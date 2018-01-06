@@ -6,17 +6,25 @@ from dirhunt.url import Url
 
 
 class ProcessRequest(object):
-    pass
+    def __init__(self, request):
+        pass
 
 
 class CrawlerRequest(object):
-    def __init__(self, url, crawler):
+    def __init__(self, url, crawler, depth=3):
         """
 
         :type crawler: Crawler
+        :type depth: int Máxima recursión sin haber subido respecto esta url
         """
+        self.depth = depth
         self.url = url
         self.crawler = crawler
+        self.add_self_directories()
+
+    def add_self_directories(self):
+        for url in Url(self.url).breadcrumb():
+            self.crawler.add_url(url.url)
 
     def start(self):
         session = self.crawler.sessions.get_session()
@@ -63,14 +71,14 @@ class Crawler(object):
         for url in urls:
             self.add_url(url)
 
-    def add_url(self, url):
+    def add_url(self, url, depth=3):
         """Add url to queue"""
         url = Url(url)
         url.query = ''
         url.fragment = ''
         url = url.url
-        print(url)
         if url in self.processed or url in self.processing:
             return False
+        print(url)
         self.processing.add(url)
-        self.executor.submit(CrawlerRequest(url, self).start)
+        self.executor.submit(CrawlerRequest(url, self, depth).start)

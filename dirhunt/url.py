@@ -70,6 +70,14 @@ class Url(object):
         return path
 
     @property
+    def path(self):
+        return self.urlparsed[2]
+
+    @path.setter
+    def path(self, new_value):
+        self.urlparsed[2] = new_value
+
+    @property
     def url(self):
         return self.urlparsed[0] + '://' + self.urlparsed[1] + self.full_path
 
@@ -88,6 +96,16 @@ class Url(object):
     @fragment.setter
     def fragment(self, new_value):
         self.urlparsed[5] = new_value
+
+    def breadcrumb(self):
+        directories = self.urlparsed[2].split('/')
+        for level in range(len(directories)):
+            url = self.copy()
+            url.path = '/'.join(directories[:level]) + '/'
+            yield url
+
+    def copy(self):
+        return Url(self.url)
 
     def json(self):
         return {
