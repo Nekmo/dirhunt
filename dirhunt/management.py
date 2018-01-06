@@ -1,7 +1,10 @@
 import click as click
 
+from dirhunt.crawler import Crawler
+
 
 @click.command()
-@click.argument('url')
-def hunt(url):
-    pass
+@click.argument('urls', nargs=-1)
+def hunt(urls):
+    crawler = Crawler()
+    crawler.add_urls(*urls)
