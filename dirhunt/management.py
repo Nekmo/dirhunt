@@ -1,4 +1,5 @@
 import click as click
+import time
 
 from dirhunt.crawler import Crawler
 
@@ -8,3 +9,4 @@ from dirhunt.crawler import Crawler
 def hunt(urls):
     crawler = Crawler()
     crawler.add_urls(*urls)
+    time.sleep(100000)

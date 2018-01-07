@@ -1,6 +1,8 @@
 from ipaddress import ip_address
 from urllib.parse import urlparse
 
+import os
+
 
 class Url(object):
     _urlparsed = None
@@ -75,7 +77,20 @@ class Url(object):
 
     @path.setter
     def path(self, new_value):
+        """
+
+        :type new_value: str
+        """
+        # TODO: abs path para urls ../../
+        if not new_value.startswith('/'):
+            new_value = self.directory_path + new_value
         self.urlparsed[2] = new_value
+
+    @property
+    def directory_path(self):
+        if self.path.endswith('/'):
+            return self.path
+        return os.path.dirname(self.path)[0]
 
     @property
     def url(self):
@@ -112,3 +127,6 @@ class Url(object):
             'address': self.address,
             'domain': self.domain,
         }
+
+    def __str__(self):
+        return '<Url {}>'.format(self.url)
