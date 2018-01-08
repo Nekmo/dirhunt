@@ -9,4 +9,4 @@ from dirhunt.crawler import Crawler
 def hunt(urls):
     crawler = Crawler()
     crawler.add_urls(*urls)
-    time.sleep(100000)
+    crawler.print_results()

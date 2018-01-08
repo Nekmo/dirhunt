@@ -2,10 +2,14 @@ import traceback
 from concurrent.futures import ThreadPoolExecutor
 
 import functools
+from queue import Queue
+
 import requests
-from bs4 import BeautifulSoup
 
 from dirhunt.url import Url
+
+
+MAX_RESPONSE_SIZE = 1024 * 512
 
 
 def reraise_with_stack(func):
@@ -17,47 +21,6 @@ def reraise_with_stack(func):
             traceback.print_exc()
             raise e
     return wrapped
-
-
-def full_url_address(address, url):
-    """
-
-    :type url: Url
-    :type address: str
-
-    """
-    # TODO: url relativa
-    if '://' not in address or address.startswith('/'):
-        url = url.copy()
-        url.path = address
-        return url.url
-    return address
-
-
-class ProcessRequest(object):
-    def __init__(self, request, crawler_url):
-        """
-
-        :type crawler_url: CrawlerUrl
-        """
-        self.request = request
-        # TODO: procesar otras cosas (css, etc.)
-        self.soup = BeautifulSoup(request.text, 'html.parser')
-        self.crawler_url = crawler_url
-
-    def process(self):
-        assets = []
-        assets += [full_url_address(link.attrs.get('href'), self.crawler_url.url)
-                   for link in self.soup.find_all('link')]
-        assets += [full_url_address(script.attrs.get('src'), self.crawler_url.url)
-                   for script in self.soup.find_all('script')]
-        assets += [full_url_address(img.attrs.get('src'), self.crawler_url.url)
-                   for img in self.soup.find_all('img')]
-        for asset in assets:
-            self.crawler_url.crawler.add_url(CrawlerUrl(self.crawler_url.crawler, asset, 3, self.crawler_url,
-                                                        type='asset'))
-        if self.crawler_url.maybe_directory():
-            print(self.crawler_url.url)
 
 
 class CrawlerUrl(object):
@@ -83,10 +46,15 @@ class CrawlerUrl(object):
             self.crawler.add_url(CrawlerUrl(self.crawler, url, self.depth - 1, self, True, True))
 
     def start(self):
+        from dirhunt.processors import get_processor, GenericProcessor
+
         if self.maybe_directory():
             session = self.crawler.sessions.get_session()
-            r = session.get(self.url.url)
-            ProcessRequest(r, self).process()
+            resp = session.get(self.url.url, stream=True)
+            text = resp.raw.read(MAX_RESPONSE_SIZE, decode_content=True)
+            processor = get_processor(resp, text, self) or GenericProcessor(resp, text, self)
+            processor.process()
+            self.crawler.results.put(processor)
         self.crawler.processed.add(self.url.url)
         self.crawler.processing.remove(self.url.url)
 
@@ -120,6 +88,7 @@ class Sessions(object):
 
 class Crawler(object):
     def __init__(self, max_workers=4):
+        self.results = Queue()
         self.sessions = Sessions()
         self.processing = set()
         self.processed = set()
@@ -142,3 +111,9 @@ class Crawler(object):
         self.processing.add(url.url)
         crawler_url.add_self_directories()
         self.executor.submit(reraise_with_stack(crawler_url.start))
+
+    def print_results(self):
+        while True:
+            result = self.results.get()
+            if result.maybe_directory():
+                print(result)
