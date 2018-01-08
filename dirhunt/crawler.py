@@ -33,6 +33,7 @@ class CrawlerUrl(object):
         self.depth = depth
         if not isinstance(url, Url):
             url = Url(url)
+        if url.is_valid():
             url.query = ''
             url.fragment = ''
         self.url = url
@@ -41,22 +42,28 @@ class CrawlerUrl(object):
         self.exists = exists
         self.type = type
 
-    def add_self_directories(self):
+    def add_self_directories(self, exists=None, type_=None):
         for url in self.url.breadcrumb():
-            self.crawler.add_url(CrawlerUrl(self.crawler, url, self.depth - 1, self, True, True))
+            self.crawler.add_url(CrawlerUrl(self.crawler, url, self.depth - 1, self, exists, type_))
+            # TODO: si no se puede añadir porque ya se ha añadido, establecer como que ya existe si la orden es exists
 
     def start(self):
         from dirhunt.processors import get_processor, GenericProcessor
 
+        session = self.crawler.sessions.get_session()
+        resp = session.get(self.url.url, stream=True)
         if self.maybe_directory():
-            session = self.crawler.sessions.get_session()
-            resp = session.get(self.url.url, stream=True)
             text = resp.raw.read(MAX_RESPONSE_SIZE, decode_content=True)
             processor = get_processor(resp, text, self) or GenericProcessor(resp, text, self)
             processor.process()
             self.crawler.results.put(processor)
+        self.add_self_directories(True if not self.maybe_rewrite() else None,
+                                  'directory' if not self.maybe_rewrite() else None)
         self.crawler.processed.add(self.url.url)
         self.crawler.processing.remove(self.url.url)
+
+    def maybe_rewrite(self):
+        return self.type not in ['asset', 'directory']
 
     def maybe_directory(self):
         return self.type not in ['asset']
@@ -88,6 +95,7 @@ class Sessions(object):
 
 class Crawler(object):
     def __init__(self, max_workers=4):
+        self.domains = set()
         self.results = Queue()
         self.sessions = Sessions()
         self.processing = set()
@@ -95,22 +103,24 @@ class Crawler(object):
         self.max_workers = max_workers
         self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
 
-    def add_urls(self, *urls):
+    def add_init_urls(self, *urls):
         """Add urls to queue.
         """
-        for url in urls:
-            if not isinstance(url, CrawlerUrl):
-                url = CrawlerUrl(self, url)
-            self.add_url(url)
+        for crawler_url in urls:
+            if not isinstance(crawler_url, CrawlerUrl):
+                crawler_url = CrawlerUrl(self, crawler_url)
+            self.domains.add(crawler_url.url.domain)
+            self.add_url(crawler_url)
 
     def add_url(self, crawler_url):
         """Add url to queue"""
         url = crawler_url.url
+        if not url.is_valid() or url.domain not in self.domains:
+            return
         if url.url in self.processed or url.url in self.processing:
             return False
         self.processing.add(url.url)
-        crawler_url.add_self_directories()
-        self.executor.submit(reraise_with_stack(crawler_url.start))
+        return self.executor.submit(reraise_with_stack(crawler_url.start))
 
     def print_results(self):
         while True:

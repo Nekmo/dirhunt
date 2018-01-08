@@ -8,5 +8,5 @@ from dirhunt.crawler import Crawler
 @click.argument('urls', nargs=-1)
 def hunt(urls):
     crawler = Crawler()
-    crawler.add_urls(*urls)
+    crawler.add_init_urls(*urls)
     crawler.print_results()
