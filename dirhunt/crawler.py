@@ -1,10 +1,11 @@
 import traceback
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, Executor
 
 import functools
 from queue import Queue
 
 import requests
+from requests import RequestException
 
 from dirhunt.url import Url
 
@@ -41,6 +42,7 @@ class CrawlerUrl(object):
         self.source = source
         self.exists = exists
         self.type = type
+        self.resp = None
 
     def add_self_directories(self, exists=None, type_=None):
         for url in self.url.breadcrumb():
@@ -51,22 +53,32 @@ class CrawlerUrl(object):
         from dirhunt.processors import get_processor, GenericProcessor
 
         session = self.crawler.sessions.get_session()
-        resp = session.get(self.url.url, stream=True)
+        try:
+            self.resp = session.get(self.url.url, stream=True, timeout=10)
+        except RequestException:
+            return self
         if self.maybe_directory():
-            text = resp.raw.read(MAX_RESPONSE_SIZE, decode_content=True)
-            processor = get_processor(resp, text, self) or GenericProcessor(resp, text, self)
+            text = self.resp.raw.read(MAX_RESPONSE_SIZE, decode_content=True)
+            processor = get_processor(self.resp, text, self) or GenericProcessor(self.resp, text, self)
             processor.process()
             self.crawler.results.put(processor)
+        if self.exists is None and self.resp.status_code < 404:
+            self.exists = True
         self.add_self_directories(True if not self.maybe_rewrite() else None,
                                   'directory' if not self.maybe_rewrite() else None)
-        self.crawler.processed.add(self.url.url)
-        self.crawler.processing.remove(self.url.url)
+        self.crawler.processed[self.url.url] = self
+        del self.crawler.processing[self.url.url]
+        return self
 
     def maybe_rewrite(self):
         return self.type not in ['asset', 'directory']
 
     def maybe_directory(self):
-        return self.type not in ['asset']
+        return self.type not in ['asset', 'document']
+
+    def result(self):
+        # Cuando se ejecuta el result() de future, si ya está processed, devolverse a sí mismo
+        return self
 
 
 class Session(object):
@@ -94,12 +106,12 @@ class Sessions(object):
 
 
 class Crawler(object):
-    def __init__(self, max_workers=4):
+    def __init__(self, max_workers=None):
         self.domains = set()
         self.results = Queue()
         self.sessions = Sessions()
-        self.processing = set()
-        self.processed = set()
+        self.processing = {}
+        self.processed = {}
         self.max_workers = max_workers
         self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
 
@@ -109,21 +121,29 @@ class Crawler(object):
         for crawler_url in urls:
             if not isinstance(crawler_url, CrawlerUrl):
                 crawler_url = CrawlerUrl(self, crawler_url)
-            self.domains.add(crawler_url.url.domain)
+            self.domains.add(crawler_url.url.only_domain)
             self.add_url(crawler_url)
 
-    def add_url(self, crawler_url):
+    def add_url(self, crawler_url, force=False):
         """Add url to queue"""
         url = crawler_url.url
-        if not url.is_valid() or url.domain not in self.domains:
+        if not url.is_valid() or url.only_domain not in self.domains:
             return
-        if url.url in self.processed or url.url in self.processing:
-            return False
-        self.processing.add(url.url)
-        return self.executor.submit(reraise_with_stack(crawler_url.start))
+        if url.url in self.processing or url.url in self.processed:
+            return self.processing.get(url.url) or self.processed.get(url.url)
+        fn = reraise_with_stack(crawler_url.start)
+        if force:
+            future = ThreadPoolExecutor(max_workers=1).submit(fn)
+        else:
+            future = self.executor.submit(fn)
+        self.processing[url.url] = future
+        return future
 
     def print_results(self):
         while True:
             result = self.results.get()
             if result.maybe_directory():
                 print(result)
+            if not self.processing:
+                # Ended?
+                return

@@ -43,7 +43,9 @@ class Url(object):
     def domain_port(self):
         """Dominio con el puerto si lo hay
         """
-        netloc = getattr(self.urlparsed, 'netloc', '')
+        if not self.urlparsed:
+            return
+        netloc = self.urlparsed[1]
         return netloc.split('@', 1)[-1] or None
 
     @property
@@ -74,6 +76,13 @@ class Url(object):
     @property
     def path(self):
         return self.urlparsed[2]
+
+    def set_children(self, children):
+        path = self.path
+        if not path.endswith('/'):
+            path += '/'
+        path += children
+        self.path = path
 
     @path.setter
     def path(self, new_value):
@@ -114,6 +123,10 @@ class Url(object):
     @fragment.setter
     def fragment(self, new_value):
         self.urlparsed[5] = new_value
+
+    @property
+    def name(self):
+        return self.path.split('/')[-1]
 
     def breadcrumb(self):
         directories = self.urlparsed[2].split('/')
