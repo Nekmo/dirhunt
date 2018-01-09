@@ -166,4 +166,5 @@ class Crawler(object):
                 print(result)
             if not self.processing:
                 # Ended?
+                print('Ended?')
                 return

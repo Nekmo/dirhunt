@@ -4,7 +4,7 @@ from dirhunt.crawler import CrawlerUrl
 from dirhunt.url import Url
 
 INDEX_FILES = ['index.php', 'index.html', 'index.html']
-INTERESTING_EXTS = ['php']
+INTERESTING_EXTS = ['php', 'zip', 'sh', 'asp']
 
 
 def full_url_address(address, url):
