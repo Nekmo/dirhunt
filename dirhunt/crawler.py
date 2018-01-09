@@ -68,9 +68,10 @@ class CrawlerUrl(object):
             processor = get_processor(resp, text, self, soup) or GenericProcessor(resp, self)
             processor.process(text, soup)
             self.crawler.results.put(processor)
+        # TODO: Podemos fijarnos en el processor.index_file. Si existe y es un 200, entonces es que existe.
         if self.exists is None and resp.status_code < 404:
             self.exists = True
-        self.add_self_directories(True if not self.maybe_rewrite() else None,
+        self.add_self_directories(True if (not self.maybe_rewrite() and self.exists) else None,
                                   'directory' if not self.maybe_rewrite() else None)
         self.crawler.processed[self.url.url] = self
         del self.crawler.processing[self.url.url]
@@ -130,10 +131,23 @@ class Crawler(object):
             self.domains.add(crawler_url.url.only_domain)
             self.add_url(crawler_url)
 
+    def in_domains(self, domain):
+        initial_domain = domain
+        while True:
+            if domain in self.domains:
+                if initial_domain != domain:
+                    # subdomain
+                    self.domains.add(domain)
+                return True
+            parts = domain.split('.')
+            if len(parts) <= 2:
+                return False
+            domain = '.'.join(parts[1:])
+
     def add_url(self, crawler_url, force=False):
         """Add url to queue"""
         url = crawler_url.url
-        if not url.is_valid() or url.only_domain not in self.domains:
+        if not url.is_valid() or not self.in_domains(url.only_domain):
             return
         if url.url in self.processing or url.url in self.processed:
             return self.processing.get(url.url) or self.processed.get(url.url)

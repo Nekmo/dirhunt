@@ -1,5 +1,5 @@
 from ipaddress import ip_address
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 import os
 
@@ -78,11 +78,7 @@ class Url(object):
         return self.urlparsed[2]
 
     def set_children(self, children):
-        path = self.path
-        if not path.endswith('/'):
-            path += '/'
-        path += children
-        self.path = path
+        self.path = children
 
     @path.setter
     def path(self, new_value):
@@ -90,10 +86,8 @@ class Url(object):
 
         :type new_value: str
         """
-        # TODO: abs path para urls ../../
-        if not new_value.startswith('/'):
-            new_value = self.directory_path + new_value
-        self.urlparsed[2] = new_value
+        new_value = new_value.replace('//', '/')
+        self.urlparsed[2] = urljoin(self.path, new_value)
 
     @property
     def directory_path(self):

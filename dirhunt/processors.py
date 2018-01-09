@@ -25,7 +25,8 @@ def full_url_address(address, url):
 
 
 class ProcessBase(object):
-    name = 'Base'
+    name = ''
+    index_file = None
 
     def __init__(self, response, crawler_url):
         """
@@ -34,7 +35,6 @@ class ProcessBase(object):
         """
         # TODO: hay que pensar en no pasar response, text y soup por aquí para establecerlo en self,
         # para no llenar la memoria. Deben ser cosas "volátiles".
-        self.index_file = None
         self.status_code = response.status_code
         # TODO: procesar otras cosas (css, etc.)
         self.crawler_url = crawler_url
@@ -64,7 +64,7 @@ class ProcessBase(object):
         return self.crawler_url.maybe_directory()
 
     def __str__(self):
-        body = '[{}] {} ({})'.format(self.status_code, self.crawler_url.url.url, self.__class__.__name__)
+        body = '[{}] {} ({})'.format(self.status_code, self.crawler_url.url.url, self.name or self.__class__.__name__)
         if self.index_file:
             body += '\n    Index file found: {}'.format(self.index_file.name)
         return body
@@ -74,7 +74,47 @@ class GenericProcessor(ProcessBase):
     name = 'Generic'
 
     def process(self, text, soup=None):
-        pass
+        self.search_index_files()
+
+
+class ProcessRedirect(ProcessBase):
+    name = 'Redirect'
+    redirector = None
+
+    def __init__(self, response, crawler_url):
+        super(ProcessRedirect, self).__init__(response, crawler_url)
+        self.redirector = full_url_address(response.headers.get('Location'), self.crawler_url.url)
+
+    def process(self, text, soup=None):
+        self.crawler_url.crawler.add_url(CrawlerUrl(self.crawler_url.crawler, self.redirector, 3, self.crawler_url))
+
+    @classmethod
+    def is_applicable(cls, request, text, crawler_url, soup):
+        return 300 <= request.status_code < 400
+
+    def __str__(self):
+        body = super(ProcessRedirect, self).__str__()
+        body += '\n    Redirect to: {}'.format(self.redirector)
+        return body
+
+
+class ProcessNotFound(ProcessBase):
+    name = 'Not Found'
+
+    def process(self, text, soup=None):
+        self.search_index_files()
+
+    @classmethod
+    def is_applicable(cls, request, text, crawler_url, soup):
+        return request.status_code == 404
+
+    def __str__(self):
+        body = '[{}] {} ({})'.format(self.status_code, self.crawler_url.url.url, self.__class__.__name__)
+        if self.crawler_url.exists:
+            body += ' (FAKE 404)'
+        if self.index_file:
+            body += '\n    Index file found: {}'.format(self.index_file.name)
+        return body
 
 
 class ProcessHtmlRequest(ProcessBase):
@@ -158,6 +198,8 @@ def get_processor(response, text, crawler_url, soup):
 
 
 PROCESSORS = [
+    ProcessRedirect,
+    ProcessNotFound,
     ProcessIndexOfRequest,
     ProcessWhitePageRequest,
     ProcessHtmlRequest,
