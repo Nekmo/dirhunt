@@ -5,12 +5,14 @@ import functools
 from queue import Queue
 
 import requests
+from bs4 import BeautifulSoup
 from requests import RequestException
 
 from dirhunt.url import Url
 
 
 MAX_RESPONSE_SIZE = 1024 * 512
+TIMEOUT = 10
 
 
 def reraise_with_stack(func):
@@ -54,15 +56,19 @@ class CrawlerUrl(object):
 
         session = self.crawler.sessions.get_session()
         try:
-            self.resp = session.get(self.url.url, stream=True, timeout=10)
+            resp = session.get(self.url.url, stream=True, timeout=TIMEOUT, allow_redirects=False)
         except RequestException:
             return self
+        text = ''
+        soup = None
+        if resp.status_code < 300 and self.maybe_directory():
+            text = resp.raw.read(MAX_RESPONSE_SIZE, decode_content=True)
+            soup = BeautifulSoup(text, 'html.parser')
         if self.maybe_directory():
-            text = self.resp.raw.read(MAX_RESPONSE_SIZE, decode_content=True)
-            processor = get_processor(self.resp, text, self) or GenericProcessor(self.resp, text, self)
-            processor.process()
+            processor = get_processor(resp, text, self, soup) or GenericProcessor(resp, self)
+            processor.process(text, soup)
             self.crawler.results.put(processor)
-        if self.exists is None and self.resp.status_code < 404:
+        if self.exists is None and resp.status_code < 404:
             self.exists = True
         self.add_self_directories(True if not self.maybe_rewrite() else None,
                                   'directory' if not self.maybe_rewrite() else None)

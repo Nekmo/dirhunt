@@ -27,7 +27,7 @@ def full_url_address(address, url):
 class ProcessBase(object):
     name = 'Base'
 
-    def __init__(self, response, text, crawler_url, soup=None):
+    def __init__(self, response, crawler_url):
         """
 
         :type crawler_url: CrawlerUrl
@@ -35,10 +35,8 @@ class ProcessBase(object):
         # TODO: hay que pensar en no pasar response, text y soup por aquí para establecerlo en self,
         # para no llenar la memoria. Deben ser cosas "volátiles".
         self.index_file = None
-        self.response = response
+        self.status_code = response.status_code
         # TODO: procesar otras cosas (css, etc.)
-        self.text = text
-        self.soup = soup
         self.crawler_url = crawler_url
 
     def search_index_files(self):
@@ -59,14 +57,14 @@ class ProcessBase(object):
     def is_applicable(cls, request, text, crawler_url, soup):
         raise NotImplementedError
 
-    def process(self):
+    def process(self, text, soup=None):
         raise NotImplementedError
 
     def maybe_directory(self):
         return self.crawler_url.maybe_directory()
 
     def __str__(self):
-        body = '[{}] {} ({})'.format(self.response.status_code, self.crawler_url.url.url, self.__class__.__name__)
+        body = '[{}] {} ({})'.format(self.status_code, self.crawler_url.url.url, self.__class__.__name__)
         if self.index_file:
             body += '\n    Index file found: {}'.format(self.index_file.name)
         return body
@@ -75,41 +73,42 @@ class ProcessBase(object):
 class GenericProcessor(ProcessBase):
     name = 'Generic'
 
-    def process(self):
+    def process(self, text, soup=None):
         pass
 
 
 class ProcessHtmlRequest(ProcessBase):
     name = 'HTML document'
 
-    def process(self):
-        self.assets()
+    def process(self, text, soup=None):
+        self.assets(text, soup)
         self.search_index_files()
 
-    def assets(self):
+    def assets(self, text, soup):
         assets = []
         assets += [full_url_address(link.attrs.get('href'), self.crawler_url.url)
-                   for link in self.soup.find_all('link')]
+                   for link in soup.find_all('link')]
         assets += [full_url_address(script.attrs.get('src'), self.crawler_url.url)
-                   for script in self.soup.find_all('script')]
+                   for script in soup.find_all('script')]
         assets += [full_url_address(img.attrs.get('src'), self.crawler_url.url)
-                   for img in self.soup.find_all('img')]
+                   for img in soup.find_all('img')]
         for asset in filter(bool, assets):
             self.crawler_url.crawler.add_url(CrawlerUrl(self.crawler_url.crawler, asset, 3, self.crawler_url,
                                                         type='asset'))
 
     @classmethod
     def is_applicable(cls, response, text, crawler_url, soup):
-        return response.headers.get('Content-Type', '').lower().startswith('text/html')
+        return response.headers.get('Content-Type', '').lower().startswith('text/html') and response.status_code < 300 \
+               and soup is not None
 
 
 class ProcessIndexOfRequest(ProcessHtmlRequest):
     name = 'Index Of'
     files = None
 
-    def process(self):
+    def process(self, text, soup=None):
         links = [full_url_address(link.attrs.get('href'), self.crawler_url.url)
-                   for link in self.soup.find_all('a')]
+                   for link in soup.find_all('a')]
         for link in filter(lambda x: x.endswith('/'), links):
             self.crawler_url.crawler.add_url(CrawlerUrl(self.crawler_url.crawler, link, 3, self.crawler_url,
                                                         type='directory'))
@@ -134,8 +133,9 @@ class ProcessWhitePageRequest(ProcessHtmlRequest):
 
     @classmethod
     def is_applicable(cls, response, text, crawler_url, soup):
-        if response.status_code >= 300:
+        if not super(ProcessWhitePageRequest, cls).is_applicable(response, text, crawler_url, soup):
             return False
+
         def tag_visible(element):
             if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
                 return False
@@ -150,11 +150,11 @@ class ProcessWhitePageRequest(ProcessHtmlRequest):
         return True
 
 
-def get_processor(response, text, crawler_url):
-    soup = BeautifulSoup(text, 'html.parser')
+def get_processor(response, text, crawler_url, soup):
     for processor_class in PROCESSORS:
         if processor_class.is_applicable(response, text, crawler_url, soup):
-            return processor_class(response, text, crawler_url, soup)
+            # TODO: resp por None
+            return processor_class(response, crawler_url)
 
 
 PROCESSORS = [
