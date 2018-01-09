@@ -74,7 +74,11 @@ class CrawlerUrl(object):
         self.add_self_directories(True if (not self.maybe_rewrite() and self.exists) else None,
                                   'directory' if not self.maybe_rewrite() else None)
         self.crawler.processed[self.url.url] = self
-        del self.crawler.processing[self.url.url]
+        try:
+            del self.crawler.processing[self.url.url]
+        except KeyError:
+            # Executed at the same time
+            pass
         return self
 
     def maybe_rewrite(self):
@@ -151,6 +155,7 @@ class Crawler(object):
             return
         if url.url in self.processing or url.url in self.processed:
             return self.processing.get(url.url) or self.processed.get(url.url)
+
         fn = reraise_with_stack(crawler_url.start)
         if force:
             future = ThreadPoolExecutor(max_workers=1).submit(fn)
