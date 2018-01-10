@@ -121,12 +121,27 @@ class ProcessHtmlRequest(ProcessBase):
     name = 'HTML document'
 
     def process(self, text, soup=None):
-        self.assets(text, soup)
+        self.assets(soup)
+        self.links(soup)
         self.search_index_files()
 
-    def assets(self, text, soup):
-        assets = []
-        assets += [full_url_address(link.attrs.get('href'), self.crawler_url.url)
+    def links(self, soup):
+        links = [full_url_address(link.attrs.get('href'), self.crawler_url.url)
+                 for link in soup.find_all('a')]
+        for link in filter(bool, links):
+            url = Url(link)
+            if not url.is_valid():
+                continue
+            depth = self.crawler_url.depth
+            if url.domain != self.crawler_url.url.domain or \
+                    not url.path.startswith(self.crawler_url.url.directory_path):
+                depth -= 1
+            if depth <= 0:
+                continue
+            self.crawler_url.crawler.add_url(CrawlerUrl(self.crawler_url.crawler, link, depth, self.crawler_url))
+
+    def assets(self, soup):
+        assets = [full_url_address(link.attrs.get('href'), self.crawler_url.url)
                    for link in soup.find_all('link')]
         assets += [full_url_address(script.attrs.get('src'), self.crawler_url.url)
                    for script in soup.find_all('script')]

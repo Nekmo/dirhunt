@@ -66,6 +66,10 @@ class Url(object):
             return int(self.domain_port.split(':')[-1])
 
     @property
+    def directories(self):
+        return self.path.split('/')
+
+    @property
     def full_path(self):
         path = self.urlparsed[2] or '/'
         path += (';' if self.urlparsed[3] else '') + self.urlparsed[3]
@@ -93,6 +97,8 @@ class Url(object):
     def directory_path(self):
         if self.path.endswith('/'):
             return self.path
+        if not self.path:
+            return '/'
         return os.path.dirname(self.path)[0]
 
     @property

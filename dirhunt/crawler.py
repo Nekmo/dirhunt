@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor, Executor
 
 import functools
 from queue import Queue
+from threading import Lock
 
 import requests
 from bs4 import BeautifulSoup
@@ -59,8 +60,11 @@ class CrawlerUrl(object):
             resp = session.get(self.url.url, stream=True, timeout=TIMEOUT, allow_redirects=False)
         except RequestException:
             return self
+
+        self.set_type(resp.headers['Content-Type'])
         text = ''
         soup = None
+
         if resp.status_code < 300 and self.maybe_directory():
             text = resp.raw.read(MAX_RESPONSE_SIZE, decode_content=True)
             soup = BeautifulSoup(text, 'html.parser')
@@ -74,12 +78,12 @@ class CrawlerUrl(object):
         self.add_self_directories(True if (not self.maybe_rewrite() and self.exists) else None,
                                   'directory' if not self.maybe_rewrite() else None)
         self.crawler.processed[self.url.url] = self
-        try:
-            del self.crawler.processing[self.url.url]
-        except KeyError:
-            # Executed at the same time
-            pass
+        del self.crawler.processing[self.url.url]
         return self
+
+    def set_type(self, content_type):
+        if not self.type and not content_type.startswith('text/html'):
+            self.type = 'asset'
 
     def maybe_rewrite(self):
         return self.type not in ['asset', 'directory']
@@ -124,6 +128,7 @@ class Crawler(object):
         self.processing = {}
         self.processed = {}
         self.max_workers = max_workers
+        self.add_lock = Lock()
         self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
 
     def add_init_urls(self, *urls):
@@ -150,18 +155,21 @@ class Crawler(object):
 
     def add_url(self, crawler_url, force=False):
         """Add url to queue"""
+
         url = crawler_url.url
         if not url.is_valid() or not self.in_domains(url.only_domain):
             return
         if url.url in self.processing or url.url in self.processed:
             return self.processing.get(url.url) or self.processed.get(url.url)
 
+        self.add_lock.acquire()
         fn = reraise_with_stack(crawler_url.start)
         if force:
             future = ThreadPoolExecutor(max_workers=1).submit(fn)
         else:
             future = self.executor.submit(fn)
         self.processing[url.url] = future
+        self.add_lock.release()
         return future
 
     def print_results(self):
