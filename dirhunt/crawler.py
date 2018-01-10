@@ -34,6 +34,7 @@ class CrawlerUrl(object):
         :type crawler: Crawler
         :type depth: int Máxima recursión sin haber subido respecto esta url
         """
+        self.flags = set()
         self.depth = depth
         if not isinstance(url, Url):
             url = Url(url)
@@ -62,6 +63,7 @@ class CrawlerUrl(object):
             return self
 
         self.set_type(resp.headers['Content-Type'])
+        self.flags.add(str(resp.status_code))
         text = ''
         soup = None
 
@@ -72,6 +74,7 @@ class CrawlerUrl(object):
             processor = get_processor(resp, text, self, soup) or GenericProcessor(resp, self)
             processor.process(text, soup)
             self.crawler.results.put(processor)
+            self.flags.update(processor.flags)
         # TODO: Podemos fijarnos en el processor.index_file. Si existe y es un 200, entonces es que existe.
         if self.exists is None and resp.status_code < 404:
             self.exists = True
@@ -156,13 +159,15 @@ class Crawler(object):
     def add_url(self, crawler_url, force=False):
         """Add url to queue"""
 
+        self.add_lock.acquire()
         url = crawler_url.url
         if not url.is_valid() or not self.in_domains(url.only_domain):
+            self.add_lock.release()
             return
         if url.url in self.processing or url.url in self.processed:
+            self.add_lock.release()
             return self.processing.get(url.url) or self.processed.get(url.url)
 
-        self.add_lock.acquire()
         fn = reraise_with_stack(crawler_url.start)
         if force:
             future = ThreadPoolExecutor(max_workers=1).submit(fn)
@@ -172,10 +177,11 @@ class Crawler(object):
         self.add_lock.release()
         return future
 
-    def print_results(self):
+    def print_results(self, exclude=None):
+        exclude = exclude or set()
         while True:
             result = self.results.get()
-            if result.maybe_directory():
+            if result.maybe_directory() and not (result.crawler_url.flags & exclude):
                 print(result)
             if not self.processing:
                 # Ended?

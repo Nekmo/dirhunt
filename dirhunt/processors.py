@@ -4,6 +4,7 @@ from dirhunt.crawler import CrawlerUrl
 from dirhunt.url import Url
 
 INDEX_FILES = ['index.php', 'index.html', 'index.html']
+IMPORTANT_FILES = ['access_log', 'error_log', 'error', 'logs', 'dump']
 INTERESTING_EXTS = ['php', 'zip', 'sh', 'asp']
 
 
@@ -26,6 +27,7 @@ def full_url_address(address, url):
 
 class ProcessBase(object):
     name = ''
+    key_name = ''
     index_file = None
 
     def __init__(self, response, crawler_url):
@@ -60,6 +62,10 @@ class ProcessBase(object):
     def process(self, text, soup=None):
         raise NotImplementedError
 
+    @property
+    def flags(self):
+        return {self.key_name}
+
     def maybe_directory(self):
         return self.crawler_url.maybe_directory()
 
@@ -72,6 +78,7 @@ class ProcessBase(object):
 
 class GenericProcessor(ProcessBase):
     name = 'Generic'
+    key_name = 'generic'
 
     def process(self, text, soup=None):
         self.search_index_files()
@@ -79,6 +86,7 @@ class GenericProcessor(ProcessBase):
 
 class ProcessRedirect(ProcessBase):
     name = 'Redirect'
+    key_name = 'redirect'
     redirector = None
 
     def __init__(self, response, crawler_url):
@@ -100,6 +108,7 @@ class ProcessRedirect(ProcessBase):
 
 class ProcessNotFound(ProcessBase):
     name = 'Not Found'
+    key_name = 'not_found'
 
     def process(self, text, soup=None):
         self.search_index_files()
@@ -116,9 +125,17 @@ class ProcessNotFound(ProcessBase):
             body += '\n    Index file found: {}'.format(self.index_file.name)
         return body
 
+    @property
+    def flags(self):
+        flags = super(ProcessNotFound, self).flags
+        if not self.crawler_url.exists:
+            flags.update({'{}.fake'.format(self.key_name)})
+        return flags
+
 
 class ProcessHtmlRequest(ProcessBase):
     name = 'HTML document'
+    key_name = 'html'
 
     def process(self, text, soup=None):
         self.assets(soup)
@@ -159,7 +176,9 @@ class ProcessHtmlRequest(ProcessBase):
 
 class ProcessIndexOfRequest(ProcessHtmlRequest):
     name = 'Index Of'
+    key_name = 'index_of'
     files = None
+    index_titles = ('index of', 'directory listing for')
 
     def process(self, text, soup=None):
         links = [full_url_address(link.attrs.get('href'), self.crawler_url.url)
@@ -169,9 +188,12 @@ class ProcessIndexOfRequest(ProcessHtmlRequest):
                                                         type='directory'))
         self.files = [Url(link) for link in links]
 
+    def interesting_files(self):
+        return filter(lambda x: x.name.split('.')[-1] in INTERESTING_EXTS, self.files)
+
     def __str__(self):
         body = super(ProcessIndexOfRequest, self).__str__()
-        files = filter(lambda x: x.name.split('.')[-1] in INTERESTING_EXTS, self.files)
+        files = self.interesting_files()
         body += '\n    Interesting extension files: {}'.format(', '.join(map(lambda x: x.name, files)))
         return body
 
@@ -180,15 +202,31 @@ class ProcessIndexOfRequest(ProcessHtmlRequest):
         if not super(ProcessIndexOfRequest, cls).is_applicable(response, text, crawler_url, soup):
             return False
         title = soup.find('title')
-        return title and title.text.lower().startswith('index of')
+        if not title:
+            return False
+        title = title.text.lower()
+        for index_title in cls.index_titles:
+            if title.startswith(index_title):
+                return True
+        return False
+
+    @property
+    def flags(self):
+        flags = super(ProcessHtmlRequest, self).flags
+        try:
+            next(self.interesting_files())
+        except StopIteration:
+            flags.update({'{}.nothing'.format(self.key_name)})
+        return flags
 
 
-class ProcessWhitePageRequest(ProcessHtmlRequest):
-    name = 'White page'
+class ProcessBlankPageRequest(ProcessHtmlRequest):
+    name = 'Blank page'
+    key_name = 'blank'
 
     @classmethod
     def is_applicable(cls, response, text, crawler_url, soup):
-        if not super(ProcessWhitePageRequest, cls).is_applicable(response, text, crawler_url, soup):
+        if not super(ProcessBlankPageRequest, cls).is_applicable(response, text, crawler_url, soup):
             return False
 
         def tag_visible(element):
@@ -216,6 +254,6 @@ PROCESSORS = [
     ProcessRedirect,
     ProcessNotFound,
     ProcessIndexOfRequest,
-    ProcessWhitePageRequest,
+    ProcessBlankPageRequest,
     ProcessHtmlRequest,
 ]
