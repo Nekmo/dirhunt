@@ -60,9 +60,10 @@ class CrawlerUrl(object):
         try:
             resp = session.get(self.url.url, stream=True, timeout=TIMEOUT, allow_redirects=False)
         except RequestException:
+            self.close()
             return self
 
-        self.set_type(resp.headers['Content-Type'])
+        self.set_type(resp.headers.get('Content-Type'))
         self.flags.add(str(resp.status_code))
         text = ''
         soup = None
@@ -80,8 +81,7 @@ class CrawlerUrl(object):
             self.exists = True
         self.add_self_directories(True if (not self.maybe_rewrite() and self.exists) else None,
                                   'directory' if not self.maybe_rewrite() else None)
-        self.crawler.processed[self.url.url] = self
-        del self.crawler.processing[self.url.url]
+        self.close()
         return self
 
     def set_type(self, content_type):
@@ -92,11 +92,15 @@ class CrawlerUrl(object):
         return self.type not in ['asset', 'directory']
 
     def maybe_directory(self):
-        return self.type not in ['asset', 'document']
+        return self.type not in ['asset', 'document', 'rewrite']
 
     def result(self):
         # Cuando se ejecuta el result() de future, si ya está processed, devolverse a sí mismo
         return self
+
+    def close(self):
+        self.crawler.processed[self.url.url] = self
+        del self.crawler.processing[self.url.url]
 
 
 class Session(object):
@@ -161,7 +165,7 @@ class Crawler(object):
 
         self.add_lock.acquire()
         url = crawler_url.url
-        if not url.is_valid() or not self.in_domains(url.only_domain):
+        if not url.is_valid() or not url.only_domain or not self.in_domains(url.only_domain):
             self.add_lock.release()
             return
         if url.url in self.processing or url.url in self.processed:

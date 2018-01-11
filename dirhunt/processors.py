@@ -18,11 +18,13 @@ def full_url_address(address, url):
     # TODO: url relativa
     if address is None:
         return
-    if ('://' not in address or address.startswith('/')) and not address.startswith('//'):
+    if address.startswith('//'):
+        address = address.replace('//', '{}://'.format(url.protocol), 1)
+    if '://' not in address or address.startswith('/'):
         url = url.copy()
         url.path = address
-        return url.url
-    return address
+        return url
+    return Url(address)
 
 
 class ProcessBase(object):
@@ -165,8 +167,19 @@ class ProcessHtmlRequest(ProcessBase):
         assets += [full_url_address(img.attrs.get('src'), self.crawler_url.url)
                    for img in soup.find_all('img')]
         for asset in filter(bool, assets):
+            self.analyze_asset(asset)
             self.crawler_url.crawler.add_url(CrawlerUrl(self.crawler_url.crawler, asset, 3, self.crawler_url,
                                                         type='asset'))
+
+    def analyze_asset(self, asset):
+        """
+
+        :type asset: Url
+        """
+        if 'wordpress' not in self.crawler_url.flags and 'wp-content' in asset.path:
+            self.crawler_url.flags.update({'wordpress'})
+            self.crawler_url.type = 'rewrite'
+            self.crawler_url.depth -= 1
 
     @classmethod
     def is_applicable(cls, response, text, crawler_url, soup):

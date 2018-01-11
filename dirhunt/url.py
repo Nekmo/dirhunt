@@ -20,8 +20,11 @@ class Url(object):
 
     @property
     def urlparsed(self):
+        address = self.address
+        if isinstance(address, Url):
+            address = address.url
         if not self._urlparsed:
-            self._urlparsed = urlparse(self.address)
+            self._urlparsed = urlparse(address)
             self._urlparsed = list(self._urlparsed) if self._urlparsed.scheme and self._urlparsed.netloc else None
         return self._urlparsed
 
@@ -90,6 +93,10 @@ class Url(object):
 
         :type new_value: str
         """
+        for symbol, i in [('#', 5), ('?', 4), (';', 3)]:
+            if not symbol in new_value:
+                continue
+            new_value, self.urlparsed[i] = new_value.split(symbol, 1)
         new_value = new_value.replace('//', '/')
         self.urlparsed[2] = urljoin(self.path, new_value)
 

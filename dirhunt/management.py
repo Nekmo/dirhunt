@@ -7,7 +7,7 @@ STATUS_CODES = lrange(100, 102+1) + lrange(200, 208+1) + [226] + lrange(300, 308
                lrange(421, 426+1) + [428, 429, 431, 451] + lrange(500, 511+1)
 
 def comma_separated(ctx, param, value):
-    return value.split(',')
+    return (value or '').split(',')
 
 
 def status_code_range(start, end):
@@ -18,16 +18,16 @@ def status_code_range(start, end):
 @click.argument('urls', nargs=-1)
 @click.option('-x', '--exclude-flags', callback=comma_separated, help='Exclude results with these flags. See '
                                                                       'documentation.')
-def hunt(urls, exclude):
+def hunt(urls, exclude_flags):
     """
 
-    :type exclude: list
+    :type exclude_flags: list
     """
-    for code in tuple(exclude):
+    for code in tuple(exclude_flags):
         match = re.match('^(\d{3})-(\d{3})$', code)
         if match:
-            exclude.remove(code)
-            exclude += status_code_range(*map(int, match.groups()))
+            exclude_flags.remove(code)
+            exclude_flags += list(map(str, status_code_range(*map(int, match.groups()))))
     crawler = Crawler()
     crawler.add_init_urls(*urls)
-    crawler.print_results(set(exclude))
+    crawler.print_results(set(exclude_flags))
