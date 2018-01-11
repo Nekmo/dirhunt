@@ -13,6 +13,7 @@ def full_url_address(address, url):
 
     :type url: Url
     :type address: str
+    :rtype :Url
 
     """
     # TODO: url relativa
@@ -39,7 +40,8 @@ class ProcessBase(object):
         """
         # TODO: hay que pensar en no pasar response, text y soup por aquí para establecerlo en self,
         # para no llenar la memoria. Deben ser cosas "volátiles".
-        self.status_code = response.status_code
+        if response:
+            self.status_code = response.status_code
         # TODO: procesar otras cosas (css, etc.)
         self.crawler_url = crawler_url
 
@@ -76,6 +78,27 @@ class ProcessBase(object):
         if self.index_file:
             body += '\n    Index file found: {}'.format(self.index_file.name)
         return body
+
+
+class Error(ProcessBase):
+
+    name = 'Error'
+    key_name = 'error'
+
+    def __init__(self, crawler_url, error):
+        super(Error, self).__init__(None, crawler_url)
+        self.error = error
+
+    def process(self, text, soup=None):
+        pass
+
+    def __str__(self):
+        body = '[ERROR] {} ({})'.format(self.crawler_url.url.url, self.error)
+        return body
+
+    @classmethod
+    def is_applicable(cls, request, text, crawler_url, soup):
+        pass
 
 
 class GenericProcessor(ProcessBase):
@@ -196,7 +219,7 @@ class ProcessIndexOfRequest(ProcessHtmlRequest):
     def process(self, text, soup=None):
         links = [full_url_address(link.attrs.get('href'), self.crawler_url.url)
                    for link in soup.find_all('a')]
-        for link in filter(lambda x: x.endswith('/'), links):
+        for link in filter(lambda x: x.url.endswith('/'), links):
             self.crawler_url.crawler.add_url(CrawlerUrl(self.crawler_url.crawler, link, 3, self.crawler_url,
                                                         type='directory'))
         self.files = [Url(link) for link in links]

@@ -1,14 +1,20 @@
+import queue
 import traceback
-from concurrent.futures import ThreadPoolExecutor, Executor
+from concurrent.futures import ThreadPoolExecutor
 
 import functools
 from queue import Queue
 from threading import Lock
 
+import datetime
+
+import humanize as humanize
 import requests
+import sys
 from bs4 import BeautifulSoup
 from requests import RequestException
 
+from dirhunt.cli import random_spinner
 from dirhunt.url import Url
 
 
@@ -54,12 +60,13 @@ class CrawlerUrl(object):
             # TODO: si no se puede añadir porque ya se ha añadido, establecer como que ya existe si la orden es exists
 
     def start(self):
-        from dirhunt.processors import get_processor, GenericProcessor
+        from dirhunt.processors import get_processor, GenericProcessor, Error
 
         session = self.crawler.sessions.get_session()
         try:
             resp = session.get(self.url.url, stream=True, timeout=TIMEOUT, allow_redirects=False)
-        except RequestException:
+        except RequestException as e:
+            self.crawler.results.put(Error(self, e))
             self.close()
             return self
 
@@ -137,6 +144,8 @@ class Crawler(object):
         self.max_workers = max_workers
         self.add_lock = Lock()
         self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
+        self.spinner = random_spinner()
+        self.start_dt = datetime.datetime.now()
 
     def add_init_urls(self, *urls):
         """Add urls to queue.
@@ -181,13 +190,33 @@ class Crawler(object):
         self.add_lock.release()
         return future
 
+    def erase(self):
+        if not sys.stdout.isatty():
+            return
+        CURSOR_UP_ONE = '\x1b[1A'
+        ERASE_LINE = '\x1b[2K'
+        sys.stdout.write(CURSOR_UP_ONE + ERASE_LINE)
+
+    def print_progress(self):
+        if not sys.stdout.isatty():
+            return
+        print('{} Started {}'.format(next(self.spinner),
+                             humanize.naturaltime(datetime.datetime.now() - self.start_dt)))
+
     def print_results(self, exclude=None):
         exclude = exclude or set()
+        print('Starting...')
         while True:
-            result = self.results.get()
-            if result.maybe_directory() and not (result.crawler_url.flags & exclude):
+            result = None
+            try:
+                result = self.results.get(timeout=.5)
+            except queue.Empty:
+                pass
+            self.erase()
+            if result and result.maybe_directory() and not (result.crawler_url.flags & exclude):
                 print(result)
+            self.print_progress()
             if not self.processing:
                 # Ended?
-                print('Ended?')
+                print('End')
                 return
