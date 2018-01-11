@@ -12,6 +12,7 @@ import humanize as humanize
 import requests
 import sys
 from bs4 import BeautifulSoup
+from humanize.time import date_and_delta
 from requests import RequestException
 
 from dirhunt.cli import random_spinner
@@ -197,11 +198,14 @@ class Crawler(object):
         ERASE_LINE = '\x1b[2K'
         sys.stdout.write(CURSOR_UP_ONE + ERASE_LINE)
 
-    def print_progress(self):
+    def print_progress(self, finished=False):
         if not sys.stdout.isatty():
             return
-        print('{} Started {}'.format(next(self.spinner),
-                             humanize.naturaltime(datetime.datetime.now() - self.start_dt)))
+        print('{} {} {}'.format(
+            next(self.spinner),
+            'Finished after' if finished else 'Started',
+            (humanize.naturaldelta if finished else humanize.naturaltime)(datetime.datetime.now() - self.start_dt))
+        )
 
     def print_results(self, exclude=None):
         exclude = exclude or set()
@@ -218,5 +222,7 @@ class Crawler(object):
             self.print_progress()
             if not self.processing:
                 # Ended?
+                self.erase()
+                self.print_progress(True)
                 print('End')
                 return
