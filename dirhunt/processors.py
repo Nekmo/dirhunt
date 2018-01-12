@@ -1,9 +1,26 @@
 from bs4 import BeautifulSoup, Comment
+from colorama import Fore, Back
 
 from dirhunt.crawler import CrawlerUrl
 from dirhunt.url import Url
+from dirhunt.utils import colored
 
 INDEX_FILES = ['index.php', 'index.html', 'index.html']
+
+
+def status_code_colors(status_code):
+    if 100 <= status_code < 200:
+        return Fore.WHITE
+    elif  200 == status_code:
+        return Fore.LIGHTGREEN_EX
+    elif 200 < status_code < 300:
+        return Fore.GREEN
+    elif 300 <= status_code < 400:
+        return Fore.LIGHTBLUE_EX
+    elif 500 == status_code:
+        return Fore.LIGHTMAGENTA_EX
+    else:
+        return Fore.MAGENTA
 
 
 def full_url_address(address, url):
@@ -72,10 +89,17 @@ class ProcessBase(object):
     def maybe_directory(self):
         return self.crawler_url.maybe_directory()
 
+    def url_line(self):
+        body = colored('[{}]'.format(self.status_code), status_code_colors(self.status_code))
+        body += ' {} '.format(self.crawler_url.url.url)
+        body += colored(' ({})'.format(self.name or self.__class__.__name__), Fore.LIGHTYELLOW_EX)
+        return body
+
     def __str__(self):
-        body = '[{}] {} ({})'.format(self.status_code, self.crawler_url.url.url, self.name or self.__class__.__name__)
+        body = self.url_line()
         if self.index_file:
-            body += '\n    Index file found: {}'.format(self.index_file.name)
+            body += colored('\n    Index file found: ', Fore.BLUE)
+            body += '{}'.format(self.index_file.name)
         return body
 
 
@@ -92,7 +116,9 @@ class Error(ProcessBase):
         pass
 
     def __str__(self):
-        body = '[ERROR] {} ({})'.format(self.crawler_url.url.url, self.error)
+        body = colored('[ERROR]', Back.LIGHTRED_EX, Fore.LIGHTWHITE_EX)
+        body += ' {} '.format(self.crawler_url.url.url)
+        body += colored('({})'.format(self.error), Fore.LIGHTYELLOW_EX)
         return body
 
     @classmethod
@@ -126,7 +152,8 @@ class ProcessRedirect(ProcessBase):
 
     def __str__(self):
         body = super(ProcessRedirect, self).__str__()
-        body += '\n    Redirect to: {}'.format(self.redirector)
+        body += colored('\n    Redirect to: ', Fore.BLUE)
+        body += '{}'.format(self.redirector)
         return body
 
 
@@ -142,9 +169,9 @@ class ProcessNotFound(ProcessBase):
         return request.status_code == 404
 
     def __str__(self):
-        body = '[{}] {} ({})'.format(self.status_code, self.crawler_url.url.url, self.__class__.__name__)
+        body = self.url_line()
         if self.crawler_url.exists:
-            body += ' (FAKE 404)'
+            body += colored(' (FAKE 404)', Fore.LIGHTYELLOW_EX)
         if self.index_file:
             body += '\n    Index file found: {}'.format(self.index_file.name)
         return body
