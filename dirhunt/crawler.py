@@ -1,18 +1,17 @@
 import queue
 import traceback
 from concurrent.futures import ThreadPoolExecutor
-
 import functools
+from concurrent.futures.thread import _python_exit
 from queue import Queue
-from threading import Lock
-
+from threading import Lock, ThreadError
 import datetime
 
+import atexit
 import humanize as humanize
 import requests
 import sys
 from bs4 import BeautifulSoup
-from humanize.time import date_and_delta
 from requests import RequestException
 
 from dirhunt.cli import random_spinner
@@ -149,6 +148,7 @@ class Crawler(object):
         self.start_dt = datetime.datetime.now()
         self.interesting_extensions = interesting_extensions or []
         self.interesting_files = interesting_files or []
+        self.closing = False
 
     def add_init_urls(self, *urls):
         """Add urls to queue.
@@ -185,6 +185,9 @@ class Crawler(object):
             return self.processing.get(url.url) or self.processed.get(url.url)
 
         fn = reraise_with_stack(crawler_url.start)
+        if self.closing:
+            self.add_lock.release()
+            return
         if force:
             future = ThreadPoolExecutor(max_workers=1).submit(fn)
         else:
@@ -228,3 +231,14 @@ class Crawler(object):
                 self.print_progress(True)
                 print('End')
                 return
+
+    def restart(self):
+        try:
+            self.add_lock.release()
+        except (ThreadError, RuntimeError):
+            pass
+
+    def close(self):
+        self.closing = True
+        self.executor.shutdown(False)
+        atexit.unregister(_python_exit)

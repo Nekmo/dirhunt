@@ -1,7 +1,7 @@
 import re
 import click as click
 from dirhunt.crawler import Crawler
-from dirhunt.utils import lrange
+from dirhunt.utils import lrange, catch_keyboard_interrupt
 from colorama import init
 
 init(autoreset=True)
@@ -52,4 +52,7 @@ def hunt(urls, exclude_flags, interesting_extensions, interesting_files):
             exclude_flags += list(map(str, status_code_range(*map(int, match.groups()))))
     crawler = Crawler(interesting_extensions=interesting_extensions, interesting_files=interesting_files)
     crawler.add_init_urls(*urls)
-    crawler.print_results(set(exclude_flags))
+    try:
+        catch_keyboard_interrupt(crawler.print_results, crawler.restart)(set(exclude_flags))
+    except SystemExit:
+        crawler.close()

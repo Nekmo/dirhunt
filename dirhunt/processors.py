@@ -70,6 +70,8 @@ class ProcessBase(object):
             url.set_children(index_file)
             future = self.crawler_url.crawler.add_url(CrawlerUrl(crawler, url, self.crawler_url.depth - 1, self,
                                                                  None, 'document'), True)
+            if self.crawler_url.crawler.closing:
+                return
             result = future.result()
             if result.exists:
                 self.index_file = url
@@ -266,11 +268,13 @@ class ProcessIndexOfRequest(ProcessHtmlRequest):
         ext_files = list(self.interesting_ext_files())
         name_files = list(self.interesting_name_files())
         if ext_files:
-            body += '\n    Interesting extension files: {}'.format(', '.join(map(lambda x: x.name, ext_files)))
+            body += colored('\n    Interesting extension files:', Fore.BLUE)
+            body += ' {}'.format(', '.join(map(lambda x: x.name, ext_files)))
         if name_files:
-            body += '\n    Interesting name files: {}'.format(', '.join(map(lambda x: x.name, name_files)))
+            body += colored('\n    Interesting name files:', Fore.BLUE)
+            body += ' {}'.format(map(lambda x: x.name, name_files))
         if not ext_files and not name_files:
-            body += ' (Nothing interesting)'
+            body += colored(' (Nothing interesting)', Fore.LIGHTYELLOW_EX)
         return body
 
     @classmethod
