@@ -46,6 +46,39 @@ For example::
     $ dirhunt http://domain1/blog/awesome-post.html http://domain1/admin/login.html http://domain2/
 
 
+Interesting extensions
+----------------------
+By default, Dirhunt will notify you if it find one of these extension file names: ``php``, ``zip``, ``sh``, ``asp``,
+``csv`` and ``log``. You can change these extensions using the parameter ``--interesting-extensions`` (``-e``).
+
+.. code-block:: bash
+
+    $ dirhunt <url> -e <ext 1>[,<ext 2>]
+
+For example::
+
+    $ dirhunt http://domain1/blog/ -e php,zip,sh
+
+It is also possible to read extensions from files. See "Comma separated files"
+
+
+Interesting files
+-----------------
+By default, Dirhunt will notify you if it find one of these extension file names: ``access_log``, ``error_log``,
+``error``, ``logs``, ``dump``.  You can change these extensions using the parameter
+``--interesting-files`` (``-f``).
+
+.. code-block:: bash
+
+    $ dirhunt <url> -e <name 1>[,<name 2>]
+
+For example::
+
+    $ dirhunt http://domain1/blog/ -e access_log,error_log
+
+It is also possible to read names from files. See "Comma separated files"
+
+
 Exclude
 -------
 Filter the results using the ``--exclude-flags`` (``-x``) parameter.
@@ -60,6 +93,7 @@ For example::
 
 See the flags section to see how you can filter the results.
 
+It is also possible to read excludes from files. See "Comma separated files"
 
 Flags
 -----
@@ -84,3 +118,18 @@ Also, some processors may have some extra flags:
 Other flags:
 
 * ``wordpress``: The page belongs to a wordpress.
+
+
+Comma separated files
+---------------------
+In those parameters with arguments separated by commas, it is possible to read values from one or more local files.
+
+.. code-block::
+
+    $ dirhunt <url> --param <file 1>,<file 2>
+
+For example::
+
+    $ dirhunt http://domain1/blog/ -e /path/to/file1.txt,./file2.txt
+
+It is necessary to put the complete path to the file, or the relative using ``./``.
