@@ -92,9 +92,11 @@ class CrawlerUrl(object):
         return self
 
     def set_type(self, content_type):
+        from dirhunt.processors import INDEX_FILES
         if not self.type and not (content_type or '').startswith('text/html'):
             self.type = 'asset'
-
+        if not self.type and (content_type or '').startswith('text/html') and self.url.name in INDEX_FILES:
+            self.type = 'document'
     def maybe_rewrite(self):
         return self.type not in ['asset', 'directory']
 
@@ -209,8 +211,8 @@ class Crawler(object):
         print('{} {} {}'.format(
             next(self.spinner),
             'Finished after' if finished else 'Started',
-            (humanize.naturaldelta if finished else humanize.naturaltime)(datetime.datetime.now() - self.start_dt))
-        )
+            (humanize.naturaldelta if finished else humanize.naturaltime)(datetime.datetime.now() - self.start_dt),
+        ))
 
     def print_results(self, exclude=None):
         exclude = exclude or set()

@@ -1,3 +1,5 @@
+import re
+
 from bs4 import BeautifulSoup, Comment
 from colorama import Fore, Back
 
@@ -6,6 +8,7 @@ from dirhunt.url import Url
 from dirhunt.utils import colored
 
 INDEX_FILES = ['index.php', 'index.html', 'index.html']
+ACCEPTED_PROTOCOLS = ['http', 'https']
 
 
 def status_code_colors(status_code):
@@ -31,9 +34,13 @@ def full_url_address(address, url):
     :rtype :Url
 
     """
-    # TODO: url relativa
     if address is None:
         return
+    protocol_match = address.split(':', 1)[0] if ':' in address else ''
+    protocol_match = re.match('^([A-z0-9\\-]+)$', protocol_match)
+    if protocol_match and protocol_match.group(1) not in ACCEPTED_PROTOCOLS:
+        return
+    # TODO: mejorar esto. Aceptar otros protocolos  a rechazar
     if address.startswith('//'):
         address = address.replace('//', '{}://'.format(url.protocol), 1)
     if '://' not in address or address.startswith('/'):
@@ -155,7 +162,7 @@ class ProcessRedirect(ProcessBase):
     def __str__(self):
         body = super(ProcessRedirect, self).__str__()
         body += colored('\n    Redirect to: ', Fore.BLUE)
-        body += '{}'.format(self.redirector)
+        body += '{}'.format(self.redirector.address)
         return body
 
 
