@@ -136,7 +136,7 @@ class Sessions(object):
 
 
 class Crawler(object):
-    def __init__(self, max_workers=None):
+    def __init__(self, max_workers=None, interesting_extensions=None, interesting_files=None):
         self.domains = set()
         self.results = Queue()
         self.sessions = Sessions()
@@ -147,6 +147,8 @@ class Crawler(object):
         self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
         self.spinner = random_spinner()
         self.start_dt = datetime.datetime.now()
+        self.interesting_extensions = interesting_extensions or []
+        self.interesting_files = interesting_files or []
 
     def add_init_urls(self, *urls):
         """Add urls to queue.

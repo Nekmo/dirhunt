@@ -4,8 +4,6 @@ from dirhunt.crawler import CrawlerUrl
 from dirhunt.url import Url
 
 INDEX_FILES = ['index.php', 'index.html', 'index.html']
-IMPORTANT_FILES = ['access_log', 'error_log', 'error', 'logs', 'dump']
-INTERESTING_EXTS = ['php', 'zip', 'sh', 'asp']
 
 
 def full_url_address(address, url):
@@ -225,15 +223,26 @@ class ProcessIndexOfRequest(ProcessHtmlRequest):
                                                         type='directory'))
         self.files = [Url(link) for link in links]
 
+    def interesting_ext_files(self):
+        return filter(lambda x: x.name.split('.')[-1] in self.crawler_url.crawler.interesting_extensions, self.files)
+
+    def interesting_name_files(self):
+        return filter(lambda x: x.name in self.crawler_url.crawler.interesting_files, self.files)
+
     def interesting_files(self):
-        return filter(lambda x: x.name.split('.')[-1] in INTERESTING_EXTS, self.files)
+        for iterator in [self.interesting_ext_files(), self.interesting_name_files()]:
+            for file in iterator:
+                yield file
 
     def __str__(self):
         body = super(ProcessIndexOfRequest, self).__str__()
-        files = self.interesting_files()
-        if files:
-            body += '\n    Interesting extension files: {}'.format(', '.join(map(lambda x: x.name, files)))
-        else:
+        ext_files = list(self.interesting_ext_files())
+        name_files = list(self.interesting_name_files())
+        if ext_files:
+            body += '\n    Interesting extension files: {}'.format(', '.join(map(lambda x: x.name, ext_files)))
+        if name_files:
+            body += '\n    Interesting name files: {}'.format(', '.join(map(lambda x: x.name, name_files)))
+        if not ext_files and not name_files:
             body += ' (Nothing interesting)'
         return body
 
