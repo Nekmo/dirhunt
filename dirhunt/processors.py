@@ -56,7 +56,7 @@ class ProcessBase(object):
         """
         # TODO: hay que pensar en no pasar response, text y soup por aquí para establecerlo en self,
         # para no llenar la memoria. Deben ser cosas "volátiles".
-        if response:
+        if response is not None:
             self.status_code = response.status_code
         # TODO: procesar otras cosas (css, etc.)
         self.crawler_url = crawler_url
