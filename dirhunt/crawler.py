@@ -93,7 +93,7 @@ class CrawlerUrl(object):
         return self
 
     def set_type(self, content_type):
-        if not self.type and not content_type.startswith('text/html'):
+        if not self.type and not (content_type or '').startswith('text/html'):
             self.type = 'asset'
 
     def maybe_rewrite(self):

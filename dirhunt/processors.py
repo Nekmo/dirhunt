@@ -32,6 +32,7 @@ class ProcessBase(object):
     name = ''
     key_name = ''
     index_file = None
+    status_code = 0
 
     def __init__(self, response, crawler_url):
         """
@@ -230,7 +231,10 @@ class ProcessIndexOfRequest(ProcessHtmlRequest):
     def __str__(self):
         body = super(ProcessIndexOfRequest, self).__str__()
         files = self.interesting_files()
-        body += '\n    Interesting extension files: {}'.format(', '.join(map(lambda x: x.name, files)))
+        if files:
+            body += '\n    Interesting extension files: {}'.format(', '.join(map(lambda x: x.name, files)))
+        else:
+            body += ' (Nothing interesting)'
         return body
 
     @classmethod
