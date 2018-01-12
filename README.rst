@@ -132,4 +132,5 @@ For example::
 
     $ dirhunt http://domain1/blog/ -e /path/to/file1.txt,./file2.txt
 
-It is necessary to put the complete path to the file, or the relative using ``./``.
+It is necessary to put the complete path to the file, or the relative using ``./``. Each value of the files must be
+separated by newlines.
