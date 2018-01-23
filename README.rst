@@ -134,3 +134,15 @@ For example::
 
 It is necessary to put the complete path to the file, or the relative using ``./``. Each value of the files must be
 separated by newlines.
+
+Disclaimer
+==========
+This software must not be used on third-party servers without permission. Dirhunt has been created to be used by audit
+teams with the consent of the owners of the website analyzed. The author is not responsible for the use of this tool
+outside the law.
+
+This software is under the MIT license. The author does not provide any warranty. But issues and pull requests are
+welcome.
+
+
+
