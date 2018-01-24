@@ -70,11 +70,11 @@ By default, Dirhunt will notify you if it find one of these extension file names
 
 .. code-block:: bash
 
-    $ dirhunt <url> -e <name 1>[,<name 2>]
+    $ dirhunt <url> -f <name 1>[,<name 2>]
 
 For example::
 
-    $ dirhunt http://domain1/blog/ -e access_log,error_log
+    $ dirhunt http://domain1/blog/ -f access_log,error_log
 
 It is also possible to read names from files. See "Comma separated files"
 
