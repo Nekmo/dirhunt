@@ -1,4 +1,6 @@
 
+.. image:: images/dirhunt.png
+
 Dirhunt
 #######
 Dirhunt is a web crawler optimize for search and analyze directories. This tool can find interesting things if the
