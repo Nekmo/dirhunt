@@ -1,5 +1,7 @@
 import re
 import click as click
+import os
+
 from dirhunt.crawler import Crawler
 from dirhunt.utils import lrange, catch_keyboard_interrupt
 from colorama import init
@@ -34,13 +36,15 @@ def status_code_range(start, end):
 
 @click.command()
 @click.argument('urls', nargs=-1)
+@click.option('-t', '--threads', type=int, default=(os.cpu_count() or 1) * 5,
+              help='Number of threads to use.')
 @click.option('-x', '--exclude-flags', callback=comma_separated_files,
               help='Exclude results with these flags. See documentation.')
 @click.option('-e', '--interesting-extensions', callback=comma_separated_files, default=','.join(INTERESTING_EXTS),
               help='The files found with these extensions are interesting')
 @click.option('-f', '--interesting-files', callback=comma_separated_files, default=','.join(INTERESTING_FILES),
               help='The files with these names are interesting')
-def hunt(urls, exclude_flags, interesting_extensions, interesting_files):
+def hunt(urls, threads, exclude_flags, interesting_extensions, interesting_files):
     """
 
     :type exclude_flags: list
@@ -50,7 +54,8 @@ def hunt(urls, exclude_flags, interesting_extensions, interesting_files):
         if match:
             exclude_flags.remove(code)
             exclude_flags += list(map(str, status_code_range(*map(int, match.groups()))))
-    crawler = Crawler(interesting_extensions=interesting_extensions, interesting_files=interesting_files)
+    crawler = Crawler(max_workers=threads, interesting_extensions=interesting_extensions,
+                      interesting_files=interesting_files)
     crawler.add_init_urls(*urls)
     try:
         catch_keyboard_interrupt(crawler.print_results, crawler.restart)(set(exclude_flags))
