@@ -16,6 +16,8 @@ Dirhunt does not use brute force. But neither is it just a **crawler**. This too
 minimizes requests to the server. Generally, this tool takes **between 5-30 seconds**, depending on the website and
 the server.
 
+Read more about **how to use** Dirhunt `in the documentation <http://docs.nekmo.org/dirhunt/usage.html>`_.
+
 
 Features
 ========
@@ -37,6 +39,8 @@ If you have Pip installed on your system, you can use it to install Dirhunt::
 
 At this time only **Python 3.4+** is officially supported. Other versions may work without guarantees.
 
+There are other `installation methods <http://docs.nekmo.org/dirhunt/installation.html>`_ available.
+
 
 Disclaimer
 ==========
@@ -46,6 +50,3 @@ outside the law.
 
 This software is under the MIT license. The author does not provide any warranty. But issues and pull requests are
 welcome.
-
-
-
