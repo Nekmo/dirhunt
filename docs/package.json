@@ -1,0 +1,15 @@
+{
+  "name": "docs",
+  "version": "1.0.0",
+  "description": ".. include:: ../README.rst",
+  "main": "gulpfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "browser-sync": "^2.23.6",
+    "gulp": "^3.9.1"
+  }
+}
