@@ -12,15 +12,120 @@ To see the available help run::
 
 Example::
 
-    <help>
+    Usage: dirhunt [OPTIONS] [URLS]...
+
+      :type exclude_flags: list
+
+    Options:
+      -x, --exclude-flags TEXT        Exclude results with these flags. See
+                                      documentation.
+      -e, --interesting-extensions TEXT
+                                      The files found with these extensions are
+                                      interesting
+      -f, --interesting-files TEXT    The files with these names are interesting
+      --help                          Show this message and exit.
 
 
-To see the help of a command::
 
-    $ dirhunt <command> --help
+Find directories
+----------------
+You can define one or more urls, from the same domain or different. It is better if you put urls with complete
+routes. This way Dirhunt will have easier to find directories.
+
+.. code::
+
+    $ dirhunt <url 1>[ <url 2>]
 
 For example::
 
-    $ dirhunt ...
+    $ dirhunt http://domain1/blog/awesome-post.html http://domain1/admin/login.html http://domain2/
 
 
+Interesting extensions
+----------------------
+By default, Dirhunt will notify you if it find one of these extension file names: ``php``, ``zip``, ``sh``, ``asp``,
+``csv`` and ``log``. You can change these extensions using the parameter ``--interesting-extensions`` (``-e``).
+
+.. code::
+
+    $ dirhunt <url> -e <ext 1>[,<ext 2>]
+
+For example::
+
+    $ dirhunt http://domain1/blog/ -e php,zip,sh
+
+It is also possible to read extensions from files. See "Comma separated files"
+
+
+Interesting files
+-----------------
+By default, Dirhunt will notify you if it find one of these extension file names: ``access_log``, ``error_log``,
+``error``, ``logs``, ``dump``.  You can change these extensions using the parameter
+``--interesting-files`` (``-f``).
+
+.. code::
+
+    $ dirhunt <url> -f <name 1>[,<name 2>]
+
+For example::
+
+    $ dirhunt http://domain1/blog/ -f access_log,error_log
+
+It is also possible to read names from files. See "Comma separated files"
+
+
+Exclude
+-------
+Filter the results using the ``--exclude-flags`` (``-x``) parameter.
+
+.. code::
+
+    $ dirhunt <url> -x <flags comma separated>
+
+For example::
+
+    $ dirhunt http://domain1/blog/ -x http,not_found,index_of.nothing,300-500
+
+See the flags section to see how you can filter the results.
+
+It is also possible to read excludes from files. See "Comma separated files"
+
+Flags
+-----
+The results are cataloged with one or several flags. Results with a **status code** include a flag with the status
+number. For example, a successful response with status code ``200`` includes as flag ``200``. When filtered, ranges
+of response codes can be defined. For example, ``401-500``.
+
+The processor used to process the result is also included as a flag. The names of the processors are:
+
+* ``generic``
+* ``redirect``
+* ``not_found``
+* ``html``
+* ``index_of``
+* ``blank``
+
+Also, some processors may have some extra flags:
+
+* ``index_of.nothing``: 'Index Of' without interesting files.
+* ``not_found.fake``: Fake 404 directory.
+
+Other flags:
+
+* ``wordpress``: The page belongs to a wordpress.
+
+
+Comma separated files
+---------------------
+In those parameters with arguments separated by commas, it is possible to read values from one or more local files.
+
+.. code::
+
+    $ dirhunt <url> --param <file 1>,<file 2>
+
+For example::
+
+    $ dirhunt http://domain1/blog/ -e /path/to/file1.txt,./file2.txt
+
+It is necessary to put the complete path to the file, or the relative using ``./``. Each value of the files must be
+separated by newlines.

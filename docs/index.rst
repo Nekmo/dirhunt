@@ -6,7 +6,7 @@ To **install** Dirhunt, run this command in your terminal:
 
 .. code-block:: console
 
-    $ pip install amazon_dash
+    $ pip install dirhunt
 
 
 Contents

@@ -27,13 +27,11 @@ Other releases
 --------------
 You can install other versions from Pypi using::
 
-    $ pip install Dirhunt==<version>
+    $ pip install dirhunt==<version>
 
 For versions that are not in Pypi (it is a development version)::
 
-    $ pip install git+https://github.com/Nekmo/Dirhunt@<branch>#egg=Dirhunt
-
-
+    $ pip install git+https://github.com/Nekmo/dirhunt@<branch>#egg=dirhunt
 
 
 From sources
@@ -45,13 +43,13 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/Nekmo/Dirhunt
+    $ git clone git://github.com/Nekmo/dirhunt
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl  -OL https://github.com/Nekmo/Dirhunt/tarball/master
+    $ curl  -OL https://github.com/Nekmo/dirhunt/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -60,5 +58,5 @@ Once you have a copy of the source, you can install it with:
     $ python setup.py install
 
 
-.. _Github repo: https://github.com/Nekmo/Dirhunt
-.. _tarball: https://github.com/Nekmo/Dirhunt/tarball/master
+.. _Github repo: https://github.com/Nekmo/dirhunt
+.. _tarball: https://github.com/Nekmo/dirhunt/tarball/master
