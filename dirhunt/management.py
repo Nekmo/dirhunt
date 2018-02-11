@@ -3,7 +3,7 @@ import click as click
 import os
 
 from dirhunt.crawler import Crawler
-from dirhunt.utils import lrange, catch_keyboard_interrupt
+from dirhunt.utils import lrange, catch_keyboard_interrupt, force_url
 from colorama import init
 
 init(autoreset=True)
@@ -35,7 +35,7 @@ def status_code_range(start, end):
 
 
 @click.command()
-@click.argument('urls', nargs=-1)
+@click.argument('urls', nargs=-1, type=force_url)
 @click.option('-t', '--threads', type=int, default=(os.cpu_count() or 1) * 5,
               help='Number of threads to use.')
 @click.option('-x', '--exclude-flags', callback=comma_separated_files,

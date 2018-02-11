@@ -1,6 +1,15 @@
 import click
+import requests
 from click import Abort
 from colorama import Fore, Back
+from requests import RequestException
+
+from ._compat import urlparse
+
+
+SCHEMES = ['http', 'https']
+DEFAULT_SCHEME = 'http'
+
 
 def lrange(start, end):
     return list(range(start, end))
@@ -27,3 +36,23 @@ def catch_keyboard_interrupt(fn, restart=None):
             if restart:
                 restart()
     return wrap
+
+
+def force_url(url):
+    """Transform domain.com to http://domain.com
+
+    Try the most common protocols until you get an answer.
+    Check the destination url in case the server is
+    redirecting the response to invalidate it.
+    """
+    if urlparse(url).scheme:
+        return url
+    for scheme in SCHEMES:
+        new_url = '{}://{}'.format(scheme, url)
+        try:
+            r = requests.get(new_url, timeout=15)
+        except RequestException:
+            continue
+        if r.url.startswith('{}:'.format(scheme)):
+            return new_url
+    return '{}://{}'.format(DEFAULT_SCHEME, url)
