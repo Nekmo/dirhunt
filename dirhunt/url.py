@@ -133,7 +133,9 @@ class Url(object):
 
     @property
     def name(self):
-        return self.path.split('/')[-1]
+        path = self.urlparsed[2] or '/'
+        path += (';' if self.urlparsed[3] else '') + self.urlparsed[3]
+        return path.split('/')[-1]
 
     def breadcrumb(self):
         directories = self.urlparsed[2].split('/')
