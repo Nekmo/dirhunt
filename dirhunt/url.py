@@ -18,6 +18,9 @@ class Url(object):
         else:
             return True
 
+    def is_valid(self):
+        return self.urlparsed and self.urlparsed[0] and self.urlparsed[1]
+
     @property
     def urlparsed(self):
         address = self.address
@@ -82,7 +85,7 @@ class Url(object):
 
     @property
     def path(self):
-        return self.urlparsed[2]
+        return self.urlparsed[2] if self.urlparsed else ''
 
     def set_children(self, children):
         self.path = children

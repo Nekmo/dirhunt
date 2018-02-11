@@ -47,7 +47,9 @@ def full_url_address(address, url):
         url = url.copy()
         url.path = address
         return url
-    return Url(address)
+    url = Url(address)
+    if url.is_valid():
+        return url
 
 
 class ProcessBase(object):
