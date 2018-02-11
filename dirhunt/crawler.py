@@ -130,7 +130,9 @@ class Sessions(object):
     def get_session(self):
         if not self.availables:
             return self.create_session()
-        return self.availables.pop()
+        # self.availables.pop()
+        # Get a element without remove until slots available
+        return next(iter(self.availables))
 
     def create_session(self):
         return Session(self)
