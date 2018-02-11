@@ -120,7 +120,7 @@ html_theme = 'alabaster'
 # documentation.
 html_theme_options = {
     'logo': 'logo.png',
-    'description': 'Hack your Amazon Dash to run what you want',
+    'description': 'Find web directories without bruteforce',
     'github_user': 'Nekmo',
     'github_repo': 'dirhunt',
     'github_type': 'star',
