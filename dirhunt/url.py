@@ -123,8 +123,8 @@ class Url(object):
     def query(self, new_value):
         self.urlparsed[4] = new_value
 
-    def is_valid(self):
-        return bool(self.urlparsed)
+    # def is_valid(self):
+    #     return bool(self.urlparsed)
 
     @property
     def fragment(self):

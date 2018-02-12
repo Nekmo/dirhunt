@@ -44,7 +44,10 @@ def force_url(url):
     Try the most common protocols until you get an answer.
     Check the destination url in case the server is
     redirecting the response to invalidate it.
+
+    :type url: str
     """
+    url = url.lstrip()
     if urlparse(url).scheme:
         return url
     for scheme in SCHEMES:
