@@ -20,6 +20,13 @@ from dirhunt.url import Url
 
 MAX_RESPONSE_SIZE = 1024 * 512
 TIMEOUT = 10
+FLAGS_WEIGHT = {
+    'blank': 4,
+    'not_found.fake': 3,
+    'html': 2,
+    'wordpress': -3
+}
+"""Flags importance"""
 
 
 def reraise_with_stack(func):
@@ -107,6 +114,12 @@ class CrawlerUrl(object):
         # Cuando se ejecuta el result() de future, si ya está processed, devolverse a sí mismo
         return self
 
+    def weight(self):
+        value = sum([FLAGS_WEIGHT.get(flag, 0) for flag in self.flags])
+        if self.url and self.url.is_valid():
+            value -= len(list(self.url.breadcrumb())) * 1.5
+        return value
+
     def close(self):
         self.crawler.processed[self.url.url] = self
         del self.crawler.processing[self.url.url]
@@ -139,7 +152,8 @@ class Sessions(object):
 
 
 class Crawler(object):
-    def __init__(self, max_workers=None, interesting_extensions=None, interesting_files=None):
+    def __init__(self, max_workers=None, interesting_extensions=None, interesting_files=None, echo=None,
+                 progress_enabled=True):
         self.domains = set()
         self.results = Queue()
         self.sessions = Sessions()
@@ -153,6 +167,8 @@ class Crawler(object):
         self.interesting_extensions = interesting_extensions or []
         self.interesting_files = interesting_files or []
         self.closing = False
+        self.echo = echo or (lambda x: x)
+        self.progress_enabled = progress_enabled
 
     def add_init_urls(self, *urls):
         """Add urls to queue.
@@ -201,16 +217,19 @@ class Crawler(object):
         return future
 
     def erase(self):
-        if not sys.stdout.isatty():
+        if not sys.stdout.isatty() and not sys.stderr.isatty():
             return
         CURSOR_UP_ONE = '\x1b[1A'
         ERASE_LINE = '\x1b[2K'
-        sys.stdout.write(CURSOR_UP_ONE + ERASE_LINE)
+        # This can be improved. In the future we may want to define stdout/stderr with an cli option
+        fn = sys.stderr.write if sys.stderr.isatty() else sys.stdout.write
+        fn(CURSOR_UP_ONE + ERASE_LINE)
 
     def print_progress(self, finished=False):
-        if not sys.stdout.isatty():
+        if not self.progress_enabled:
+            # Cancel print progress on
             return
-        print('{} {} {}'.format(
+        self.echo('{} {} {}'.format(
             next(self.spinner),
             'Finished after' if finished else 'Started',
             (humanize.naturaldelta if finished else humanize.naturaltime)(datetime.datetime.now() - self.start_dt),
@@ -218,7 +237,7 @@ class Crawler(object):
 
     def print_results(self, exclude=None):
         exclude = exclude or set()
-        print('Starting...')
+        self.echo('Starting...')
         while True:
             result = None
             try:
@@ -227,13 +246,13 @@ class Crawler(object):
                 pass
             self.erase()
             if result and result.maybe_directory() and not (result.crawler_url.flags & exclude):
-                print(result)
+                self.echo(result)
             self.print_progress()
             if not self.processing:
                 # Ended?
                 self.erase()
                 self.print_progress(True)
-                print('End')
+                self.echo('End')
                 return
 
     def restart(self):

@@ -7,6 +7,9 @@ History
 
 * docs.nekmo.org documentation
 * Change threads number option
+* Accessibility to enter urls (issues #4 and #12)
+* Resolved multiple bugs (issues #5, #6, #8 and #10)
+
 
 
 0.1.0 (2018-01-12)

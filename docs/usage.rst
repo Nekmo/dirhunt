@@ -129,3 +129,20 @@ For example::
 
 It is necessary to put the complete path to the file, or the relative using ``./``. Each value of the files must be
 separated by newlines.
+
+
+External programs
+-----------------
+The folders that have been found can be redirected to the standard output::
+
+    dirhunt www.domain.com/path > directories.txt
+
+You can use standard output to run other programs to use brute force::
+
+    for url in $(dirhunt www.domain.com/path); do
+        other.py -u "$url";
+    done
+
+You can define the type of results that will be returned using flags::
+
+    dirhunt www.domain.com/path --stdout-flags blank,not_found.fake,html > directories.txt
