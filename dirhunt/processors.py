@@ -190,7 +190,7 @@ class ProcessNotFound(ProcessBase):
     @property
     def flags(self):
         flags = super(ProcessNotFound, self).flags
-        if not self.crawler_url.exists:
+        if self.crawler_url.exists:
             flags.update({'{}.fake'.format(self.key_name)})
         return flags
 
@@ -238,7 +238,8 @@ class ProcessHtmlRequest(ProcessBase):
         """
         if 'wordpress' not in self.crawler_url.flags and 'wp-content' in asset.path:
             self.crawler_url.flags.update({'wordpress'})
-            self.crawler_url.type = 'rewrite'
+            # Override type always except for root path
+            self.crawler_url.type = 'rewrite' if self.crawler_url.type != 'directory' else 'directory'
             self.crawler_url.depth -= 1
 
     @classmethod

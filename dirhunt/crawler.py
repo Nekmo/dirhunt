@@ -24,7 +24,6 @@ FLAGS_WEIGHT = {
     'blank': 4,
     'not_found.fake': 3,
     'html': 2,
-    'wordpress': -3
 }
 """Flags importance"""
 
@@ -59,6 +58,8 @@ class CrawlerUrl(object):
         self.source = source
         self.exists = exists
         self.type = type
+        if url.is_valid() and (not url.path or url.path == '/'):
+            self.type = 'directory'
         self.resp = None
 
     def add_self_directories(self, exists=None, type_=None):
@@ -104,11 +105,12 @@ class CrawlerUrl(object):
             self.type = 'asset'
         if not self.type and (content_type or '').startswith('text/html') and self.url.name in INDEX_FILES:
             self.type = 'document'
+
     def maybe_rewrite(self):
         return self.type not in ['asset', 'directory']
 
     def maybe_directory(self):
-        return self.type not in ['asset', 'document', 'rewrite']
+        return self.type not in ['asset', 'document', 'rewrite'] or self.type in ['directory']
 
     def result(self):
         # Cuando se ejecuta el result() de future, si ya está processed, devolverse a sí mismo

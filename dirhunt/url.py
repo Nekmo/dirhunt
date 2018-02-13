@@ -141,7 +141,10 @@ class Url(object):
         return path.split('/')[-1]
 
     def breadcrumb(self):
-        directories = self.urlparsed[2].split('/')
+        if self.urlparsed[2] == '/':
+            directories = ['']
+        else:
+            directories = self.urlparsed[2].split('/')
         for level in range(len(directories)):
             url = self.copy()
             url.path = '/'.join(directories[:level]) + '/'
