@@ -1,9 +1,9 @@
 import re
 
-from bs4 import BeautifulSoup, Comment
+from bs4 import Comment
 from colorama import Fore, Back
 
-from dirhunt.crawler import CrawlerUrl
+from dirhunt.crawler_url import CrawlerUrl
 from dirhunt.url import Url
 from dirhunt.utils import colored
 

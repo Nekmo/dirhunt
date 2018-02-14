@@ -159,5 +159,10 @@ class Url(object):
             'domain': self.domain,
         }
 
+    def __eq__(self, other):
+        if isinstance(other, Url):
+            other = other.url
+        return self.url == other
+
     def __str__(self):
         return '<Url {}>'.format(self.url)
