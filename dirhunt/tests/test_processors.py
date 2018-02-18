@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 
 from dirhunt.crawler import Crawler
 from dirhunt.crawler_url import CrawlerUrl
-from dirhunt.processors import ProcessHtmlRequest, ProcessIndexOfRequest
+from dirhunt.processors import ProcessHtmlRequest, ProcessIndexOfRequest, ProcessBlankPageRequest
 
 
 class ProcessTestBase(object):
@@ -112,3 +112,23 @@ class TestProcessIndexOfRequest(ProcessTestBase, unittest.TestCase):
         process = ProcessIndexOfRequest(None, self.get_crawler_url())
         process.process('', BeautifulSoup('', 'html.parser'))
         self.assertEqual(process.flags, {'index_of', 'index_of.nothing'})
+
+
+class TestProcessBlankPageRequest(ProcessTestBase, unittest.TestCase):
+    def test_is_applicable(self):
+        html = '<html><!-- Foo --><head><title>Foo</title><script src="foo.js"></script></head><body>  </body></html>'
+        crawler_url = self.get_crawler_url()
+        with requests_mock.mock() as m:
+            m.get('http://test.com', text=html, headers={'Content-Type': 'text/html'})
+            r = requests.get('http://test.com')
+            soup = BeautifulSoup(html, 'html.parser')
+            self.assertTrue(ProcessBlankPageRequest.is_applicable(r, html, crawler_url, soup))
+
+    def test_not_applicable(self):
+        html = '<html><head><title>Foo</title></head><body>  Hello    </body></html>'
+        crawler_url = self.get_crawler_url()
+        with requests_mock.mock() as m:
+            m.get('http://test.com', text=html, headers={'Content-Type': 'text/html'})
+            r = requests.get('http://test.com')
+            soup = BeautifulSoup(html, 'html.parser')
+            self.assertFalse(ProcessBlankPageRequest.is_applicable(r, html, crawler_url, soup))
