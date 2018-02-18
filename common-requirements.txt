@@ -3,3 +3,4 @@ requests
 click
 humanize
 colorama
+requests-mock
