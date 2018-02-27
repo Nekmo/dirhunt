@@ -1,6 +1,35 @@
 
 .. image:: https://raw.githubusercontent.com/Nekmo/dirhunt/v0.2.0/images/dirhunt.png
 
+|
+
+
+.. image:: https://img.shields.io/travis/Nekmo/dirhunt.svg?style=flat-square&maxAge=2592000
+  :target: https://travis-ci.org/Nekmo/dirhunt
+  :alt: Latest Travis CI build status
+
+.. image:: https://img.shields.io/pypi/v/dirhunt.svg?style=flat-square
+  :target: https://pypi.org/project/dirhunt/
+  :alt: Latest PyPI version
+
+.. image:: https://img.shields.io/pypi/pyversions/dirhunt.svg?style=flat-square
+  :target: https://pypi.org/project/dirhunt/
+  :alt: Python versions
+
+.. image:: https://img.shields.io/codeclimate/github/Nekmo/dirhunt.svg?style=flat-square
+  :target: https://codeclimate.com/github/Nekmo/dirhunt
+  :alt: Code Climate
+
+.. image:: https://img.shields.io/codecov/c/github/Nekmo/dirhunt/master.svg?style=flat-square
+  :target: https://codecov.io/github/Nekmo/dirhunt
+  :alt: Test coverage
+
+.. image:: https://img.shields.io/requires/github/Nekmo/dirhunt.svg?style=flat-square
+     :target: https://requires.io/github/Nekmo/dirhunt/requirements/?branch=master
+     :alt: Requirements Status
+
+
+
 Dirhunt
 #######
 Dirhunt is a web crawler optimize for **search and analyze directories**. This tool can find interesting things if the
