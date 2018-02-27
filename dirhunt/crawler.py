@@ -56,7 +56,7 @@ class Sessions(object):
 
 
 class Crawler(object):
-    def __init__(self, max_workers=None, interesting_extensions=None, interesting_files=None, echo=None,
+    def __init__(self, max_workers=None, interesting_extensions=None, interesting_files=None, std=None,
                  progress_enabled=True):
         self.domains = set()
         self.results = Queue()
@@ -71,7 +71,7 @@ class Crawler(object):
         self.interesting_extensions = interesting_extensions or []
         self.interesting_files = interesting_files or []
         self.closing = False
-        self.echo = echo or (lambda x: x)
+        self.std = std or None
         self.progress_enabled = progress_enabled
 
     def add_init_urls(self, *urls):
@@ -120,14 +120,20 @@ class Crawler(object):
         self.add_lock.release()
         return future
 
+    def echo(self, body):
+        if self.std is None:
+            return
+        self.std.write(str(body))
+        self.std.write('\n')
+
     def erase(self):
-        if not sys.stdout.isatty() and not sys.stderr.isatty():
+        if self.std is None or not self.std.isatty():
             return
         CURSOR_UP_ONE = '\x1b[1A'
         ERASE_LINE = '\x1b[2K'
         # This can be improved. In the future we may want to define stdout/stderr with an cli option
-        fn = sys.stderr.write if sys.stderr.isatty() else sys.stdout.write
-        fn(CURSOR_UP_ONE + ERASE_LINE)
+        # fn = sys.stderr.write if sys.stderr.isatty() else sys.stdout.write
+        self.std.write(CURSOR_UP_ONE + ERASE_LINE)
 
     def print_progress(self, finished=False):
         if not self.progress_enabled:

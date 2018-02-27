@@ -6,19 +6,89 @@ import requests_mock
 from bs4 import BeautifulSoup
 
 from dirhunt.crawler import Crawler
-from dirhunt.crawler_url import CrawlerUrl
-from dirhunt.processors import ProcessHtmlRequest, ProcessIndexOfRequest, ProcessBlankPageRequest
+from dirhunt.processors import ProcessHtmlRequest, ProcessIndexOfRequest, ProcessBlankPageRequest, ProcessNotFound, \
+    ProcessRedirect, Error
+from dirhunt.tests.base import CrawlerTestBase
 
 
-class ProcessTestBase(object):
-    url = 'http://domain.com/path/'
-
-    def get_crawler_url(self):
-         crawler = Crawler(interesting_extensions=['php'], interesting_files=['error_log'])
-         return CrawlerUrl(crawler, self.url)
+class TestError(CrawlerTestBase, unittest.TestCase):
+    def test_str(self):
+        e = Error(self.get_crawler_url(), Exception('Foo bar'))
+        self.assertIn('Foo bar', str(e))
 
 
-class TestProcessHtmlRequest(ProcessTestBase, unittest.TestCase):
+class TestProcessRedirect(CrawlerTestBase, unittest.TestCase):
+    html = ''
+
+    def test_is_applicable(self):
+        with requests_mock.mock() as m:
+            m.register_uri('GET', 'http://test.com', text=self.html, headers={'Content-Type': 'text/html'},
+                           status_code=300)
+            r = requests.get('http://test.com')
+            self.assertTrue(ProcessRedirect.is_applicable(r, None, None, None))
+
+    def test_process(self):
+        with requests_mock.mock() as m:
+            m.register_uri('GET', 'http://test.com', text=self.html, headers={'Location': 'http://foo/'},
+                           status_code=300)
+            r = requests.get('http://test.com')
+        with patch.object(Crawler, 'add_url') as mock_method:
+            p = ProcessRedirect(r, self.get_crawler_url())
+            p.process('')
+            urls = [crawler_url[0][0].url.url for crawler_url in mock_method.call_args_list]
+            self.assertEqual(urls, ['http://foo/'])
+
+    def test_str(self):
+        with requests_mock.mock() as m:
+            m.register_uri('GET', 'http://test.com', text=self.html, headers={'Location': 'http://foo/'},
+                           status_code=300)
+            r = requests.get('http://test.com')
+        with patch.object(Crawler, 'add_url'):
+            p = ProcessRedirect(r, self.get_crawler_url())
+            p.process('')
+        self.assertIn('http://foo/', str(p))
+
+
+class TestProcessNotFound(CrawlerTestBase, unittest.TestCase):
+    html = ''
+
+    def test_is_applicable(self):
+        with requests_mock.mock() as m:
+            m.register_uri('GET', 'http://test.com', text=self.html, headers={'Content-Type': 'text/html'},
+                           status_code=404)
+            r = requests.get('http://test.com')
+            self.assertTrue(ProcessNotFound.is_applicable(r, None, None, None))
+
+    def test_fake(self):
+        crawler_url = self.get_crawler_url()
+        crawler_url.exists = True
+        process = ProcessNotFound(None, crawler_url)
+        self.assertIn('{}.fake'.format(process.key_name), process.flags)
+
+    def test_str(self):
+        crawler_url = self.get_crawler_url()
+        crawler_url.exists = True
+        process = ProcessNotFound(None, crawler_url)
+        str(process)
+
+
+class TestProcessHtmlRequest(CrawlerTestBase, unittest.TestCase):
+
+    def test_process(self):
+        html = """
+        <a href="dir/">dir</a>
+        <script src="myscripts.js"></script>        
+        """
+        with patch.object(Crawler, 'add_url') as mock_method:
+            process = ProcessHtmlRequest(None, self.get_crawler_url())
+            soup = BeautifulSoup(html, 'html.parser')
+            process.process(html, soup)
+            urls = [crawler_url[0][0].url.url for crawler_url in mock_method.call_args_list]
+            self.assertEqual(set(urls), {
+                'http://domain.com/path/myscripts.js',
+                'http://domain.com/path/dir/',
+                'http://domain.com/path/index.php',
+            })
 
     def test_links(self):
         html = """
@@ -59,8 +129,18 @@ class TestProcessHtmlRequest(ProcessTestBase, unittest.TestCase):
                 'http://domain.com/smiley.gif',
             ])
 
+    def test_wordpress(self):
+        html = """
+        <script src="wp-content/myscripts.js"></script>
+        """
+        with patch.object(Crawler, 'add_url'):
+            process = ProcessHtmlRequest(None, self.get_crawler_url())
+            soup = BeautifulSoup(html, 'html.parser')
+            process.assets(soup)
+            self.assertIn('wordpress', process.crawler_url.flags)
 
-class TestProcessIndexOfRequest(ProcessTestBase, unittest.TestCase):
+
+class TestProcessIndexOfRequest(CrawlerTestBase, unittest.TestCase):
     html = """
     <html><head><title>Index Of</title></head><body>
     <a href="..">Top</a>
@@ -113,8 +193,13 @@ class TestProcessIndexOfRequest(ProcessTestBase, unittest.TestCase):
         process.process('', BeautifulSoup('', 'html.parser'))
         self.assertEqual(process.flags, {'index_of', 'index_of.nothing'})
 
+    def test_str(self):
+        process = ProcessIndexOfRequest(None, self.get_crawler_url())
+        process.process(self.html, BeautifulSoup(self.html, 'html.parser'))
+        str(process)
 
-class TestProcessBlankPageRequest(ProcessTestBase, unittest.TestCase):
+
+class TestProcessBlankPageRequest(CrawlerTestBase, unittest.TestCase):
     def test_is_applicable(self):
         html = '<html><!-- Foo --><head><title>Foo</title><script src="foo.js"></script></head><body>  </body></html>'
         crawler_url = self.get_crawler_url()

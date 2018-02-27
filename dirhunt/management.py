@@ -69,7 +69,7 @@ def hunt(urls, threads, exclude_flags, interesting_extensions, interesting_files
             exclude_flags += list(map(str, status_code_range(*map(int, match.groups()))))
     progress_enabled = (sys.stdout.isatty() or sys.stderr.isatty()) if progress_enabled is None else progress_enabled
     crawler = Crawler(max_workers=threads, interesting_extensions=interesting_extensions,
-                      interesting_files=interesting_files, echo=print if sys.stdout.isatty() else eprint,
+                      interesting_files=interesting_files, std=sys.stdout if sys.stdout.isatty() else sys.stderr,
                       progress_enabled=progress_enabled)
     crawler.add_init_urls(*urls)
     try:
