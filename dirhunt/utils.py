@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import click
 import requests
 from click import Abort

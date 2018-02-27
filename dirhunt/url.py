@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 from ipaddress import ip_address
-from urllib.parse import urlparse, urljoin
+from dirhunt._compat import urlparse, urljoin
 
 import os
 

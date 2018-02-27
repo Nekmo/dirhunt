@@ -1,9 +1,8 @@
-import queue
+# -*- coding: utf-8 -*-
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 import functools
 from concurrent.futures.thread import _python_exit
-from queue import Queue
 from threading import Lock, ThreadError
 import datetime
 
@@ -12,6 +11,7 @@ import humanize as humanize
 import requests
 import sys
 
+from dirhunt._compat import queue, Queue
 from dirhunt.cli import random_spinner
 from dirhunt.crawler_url import CrawlerUrl
 

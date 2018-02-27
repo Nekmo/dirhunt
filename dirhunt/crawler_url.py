@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 from bs4 import BeautifulSoup
 from requests import RequestException
 
 from dirhunt.url import Url
+
 
 MAX_RESPONSE_SIZE = 1024 * 512
 TIMEOUT = 10

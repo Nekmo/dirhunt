@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 
 def output_urls(crawler, stdout_flags):
