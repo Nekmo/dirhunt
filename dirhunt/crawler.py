@@ -123,6 +123,7 @@ class Crawler(object):
     def echo(self, body):
         if self.std is None:
             return
+        # TODO: remove ANSI chars on is not tty
         self.std.write(str(body))
         self.std.write('\n')
 

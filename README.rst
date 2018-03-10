@@ -48,6 +48,9 @@ the server.
 Read more about **how to use** Dirhunt `in the documentation <http://docs.nekmo.org/dirhunt/usage.html>`_.
 
 
+**DISCLAIMER**: The current branch belongs to a development version. To see the latest stable version go to
+`the master branch <https://github.com/Nekmo/dirhunt/tree/master>`_
+
 Features
 ========
 
@@ -62,7 +65,7 @@ Features
 
 Install
 =======
-If you have Pip installed on your system, you can use it to install Dirhunt::
+If you have Pip installed on your system, you can use it to install the latest Dirhunt stable version::
 
     $ sudo pip3 install dirhunt
 
