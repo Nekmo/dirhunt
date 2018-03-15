@@ -43,7 +43,7 @@ class CrawlerUrl(object):
             # TODO: si no se puede añadir porque ya se ha añadido, establecer como que ya existe si la orden es exists
 
     def start(self):
-        from dirhunt.processors import get_processor, GenericProcessor, Error
+        from dirhunt.processors import get_processor, GenericProcessor, Error, ProcessIndexOfRequest
 
         session = self.crawler.sessions.get_session()
         try:
@@ -58,6 +58,7 @@ class CrawlerUrl(object):
         text = ''
         soup = None
 
+        processor = None
         if resp.status_code < 300 and self.maybe_directory():
             text = resp.raw.read(MAX_RESPONSE_SIZE, decode_content=True)
             soup = BeautifulSoup(text, 'html.parser')
@@ -66,6 +67,8 @@ class CrawlerUrl(object):
             processor.process(text, soup)
             self.crawler.results.put(processor)
             self.flags.update(processor.flags)
+        if processor and isinstance(processor, ProcessIndexOfRequest):
+            self.crawler.index_of_processors.append(processor)
         # TODO: Podemos fijarnos en el processor.index_file. Si existe y es un 200, entonces es que existe.
         if self.exists is None and resp.status_code < 404:
             self.exists = True

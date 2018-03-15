@@ -13,6 +13,7 @@ from dirhunt._compat import queue, Queue
 from dirhunt.cli import random_spinner
 from dirhunt.crawler_url import CrawlerUrl
 from dirhunt.sessions import Sessions
+from dirhunt.url_info import UrlInfo
 
 """Flags importance"""
 
@@ -33,6 +34,7 @@ class Crawler(object):
                  progress_enabled=True):
         self.domains = set()
         self.results = Queue()
+        self.index_of_processors = []
         self.sessions = Sessions()
         self.processing = {}
         self.processed = {}
@@ -138,6 +140,11 @@ class Crawler(object):
                 self.print_progress(True)
                 self.echo('End')
                 return
+
+    def print_urls_info(self):
+        for processor in self.index_of_processors:
+            for file in processor.interesting_files():
+                UrlInfo(self.sessions, file.address).data()
 
     def restart(self):
         try:

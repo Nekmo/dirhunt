@@ -78,5 +78,6 @@ def hunt(urls, threads, exclude_flags, interesting_extensions, interesting_files
         catch_keyboard_interrupt(crawler.print_results, crawler.restart)(set(exclude_flags))
     except SystemExit:
         crawler.close()
+    crawler.print_urls_info()
     if not sys.stdout.isatty():
         output_urls(crawler, stdout_flags)
