@@ -9,7 +9,7 @@ import datetime
 import atexit
 import humanize as humanize
 
-from dirhunt._compat import queue, Queue
+from dirhunt._compat import queue, Queue, get_terminal_size
 from dirhunt.cli import random_spinner
 from dirhunt.crawler_url import CrawlerUrl
 from dirhunt.sessions import Sessions
@@ -141,10 +141,20 @@ class Crawler(object):
                 self.echo('End')
                 return
 
-    def print_urls_info(self):
+    def getted_interesting_files(self):
         for processor in self.index_of_processors:
             for file in processor.interesting_files():
-                UrlInfo(self.sessions, file.address).data()
+                yield file
+
+    def print_urls_info(self):
+        url_len = 0
+        for file in self.getted_interesting_files():
+            url_len = max(url_len, len(file.url))
+        for processor in self.index_of_processors:
+            for file in processor.interesting_files():
+                size = get_terminal_size()
+                line = UrlInfo(self.sessions, file.address).line(size.columns, url_len)
+                print(line)
 
     def restart(self):
         try:
