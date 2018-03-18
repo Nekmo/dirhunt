@@ -22,6 +22,10 @@ class EmptyError(DirHuntError):
     pass
 
 
+class RequestError(DirHuntError):
+    pass
+
+
 def catch(fn):
     def wrap(*args, **kwargs):
         try:

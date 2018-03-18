@@ -7,7 +7,7 @@ from colorama import Fore
 from requests import RequestException
 
 from dirhunt.colors import status_code_colors
-from dirhunt.exceptions import EmptyError
+from dirhunt.exceptions import EmptyError, RequestError
 from dirhunt.utils import colored, remove_ansi_escape
 
 MAX_RESPONSE_SIZE = 1024 * 512
@@ -40,11 +40,11 @@ class UrlInfo(object):
         try:
             resp = session.get(self.url.url, stream=True, timeout=TIMEOUT, allow_redirects=False)
         except RequestException:
-            return
+            raise RequestError
         try:
             text = resp.raw.read(MAX_RESPONSE_SIZE, decode_content=True)
         except RequestException:
-            return
+            raise RequestError
         try:
             soup = BeautifulSoup(text, 'html.parser')
         except NotImplementedError:
