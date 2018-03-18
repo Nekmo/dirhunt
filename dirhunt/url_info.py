@@ -2,7 +2,11 @@ import re
 import string
 import sys
 from bs4 import BeautifulSoup
+from colorama import Fore
 from requests import RequestException
+
+from dirhunt.colors import status_code_colors
+from dirhunt.utils import colored, remove_ansi_escape
 
 MAX_RESPONSE_SIZE = 1024 * 512
 TIMEOUT = 10
@@ -21,11 +25,14 @@ def sizeof_fmt(num, suffix='B'):
 
 
 class UrlInfo(object):
+    _data = None
+    _url_info = None
+
     def __init__(self, sessions, url):
         self.sessions = sessions
         self.url = url
 
-    def data(self):
+    def get_data(self):
         session = self.sessions.get_session()
         try:
             resp = session.get(self.url.url, stream=True, timeout=TIMEOUT, allow_redirects=False)
@@ -56,19 +63,47 @@ class UrlInfo(object):
             'body': body,
         }
 
-    def line(self, line_size, url_column):
-        data = self.data()
-        text = data['title'] or data['body'] or data['text'] or ''
+    @property
+    def data(self):
+        if self._data is None:
+            self._data = self.get_data()
+        return self._data
+
+    def get_url_info(self):
+        size = self.data['resp'].headers.get('Content-Length')
+        size = len(self.data.get('text', '')) if size is None else size
+        status_code = int(self.data['resp'].status_code)
+        out = colored('({})'.format(status_code), status_code_colors(status_code)) + " "
+        out += colored('({:>6})'.format(sizeof_fmt(size)), Fore.LIGHTYELLOW_EX) + " "
+        return out
+
+    @property
+    def url_info(self):
+        if self._url_info is None:
+            self._url_info = self.get_url_info()
+        return self._url_info
+
+    def text(self):
+        text = self.data['title'] or self.data['body'] or self.data['text'] or ''
         text = re.sub('[{}]'.format(string.whitespace), ' ', text)
-        text = re.sub(' +', ' ', text)
-        f = '({}) ({:>6}) '
-        text = text[:line_size-url_column-len(f.format(200, '100KiB'))-3]
-        f += '{:<%d}' % url_column
-        size = data['resp'].headers.get('Content-Length')
-        size = len(data.get('text', '')) if size is None else size
-        return (f + '  {}').format(
-            data['resp'].status_code,
-            sizeof_fmt(size),
-            self.url.url,
-            text
+        return re.sub(' +', ' ', text)
+
+    def line(self, line_size, url_column):
+        if len(self.url_info) + url_column + 20 < line_size:
+            return self.one_line(line_size, url_column)
+        else:
+            return self.multi_line(line_size)
+
+    def one_line(self, line_size, url_column):
+        text = self.text()[:line_size-url_column-len(list(remove_ansi_escape(self.url_info)))-3]
+        out = self.url_info
+        out += colored(('{:<%d}' % url_column).format(self.url.url), Fore.LIGHTBLUE_EX) + "  "
+        out += text
+        return out
+
+    def multi_line(self, line_size):
+        out = colored('┏', Fore.LIGHTBLUE_EX) + ' {} {}\n'.format(
+            self.url_info, colored(self.url.url, Fore.LIGHTBLUE_EX)
         )
+        out += colored('┗', Fore.LIGHTBLUE_EX) + ' {}'.format(self.text()[:line_size-2])
+        return out

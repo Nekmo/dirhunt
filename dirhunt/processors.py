@@ -4,27 +4,13 @@ import re
 from bs4 import Comment
 from colorama import Fore, Back
 
+from dirhunt.colors import status_code_colors
 from dirhunt.crawler_url import CrawlerUrl
 from dirhunt.url import Url
 from dirhunt.utils import colored
 
 INDEX_FILES = ['index.php', 'index.html', 'index.html']
 ACCEPTED_PROTOCOLS = ['http', 'https']
-
-
-def status_code_colors(status_code):
-    if 100 <= status_code < 200:
-        return Fore.WHITE
-    elif  200 == status_code:
-        return Fore.LIGHTGREEN_EX
-    elif 200 < status_code < 300:
-        return Fore.GREEN
-    elif 300 <= status_code < 400:
-        return Fore.LIGHTBLUE_EX
-    elif 500 == status_code:
-        return Fore.LIGHTMAGENTA_EX
-    else:
-        return Fore.MAGENTA
 
 
 def full_url_address(address, url):

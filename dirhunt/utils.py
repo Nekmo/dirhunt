@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import re
+import string
+
 import click
 import requests
 from click import Abort
@@ -60,3 +63,8 @@ def force_url(url):
         if r.url.startswith('{}:'.format(scheme)):
             return new_url
     return '{}://{}'.format(DEFAULT_SCHEME, url)
+
+
+def remove_ansi_escape(text):
+    ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
+    return ansi_escape.sub('', text)
