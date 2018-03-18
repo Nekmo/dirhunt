@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import re
 import string
 import sys
@@ -6,6 +7,7 @@ from colorama import Fore
 from requests import RequestException
 
 from dirhunt.colors import status_code_colors
+from dirhunt.exceptions import EmptyError
 from dirhunt.utils import colored, remove_ansi_escape
 
 MAX_RESPONSE_SIZE = 1024 * 512
@@ -27,6 +29,7 @@ def sizeof_fmt(num, suffix='B'):
 class UrlInfo(object):
     _data = None
     _url_info = None
+    _text = None
 
     def __init__(self, sessions, url):
         self.sessions = sessions
@@ -83,19 +86,27 @@ class UrlInfo(object):
             self._url_info = self.get_url_info()
         return self._url_info
 
-    def text(self):
+    def get_text(self):
         text = self.data['title'] or self.data['body'] or self.data['text'] or ''
         text = re.sub('[{}]'.format(string.whitespace), ' ', text)
         return re.sub(' +', ' ', text)
 
+    @property
+    def text(self):
+        if self._text is None:
+            self._text = self.get_text()
+        return self._text
+
     def line(self, line_size, url_column):
+        if not len(self.text):
+            raise EmptyError
         if len(self.url_info) + url_column + 20 < line_size:
             return self.one_line(line_size, url_column)
         else:
             return self.multi_line(line_size)
 
     def one_line(self, line_size, url_column):
-        text = self.text()[:line_size-url_column-len(list(remove_ansi_escape(self.url_info)))-3]
+        text = self.text[:line_size-url_column-len(list(remove_ansi_escape(self.url_info)))-3]
         out = self.url_info
         out += colored(('{:<%d}' % url_column).format(self.url.url), Fore.LIGHTBLUE_EX) + "  "
         out += text
@@ -105,5 +116,5 @@ class UrlInfo(object):
         out = colored('┏', Fore.LIGHTBLUE_EX) + ' {} {}\n'.format(
             self.url_info, colored(self.url.url, Fore.LIGHTBLUE_EX)
         )
-        out += colored('┗', Fore.LIGHTBLUE_EX) + ' {}'.format(self.text()[:line_size-2])
+        out += colored('┗', Fore.LIGHTBLUE_EX) + ' {}'.format(self.text[:line_size-2])
         return out

@@ -12,6 +12,7 @@ import humanize as humanize
 from dirhunt._compat import queue, Queue, get_terminal_size
 from dirhunt.cli import random_spinner
 from dirhunt.crawler_url import CrawlerUrl
+from dirhunt.exceptions import EmptyError
 from dirhunt.sessions import Sessions
 from dirhunt.url_info import UrlInfo
 
@@ -148,13 +149,24 @@ class Crawler(object):
 
     def print_urls_info(self):
         url_len = 0
+        empty_files = 0
         for file in self.getted_interesting_files():
             url_len = max(url_len, len(file.url))
-        for processor in self.index_of_processors:
-            for file in processor.interesting_files():
-                size = get_terminal_size()
-                line = UrlInfo(self.sessions, file.address).line(size.columns, url_len)
-                print(line)
+        for file in (x for b in self.index_of_processors for x in b.interesting_files()):
+            try:
+                self._print_url_info(url_len, file)
+            except EmptyError:
+                empty_files += 1
+        out = ''
+        if empty_files:
+            out += 'Empty files: {}'.format(empty_files)
+        if out:
+            self.echo(out)
+
+    def _print_url_info(self, url_len, file):
+        size = get_terminal_size()
+        line = UrlInfo(self.sessions, file.address).line(size.columns, url_len)
+        self.echo(line)
 
     def restart(self):
         try:

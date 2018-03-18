@@ -18,6 +18,10 @@ class DirHuntError(Exception):
         return msg
 
 
+class EmptyError(DirHuntError):
+    pass
+
+
 def catch(fn):
     def wrap(*args, **kwargs):
         try:
