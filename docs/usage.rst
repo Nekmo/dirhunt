@@ -44,7 +44,7 @@ For example::
 Interesting extensions
 ----------------------
 By default, Dirhunt will notify you if it find one of these extension file names: ``php``, ``zip``, ``sh``, ``asp``,
-``csv`` and ``log``. You can change these files using the parameter ``--interesting-extensions`` (``-e``).
+``csv`` and ``log``. You can change these extensions using the parameter ``--interesting-extensions`` (``-e``).
 
 .. code::
 
@@ -60,7 +60,7 @@ It is also possible to read extensions from files. See "Comma separated files"
 Interesting files
 -----------------
 Dirhunt can warn you if it finds a specific file name. By default Dirhunt will warn you if you find one of these files:
-``access_log``, ``error_log``, ``error``, ``logs``, ``dump``. You can change these extensions using the parameter
+``access_log``, ``error_log``, ``error``, ``logs``, ``dump``. You can change these files using the parameter
 ``--interesting-files`` (``-f``).
 
 .. code::
