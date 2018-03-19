@@ -59,8 +59,8 @@ It is also possible to read extensions from files. See "Comma separated files"
 
 Interesting files
 -----------------
-By default, Dirhunt will notify you if it find one of these extension file names: ``access_log``, ``error_log``,
-``error``, ``logs``, ``dump``.  You can change these extensions using the parameter
+Dirhunt can warn you if it finds a specific file name. By default Dirhunt will warn you if you find one of these files:
+``access_log``, ``error_log``, ``error``, ``logs``, ``dump``. You can change these extensions using the parameter
 ``--interesting-files`` (``-f``).
 
 .. code::
@@ -71,7 +71,11 @@ For example::
 
     $ dirhunt http://domain1/blog/ -f access_log,error_log
 
-It is also possible to read names from files. See "Comma separated files"
+You can also load file names from one or more local files::
+
+    $ dirhunt http://domain1/blog/ -f /home/user/dict.txt,./files.txt
+
+You can read more about this `here <#comma-separated-files>`_
 
 
 Exclude

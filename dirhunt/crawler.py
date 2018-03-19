@@ -6,6 +6,7 @@ import datetime
 
 import atexit
 import humanize as humanize
+from click import get_terminal_size
 
 from dirhunt._compat import queue, Queue
 from dirhunt.cli import random_spinner
@@ -125,10 +126,10 @@ class Crawler(ThreadPoolExecutor):
                 # Ended?
                 self.erase()
                 self.print_progress(True)
-                self.echo('End')
                 return
 
     def print_urls_info(self):
+        self.echo('━' * get_terminal_size()[0])
         UrlsInfo(self.index_of_processors, self.sessions, self.std, self._max_workers).start()
 
     def restart(self):

@@ -9,6 +9,7 @@ from click import get_terminal_size
 from colorama import Fore
 from requests import RequestException
 
+from dirhunt.cli import random_spinner
 from dirhunt.colors import status_code_colors
 from dirhunt.exceptions import EmptyError, RequestError
 from dirhunt.pool import Pool
@@ -128,6 +129,8 @@ class UrlsInfo(Pool):
     url_len = 0
     empty_files = 0
     error_files = 0
+    count = 0
+    current = 0
 
     def __init__(self, processors, sessions, std=None, max_workers=None):
         super(UrlsInfo, self).__init__(max_workers)
@@ -135,18 +138,31 @@ class UrlsInfo(Pool):
         self.processors = processors
         self.sessions = sessions
         self.std = std
+        self.spinner = random_spinner()
 
     def callback(self, url_len, file):
+        line = None
         try:
             line = self._get_url_info(url_len, file)
         except EmptyError:
             self.empty_files += 1
         except RequestError:
             self.error_files += 1
-        else:
-            self.lock.acquire()
+        self.lock.acquire()
+        self.erase()
+        if line:
             self.echo(line)
-            self.lock.release()
+        self.print_progress()
+        self.lock.release()
+
+    def erase(self):
+        if self.std is None or not self.std.isatty():
+            return
+        CURSOR_UP_ONE = '\x1b[1A'
+        ERASE_LINE = '\x1b[2K'
+        # This can be improved. In the future we may want to define stdout/stderr with an cli option
+        # fn = sys.stderr.write if sys.stderr.isatty() else sys.stdout.write
+        self.std.write(CURSOR_UP_ONE + ERASE_LINE)
 
     def echo(self, body):
         if self.std is None:
@@ -165,9 +181,12 @@ class UrlsInfo(Pool):
                 yield file
 
     def start(self):
+        self.echo('Starting...')
+        self.count = 0
         url_len = 0
         for file in self.getted_interesting_files():
             url_len = max(url_len, len(file.url))
+            self.count += 1
         for file in self.getted_interesting_files():
             self.submit(url_len, file)
         out = ''
@@ -177,3 +196,11 @@ class UrlsInfo(Pool):
             out += 'Error files: {}'.format(self.error_files)
         if out:
             self.echo(out)
+
+    def print_progress(self):
+        self.current += 1
+        self.echo(('{} Interesting files {:>%d} / {}' % len(str(self.count))).format(
+            next(self.spinner),
+            self.current,
+            self.count,
+        ))
