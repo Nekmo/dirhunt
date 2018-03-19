@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-
+import functools
 import sys
+import traceback
 
 
 class DirHuntError(Exception):
@@ -33,3 +34,14 @@ def catch(fn):
         except DirHuntError as e:
             sys.stderr.write('[Error] Dir Hunt Exception:\n{}\n'.format(e))
     return wrap
+
+
+def reraise_with_stack(func):
+    @functools.wraps(func)
+    def wrapped(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            traceback.print_exc()
+            raise e
+    return wrapped

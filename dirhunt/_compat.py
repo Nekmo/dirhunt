@@ -16,12 +16,6 @@ else:
     import Queue as queue
 
 
-if sys.version_info >= (3,):
-    from shutil import get_terminal_size
-else:
-    from backports.shutil_get_terminal_size import get_terminal_size
-
-
 try:
     from mock import patch, Mock
 except ImportError:

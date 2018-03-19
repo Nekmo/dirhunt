@@ -1,3 +1,2 @@
 -r common-requirements.txt
 futures
-backports.shutil_get_terminal_size

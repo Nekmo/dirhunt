@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-import traceback
 from concurrent.futures import ThreadPoolExecutor
-import functools
 from concurrent.futures.thread import _python_exit
 from threading import Lock, ThreadError
 import datetime
@@ -9,39 +7,27 @@ import datetime
 import atexit
 import humanize as humanize
 
-from dirhunt._compat import queue, Queue, get_terminal_size
+from dirhunt._compat import queue, Queue
 from dirhunt.cli import random_spinner
 from dirhunt.crawler_url import CrawlerUrl
-from dirhunt.exceptions import EmptyError, RequestError
+from dirhunt.exceptions import EmptyError, RequestError, reraise_with_stack
 from dirhunt.sessions import Sessions
-from dirhunt.url_info import UrlInfo
+from dirhunt.url_info import UrlInfo, UrlsInfo
 
 """Flags importance"""
 
 
-def reraise_with_stack(func):
-    @functools.wraps(func)
-    def wrapped(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            traceback.print_exc()
-            raise e
-    return wrapped
-
-
-class Crawler(object):
+class Crawler(ThreadPoolExecutor):
     def __init__(self, max_workers=None, interesting_extensions=None, interesting_files=None, std=None,
                  progress_enabled=True):
+        super(Crawler, self).__init__(max_workers)
         self.domains = set()
         self.results = Queue()
         self.index_of_processors = []
         self.sessions = Sessions()
         self.processing = {}
         self.processed = {}
-        self.max_workers = max_workers
         self.add_lock = Lock()
-        self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
         self.spinner = random_spinner()
         self.start_dt = datetime.datetime.now()
         self.interesting_extensions = interesting_extensions or []
@@ -91,7 +77,7 @@ class Crawler(object):
         if force:
             future = ThreadPoolExecutor(max_workers=1).submit(fn)
         else:
-            future = self.executor.submit(fn)
+            future = self.submit(fn)
         self.processing[url.url] = future
         self.add_lock.release()
         return future
@@ -142,48 +128,8 @@ class Crawler(object):
                 self.echo('End')
                 return
 
-    def getted_interesting_files(self):
-        for processor in self.index_of_processors:
-            for file in processor.interesting_files():
-                yield file
-
     def print_urls_info(self):
-        url_len = 0
-        empty_files = 0
-        error_files = 0
-        executor = ThreadPoolExecutor(max_workers=self.max_workers)
-        lock = Lock()
-
-        def request_data(file):
-            global empty_files
-            global error_files
-
-            try:
-                line = self._get_url_info(url_len, file)
-            except EmptyError:
-                empty_files += 1
-            except RequestError:
-                error_files += 1
-            else:
-                lock.acquire()
-                self.echo(line)
-                lock.release()
-
-        for file in self.getted_interesting_files():
-            url_len = max(url_len, len(file.url))
-        for file in (x for b in self.index_of_processors for x in b.interesting_files()):
-            executor.submit(request_data, file)
-        out = ''
-        if empty_files:
-            out += 'Empty files: {} '.format(empty_files)
-        if error_files:
-            out += 'Error files: {}'.format(error_files)
-        if out:
-            self.echo(out)
-
-    def _get_url_info(self, url_len, file):
-        size = get_terminal_size()
-        return UrlInfo(self.sessions, file.address).line(size.columns, url_len)
+        UrlsInfo(self.index_of_processors, self.sessions, self.std, self._max_workers).start()
 
     def restart(self):
         try:
@@ -193,5 +139,5 @@ class Crawler(object):
 
     def close(self):
         self.closing = True
-        self.executor.shutdown(False)
+        self.shutdown(False)
         atexit.unregister(_python_exit)

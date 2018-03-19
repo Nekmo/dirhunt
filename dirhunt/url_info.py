@@ -2,12 +2,16 @@
 import re
 import string
 import sys
+from threading import Lock
+
 from bs4 import BeautifulSoup
+from click import get_terminal_size
 from colorama import Fore
 from requests import RequestException
 
 from dirhunt.colors import status_code_colors
 from dirhunt.exceptions import EmptyError, RequestError
+from dirhunt.pool import Pool
 from dirhunt.utils import colored, remove_ansi_escape
 
 MAX_RESPONSE_SIZE = 1024 * 512
@@ -118,3 +122,58 @@ class UrlInfo(object):
         )
         out += colored('┗', Fore.LIGHTBLUE_EX) + ' {}'.format(self.text[:line_size-2])
         return out
+
+
+class UrlsInfo(Pool):
+    url_len = 0
+    empty_files = 0
+    error_files = 0
+
+    def __init__(self, processors, sessions, std=None, max_workers=None):
+        super(UrlsInfo, self).__init__(max_workers)
+        self.lock = Lock()
+        self.processors = processors
+        self.sessions = sessions
+        self.std = std
+
+    def callback(self, url_len, file):
+        try:
+            line = self._get_url_info(url_len, file)
+        except EmptyError:
+            self.empty_files += 1
+        except RequestError:
+            self.error_files += 1
+        else:
+            self.lock.acquire()
+            self.echo(line)
+            self.lock.release()
+
+    def echo(self, body):
+        if self.std is None:
+            return
+        # TODO: remove ANSI chars on is not tty
+        self.std.write(str(body))
+        self.std.write('\n')
+
+    def _get_url_info(self, url_len, file):
+        size = get_terminal_size()
+        return UrlInfo(self.sessions, file.address).line(size[0], url_len)
+
+    def getted_interesting_files(self):
+        for processor in self.processors:
+            for file in processor.interesting_files():
+                yield file
+
+    def start(self):
+        url_len = 0
+        for file in self.getted_interesting_files():
+            url_len = max(url_len, len(file.url))
+        for file in self.getted_interesting_files():
+            self.submit(url_len, file)
+        out = ''
+        if self.empty_files:
+            out += 'Empty files: {} '.format(self.empty_files)
+        if self.error_files:
+            out += 'Error files: {}'.format(self.error_files)
+        if out:
+            self.echo(out)
