@@ -132,13 +132,14 @@ class UrlsInfo(Pool):
     count = 0
     current = 0
 
-    def __init__(self, processors, sessions, std=None, max_workers=None):
+    def __init__(self, processors, sessions, std=None, max_workers=None, progress_enabled=True):
         super(UrlsInfo, self).__init__(max_workers)
         self.lock = Lock()
         self.processors = processors
         self.sessions = sessions
         self.std = std
         self.spinner = random_spinner()
+        self.progress_enabled = progress_enabled
 
     def callback(self, url_len, file):
         line = None
@@ -198,6 +199,9 @@ class UrlsInfo(Pool):
             self.echo(out)
 
     def print_progress(self):
+        if not self.progress_enabled:
+            # Cancel print progress on
+            return
         self.current += 1
         self.echo(('{} Interesting files {:>%d} / {}' % len(str(self.count))).format(
             next(self.spinner),

@@ -268,7 +268,7 @@ class ProcessIndexOfRequest(ProcessHtmlRequest):
             body += colored('\n    Interesting extension files:', Fore.BLUE)
             body += ' {}'.format(', '.join(map(lambda x: x.name, ext_files)))
         if name_files:
-            body += colored('\n    Interesting name files:', Fore.BLUE)
+            body += colored('\n    Interesting file names:', Fore.MAGENTA)
             body += ' {}'.format(', '.join(map(lambda x: x.name, name_files)))
         if not ext_files and not name_files:
             body += colored(' (Nothing interesting)', Fore.LIGHTYELLOW_EX)

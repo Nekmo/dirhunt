@@ -130,7 +130,7 @@ class Crawler(ThreadPoolExecutor):
 
     def print_urls_info(self):
         self.echo('━' * get_terminal_size()[0])
-        UrlsInfo(self.index_of_processors, self.sessions, self.std, self._max_workers).start()
+        UrlsInfo(self.index_of_processors, self.sessions, self.std, self._max_workers, self.progress_enabled).start()
 
     def restart(self):
         try:
