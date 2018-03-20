@@ -169,7 +169,7 @@ class ProcessNotFound(ProcessBase):
     def __str__(self):
         body = self.url_line()
         if self.crawler_url.exists:
-            body += colored(' (FAKE 404)', Fore.LIGHTYELLOW_EX)
+            body += colored(' (FAKE 404)', Fore.YELLOW)
         if self.index_file:
             body += '\n    Index file found: {}'.format(self.index_file.name)
         return body
