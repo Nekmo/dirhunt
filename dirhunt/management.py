@@ -21,6 +21,21 @@ INTERESTING_FILES = ['access_log', 'error_log', 'error', 'logs', 'dump']
 STDOUT_FLAGS = ['blank', 'not_found.fake', 'html']
 
 
+def latest_release(package):
+    if sys.version_info > (3,):
+        from xmlrpc import client
+    else:
+        import xmlrpclib as client
+    pypi = client.ServerProxy('https://pypi.python.org/pypi')
+    available = pypi.package_releases(package)
+    if not available:
+        # Try to capitalize pkg name
+        available = pypi.package_releases(package.capitalize())
+    if not available:
+        return
+    return available[0]
+
+
 def comma_separated(ctx, param, value):
     return (value or '').split(',')
 
@@ -45,6 +60,29 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
+def print_version(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    import dirhunt
+    from dirhunt import __version__
+    latest = latest_release('dirhunt')
+    release = ('This is the latest release' if latest == __version__
+               else 'There is a new version available: {}. Upgrade it using: '
+                    'sudo pip install -U dirhunt'.format(latest))
+    click.echo('You are running Dirhunt v{} using Python {}.\n{}\n'
+               'Installation path: {}\n'
+               'Current path: {}\n'.format(
+        __version__, sys.version.split()[0], release, os.path.dirname(dirhunt.__file__), os.getcwd()
+    ))
+    ctx.exit()
+
+
+def welcome():
+    from dirhunt import __version__
+    click.secho('Welcome to Dirhunt v{} using Python {}'.format(__version__, sys.version.split()[0]),
+                fg='cyan')
+
+
 @click.command()
 @click.argument('urls', nargs=-1, type=force_url)
 @click.option('-t', '--threads', type=int, default=(os.cpu_count() or 1) * 5,
@@ -58,12 +96,15 @@ def eprint(*args, **kwargs):
 @click.option('--stdout-flags', callback=comma_separated_files, default=','.join(STDOUT_FLAGS),
               help='Return only in stdout the urls of these flags')
 @click.option('--progress-enabled/--progress-disabled', default=None)
+@click.option('--version', is_flag=True, callback=print_version,
+              expose_value=False, is_eager=True)
 def hunt(urls, threads, exclude_flags, interesting_extensions, interesting_files, stdout_flags, progress_enabled):
     """
 
     :param int threads:
     :type exclude_flags: list
     """
+    welcome()
     for code in tuple(exclude_flags):
         match = re.match('^(\d{3})-(\d{3})$', code)
         if match:
