@@ -45,6 +45,7 @@ Interesting extensions
 ----------------------
 By default, Dirhunt will notify you if it find one of these extension file names: ``php``, ``zip``, ``sh``, ``asp``,
 ``csv`` and ``log``. You can change these extensions using the parameter ``--interesting-extensions`` (``-e``).
+The files found with these extensions will be shown as they are discovered.
 
 .. code::
 
@@ -54,14 +55,14 @@ For example::
 
     $ dirhunt http://domain1/blog/ -e php,zip,sh
 
-It is also possible to read extensions from files. See "Comma separated files"
+It is also possible to read extensions from files. `See "Comma separated files" <#comma-separated-files>`_.
 
 
 Interesting files
 -----------------
 Dirhunt can warn you if it finds a specific file name. By default Dirhunt will warn you if you find one of these files:
 ``access_log``, ``error_log``, ``error``, ``logs``, ``dump``. You can change these files using the parameter
-``--interesting-files`` (``-f``).
+``--interesting-files`` (``-f``). The files found will be shown as they are discovered.
 
 .. code::
 
@@ -90,7 +91,7 @@ For example::
 
     $ dirhunt http://domain1/blog/ -x http,not_found,index_of.nothing,300-500
 
-See the flags section to see how you can filter the results.
+See the `flags section <#Flags>`_ to see how you can filter the results.
 
 It is also possible to read excludes from files. See "Comma separated files"
 
@@ -125,11 +126,11 @@ In those parameters with arguments separated by commas, it is possible to read v
 
 .. code::
 
-    $ dirhunt <url> --param <file 1>,<file 2>
+    $ dirhunt <url> --<parameter> <file 1>,<file 2>
 
-For example::
+Example for **interesting files** (``-f``)::
 
-    $ dirhunt http://domain1/blog/ -e /path/to/file1.txt,./file2.txt
+    $ dirhunt http://domain1/blog/ -f /path/to/file1.txt,./file2.txt
 
 It is necessary to put the complete path to the file, or the relative using ``./``. Each value of the files must be
 separated by newlines.
@@ -137,7 +138,7 @@ separated by newlines.
 
 External programs
 -----------------
-The folders that have been found can be redirected to the standard output::
+Folders that have been found can be redirected to the standard output::
 
     dirhunt www.domain.com/path > directories.txt
 
