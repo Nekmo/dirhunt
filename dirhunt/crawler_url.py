@@ -6,7 +6,6 @@ from dirhunt.url import Url
 
 
 MAX_RESPONSE_SIZE = 1024 * 512
-TIMEOUT = 10
 FLAGS_WEIGHT = {
     'blank': 4,
     'not_found.fake': 3,
@@ -15,7 +14,7 @@ FLAGS_WEIGHT = {
 
 
 class CrawlerUrl(object):
-    def __init__(self, crawler, url, depth=3, source=None, exists=None, type=None):
+    def __init__(self, crawler, url, depth=3, source=None, exists=None, type=None, timeout=10):
         """
 
         :type crawler: Crawler
@@ -33,13 +32,15 @@ class CrawlerUrl(object):
         self.source = source
         self.exists = exists
         self.type = type
+        self.timeout = timeout
         if url.is_valid() and (not url.path or url.path == '/'):
             self.type = 'directory'
         self.resp = None
 
     def add_self_directories(self, exists=None, type_=None):
         for url in self.url.breadcrumb():
-            self.crawler.add_url(CrawlerUrl(self.crawler, url, self.depth - 1, self, exists, type_))
+            self.crawler.add_url(CrawlerUrl(self.crawler, url, self.depth - 1, self, exists, type_,
+                                            timeout=self.timeout))
             # TODO: si no se puede añadir porque ya se ha añadido, establecer como que ya existe si la orden es exists
 
     def start(self):
@@ -47,7 +48,7 @@ class CrawlerUrl(object):
 
         session = self.crawler.sessions.get_session()
         try:
-            resp = session.get(self.url.url, stream=True, timeout=TIMEOUT, allow_redirects=False)
+            resp = session.get(self.url.url, stream=True, timeout=self.timeout, allow_redirects=False)
         except RequestException as e:
             self.crawler.results.put(Error(self, e))
             self.close()

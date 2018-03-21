@@ -96,9 +96,11 @@ def welcome():
 @click.option('--stdout-flags', callback=comma_separated_files, default=','.join(STDOUT_FLAGS),
               help='Return only in stdout the urls of these flags')
 @click.option('--progress-enabled/--progress-disabled', default=None)
+@click.option('--timeout', default=10)
 @click.option('--version', is_flag=True, callback=print_version,
               expose_value=False, is_eager=True)
-def hunt(urls, threads, exclude_flags, interesting_extensions, interesting_files, stdout_flags, progress_enabled):
+def hunt(urls, threads, exclude_flags, interesting_extensions, interesting_files, stdout_flags, progress_enabled,
+         timeout):
     """
 
     :param int threads:
@@ -113,7 +115,7 @@ def hunt(urls, threads, exclude_flags, interesting_extensions, interesting_files
     progress_enabled = (sys.stdout.isatty() or sys.stderr.isatty()) if progress_enabled is None else progress_enabled
     crawler = Crawler(max_workers=threads, interesting_extensions=interesting_extensions,
                       interesting_files=interesting_files, std=sys.stdout if sys.stdout.isatty() else sys.stderr,
-                      progress_enabled=progress_enabled)
+                      progress_enabled=progress_enabled, timeout=timeout)
     crawler.add_init_urls(*urls)
     try:
         catch_keyboard_interrupt(crawler.print_results, crawler.restart)(set(exclude_flags))

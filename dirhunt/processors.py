@@ -64,8 +64,9 @@ class ProcessBase(object):
         for index_file in INDEX_FILES:
             url = self.crawler_url.url.copy()
             url.set_children(index_file)
-            future = self.crawler_url.crawler.add_url(CrawlerUrl(crawler, url, self.crawler_url.depth - 1, self,
-                                                                 None, 'document'), True)
+            future = self.crawler_url.crawler.add_url(
+                CrawlerUrl(crawler, url, self.crawler_url.depth - 1, self, None, 'document',
+                           timeout=self.crawler_url.timeout), True)
             if self.crawler_url.crawler.closing:
                 return
             result = future.result()
@@ -142,7 +143,8 @@ class ProcessRedirect(ProcessBase):
         self.redirector = full_url_address(response.headers.get('Location'), self.crawler_url.url)
 
     def process(self, text, soup=None):
-        self.crawler_url.crawler.add_url(CrawlerUrl(self.crawler_url.crawler, self.redirector, 3, self.crawler_url))
+        self.crawler_url.crawler.add_url(CrawlerUrl(self.crawler_url.crawler, self.redirector, 3, self.crawler_url,
+                                                    timeout=self.crawler_url.timeout))
 
     @classmethod
     def is_applicable(cls, request, text, crawler_url, soup):
@@ -204,7 +206,8 @@ class ProcessHtmlRequest(ProcessBase):
                 depth -= 1
             if depth <= 0:
                 continue
-            self.crawler_url.crawler.add_url(CrawlerUrl(self.crawler_url.crawler, link, depth, self.crawler_url))
+            self.crawler_url.crawler.add_url(CrawlerUrl(self.crawler_url.crawler, link, depth, self.crawler_url,
+                                                        timeout=self.crawler_url.timeout))
 
     def assets(self, soup):
         assets = [full_url_address(link.attrs.get('href'), self.crawler_url.url)
@@ -216,7 +219,7 @@ class ProcessHtmlRequest(ProcessBase):
         for asset in filter(bool, assets):
             self.analyze_asset(asset)
             self.crawler_url.crawler.add_url(CrawlerUrl(self.crawler_url.crawler, asset, 3, self.crawler_url,
-                                                        type='asset'))
+                                                        type='asset', timeout=self.crawler_url.timeout))
 
     def analyze_asset(self, asset):
         """
@@ -246,7 +249,7 @@ class ProcessIndexOfRequest(ProcessHtmlRequest):
                    for link in soup.find_all('a')]
         for link in filter(lambda x: x.url.endswith('/'), links):
             self.crawler_url.crawler.add_url(CrawlerUrl(self.crawler_url.crawler, link, 3, self.crawler_url,
-                                                        type='directory'))
+                                                        type='directory', timeout=self.crawler_url.timeout))
         self.files = [Url(link) for link in links]
 
     def interesting_ext_files(self):

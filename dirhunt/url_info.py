@@ -16,7 +16,6 @@ from dirhunt.pool import Pool
 from dirhunt.utils import colored, remove_ansi_escape
 
 MAX_RESPONSE_SIZE = 1024 * 512
-TIMEOUT = 10
 
 
 def sizeof_fmt(num, suffix='B'):
@@ -36,14 +35,15 @@ class UrlInfo(object):
     _url_info = None
     _text = None
 
-    def __init__(self, sessions, url):
+    def __init__(self, sessions, url, timeout=10):
         self.sessions = sessions
         self.url = url
+        self.timeout = timeout
 
     def get_data(self):
         session = self.sessions.get_session()
         try:
-            resp = session.get(self.url.url, stream=True, timeout=TIMEOUT, allow_redirects=False)
+            resp = session.get(self.url.url, stream=True, timeout=self.timeout, allow_redirects=False)
         except RequestException:
             raise RequestError
         try:
@@ -132,7 +132,7 @@ class UrlsInfo(Pool):
     count = 0
     current = 0
 
-    def __init__(self, processors, sessions, std=None, max_workers=None, progress_enabled=True):
+    def __init__(self, processors, sessions, std=None, max_workers=None, progress_enabled=True, timeout=10):
         super(UrlsInfo, self).__init__(max_workers)
         self.lock = Lock()
         self.processors = processors
@@ -140,6 +140,7 @@ class UrlsInfo(Pool):
         self.std = std
         self.spinner = random_spinner()
         self.progress_enabled = progress_enabled
+        self.timeout = timeout
 
     def callback(self, url_len, file):
         line = None
@@ -174,7 +175,7 @@ class UrlsInfo(Pool):
 
     def _get_url_info(self, url_len, file):
         size = get_terminal_size()
-        return UrlInfo(self.sessions, file.address).line(size[0], url_len)
+        return UrlInfo(self.sessions, file.address, self.timeout).line(size[0], url_len)
 
     def getted_interesting_files(self):
         for processor in self.processors:

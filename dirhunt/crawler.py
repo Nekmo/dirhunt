@@ -13,14 +13,14 @@ from dirhunt.cli import random_spinner
 from dirhunt.crawler_url import CrawlerUrl
 from dirhunt.exceptions import EmptyError, RequestError, reraise_with_stack
 from dirhunt.sessions import Sessions
-from dirhunt.url_info import UrlInfo, UrlsInfo
+from dirhunt.url_info import UrlsInfo
 
 """Flags importance"""
 
 
 class Crawler(ThreadPoolExecutor):
     def __init__(self, max_workers=None, interesting_extensions=None, interesting_files=None, std=None,
-                 progress_enabled=True):
+                 progress_enabled=True, timeout=10):
         super(Crawler, self).__init__(max_workers)
         self.domains = set()
         self.results = Queue()
@@ -36,13 +36,14 @@ class Crawler(ThreadPoolExecutor):
         self.closing = False
         self.std = std or None
         self.progress_enabled = progress_enabled
+        self.timeout = timeout
 
     def add_init_urls(self, *urls):
         """Add urls to queue.
         """
         for crawler_url in urls:
             if not isinstance(crawler_url, CrawlerUrl):
-                crawler_url = CrawlerUrl(self, crawler_url)
+                crawler_url = CrawlerUrl(self, crawler_url, timeout=self.timeout)
             self.domains.add(crawler_url.url.only_domain)
             self.add_url(crawler_url)
 
@@ -133,7 +134,8 @@ class Crawler(ThreadPoolExecutor):
             self.echo('No interesting files detected ¯\_(ツ)_/¯')
             return
         self.echo('━' * get_terminal_size()[0])
-        UrlsInfo(self.index_of_processors, self.sessions, self.std, self._max_workers, self.progress_enabled).start()
+        UrlsInfo(self.index_of_processors, self.sessions, self.std, self._max_workers, self.progress_enabled,
+                 self.timeout).start()
 
     def restart(self):
         try:
