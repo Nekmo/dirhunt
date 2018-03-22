@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
+
+import multiprocessing
 import re
 import click as click
 import os
 
 import sys
 
+from click import BadOptionUsage
+
 from dirhunt.crawler import Crawler
+from dirhunt.exceptions import DirHuntError
 from dirhunt.output import output_urls
 from dirhunt.utils import lrange, catch_keyboard_interrupt, force_url
 from colorama import init
@@ -37,7 +42,7 @@ def latest_release(package):
 
 
 def comma_separated(ctx, param, value):
-    return (value or '').split(',')
+    return (value).split(',') if value else []
 
 
 def comma_separated_files(ctx, param, value):
@@ -83,12 +88,24 @@ def welcome():
                 fg='cyan')
 
 
+def flags_range(flags):
+    for code in tuple(flags):
+        match = re.match('^(\d{3})-(\d{3})$', code)
+        if match:
+            flags.remove(code)
+            flags += list(map(str, status_code_range(*map(int, match.groups()))))
+    return flags
+
+
+
 @click.command()
 @click.argument('urls', nargs=-1, type=force_url)
-@click.option('-t', '--threads', type=int, default=(os.cpu_count() or 1) * 5,
+@click.option('-t', '--threads', type=int, default=(multiprocessing.cpu_count() or 1) * 5,
               help='Number of threads to use.')
 @click.option('-x', '--exclude-flags', callback=comma_separated_files,
               help='Exclude results with these flags. See documentation.')
+@click.option('-i', '--include-flags', callback=comma_separated_files,
+              help='Only include results with these flags. See documentation.')
 @click.option('-e', '--interesting-extensions', callback=comma_separated_files, default=','.join(INTERESTING_EXTS),
               help='The files found with these extensions are interesting')
 @click.option('-f', '--interesting-files', callback=comma_separated_files, default=','.join(INTERESTING_FILES),
@@ -99,26 +116,24 @@ def welcome():
 @click.option('--timeout', default=10)
 @click.option('--version', is_flag=True, callback=print_version,
               expose_value=False, is_eager=True)
-def hunt(urls, threads, exclude_flags, interesting_extensions, interesting_files, stdout_flags, progress_enabled,
-         timeout):
+def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, interesting_files, stdout_flags,
+         progress_enabled, timeout):
     """
 
     :param int threads:
     :type exclude_flags: list
     """
+    if exclude_flags and include_flags:
+        raise BadOptionUsage('--exclude-flags and --include-flags are mutually exclusive.')
     welcome()
-    for code in tuple(exclude_flags):
-        match = re.match('^(\d{3})-(\d{3})$', code)
-        if match:
-            exclude_flags.remove(code)
-            exclude_flags += list(map(str, status_code_range(*map(int, match.groups()))))
+    exclude_flags, include_flags = flags_range(exclude_flags), flags_range(include_flags)
     progress_enabled = (sys.stdout.isatty() or sys.stderr.isatty()) if progress_enabled is None else progress_enabled
     crawler = Crawler(max_workers=threads, interesting_extensions=interesting_extensions,
                       interesting_files=interesting_files, std=sys.stdout if sys.stdout.isatty() else sys.stderr,
                       progress_enabled=progress_enabled, timeout=timeout)
     crawler.add_init_urls(*urls)
     try:
-        catch_keyboard_interrupt(crawler.print_results, crawler.restart)(set(exclude_flags))
+        catch_keyboard_interrupt(crawler.print_results, crawler.restart)(set(exclude_flags), set(include_flags))
     except SystemExit:
         crawler.close()
     crawler.print_urls_info()

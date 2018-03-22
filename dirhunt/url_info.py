@@ -94,7 +94,7 @@ class UrlInfo(object):
     def get_text(self):
         text = self.data['title'] or self.data['body'] or self.data['text'] or ''
         text = re.sub('[{}]'.format(string.whitespace), ' ', text)
-        return re.sub(' +', ' ', text)
+        return re.sub(' +', ' ', text).strip(' ')
 
     @property
     def text(self):

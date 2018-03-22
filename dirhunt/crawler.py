@@ -110,7 +110,7 @@ class Crawler(ThreadPoolExecutor):
             (humanize.naturaldelta if finished else humanize.naturaltime)(datetime.datetime.now() - self.start_dt),
         ))
 
-    def print_results(self, exclude=None):
+    def print_results(self, exclude=None, include=None):
         exclude = exclude or set()
         self.echo('Starting...')
         while True:
@@ -120,7 +120,8 @@ class Crawler(ThreadPoolExecutor):
             except queue.Empty:
                 pass
             self.erase()
-            if result and result.maybe_directory() and not (result.crawler_url.flags & exclude):
+            if result and result.maybe_directory() and not (result.crawler_url.flags & exclude) \
+                    and (not include or (include & result.crawler_url.flags)):
                 self.echo(result)
             self.print_progress()
             if not self.processing:

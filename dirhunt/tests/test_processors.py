@@ -1,5 +1,5 @@
 import unittest
-from dirhunt._compat import patch
+from dirhunt.tests._compat import patch
 
 import requests
 import requests_mock

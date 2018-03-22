@@ -1,7 +1,7 @@
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 
-from dirhunt._compat import Mock, patch
+from dirhunt.tests._compat import Mock, patch
 from dirhunt.crawler import Crawler
 from dirhunt.crawler_url import CrawlerUrl
 from dirhunt.processors import GenericProcessor
