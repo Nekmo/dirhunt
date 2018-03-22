@@ -126,6 +126,10 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
     if exclude_flags and include_flags:
         raise BadOptionUsage('--exclude-flags and --include-flags are mutually exclusive.')
     welcome()
+    if not urls:
+        click.echo('•_•) OOPS! Add urls to analyze.\nFor example: dirhunt http://domain/path\n\n'
+                   'Need help? Then use dirhunt --help', err=True)
+        return 
     exclude_flags, include_flags = flags_range(exclude_flags), flags_range(include_flags)
     progress_enabled = (sys.stdout.isatty() or sys.stderr.isatty()) if progress_enabled is None else progress_enabled
     crawler = Crawler(max_workers=threads, interesting_extensions=interesting_extensions,
