@@ -14,15 +14,23 @@ Example::
 
     Usage: dirhunt [OPTIONS] [URLS]...
 
-      :type exclude_flags: list
+      :param int threads: :type exclude_flags: list
 
     Options:
+      -t, --threads INTEGER           Number of threads to use.
       -x, --exclude-flags TEXT        Exclude results with these flags. See
+                                      documentation.
+      -i, --include-flags TEXT        Only include results with these flags. See
                                       documentation.
       -e, --interesting-extensions TEXT
                                       The files found with these extensions are
                                       interesting
       -f, --interesting-files TEXT    The files with these names are interesting
+      --stdout-flags TEXT             Return only in stdout the urls of these
+                                      flags
+      --progress-enabled / --progress-disabled
+      --timeout INTEGER
+      --version
       --help                          Show this message and exit.
 
 
@@ -55,7 +63,7 @@ For example::
 
     $ dirhunt http://domain1/blog/ -e php,zip,sh
 
-It is also possible to read extensions from files. `See "Comma separated files" <#comma-separated-files>`_.
+It is also possible to read extensions from files. `See "Comma separated files" <#id3>`_.
 
 
 Interesting files
@@ -76,7 +84,7 @@ You can also load file names from one or more local files::
 
     $ dirhunt http://domain1/blog/ -f /home/user/dict.txt,./files.txt
 
-You can read more about this `here <#comma-separated-files>`_
+You can read more about this `here <#id3>`_
 
 
 Exclude
@@ -93,7 +101,24 @@ For example::
 
 See the `flags section <#Flags>`_ to see how you can filter the results.
 
-It is also possible to read excludes from files. See "Comma separated files"
+It is also possible to read excludes from files. See `"Comma separated files" <#id3>`_
+
+
+Include
+-------
+This is the opposite to *exclude*. ``--include-flags`` (``-i``) allows you to show only the
+results that are in the defined flags::
+
+    $ dirhunt <url> -i <flags comma separated>
+
+For example::
+
+    $ dirhunt http://domain1/blog/ -i html,300-500
+
+See the `flags section <#Flags>`_ to see how you can filter the results.
+
+It is also possible to read excludes from files. See `"Comma separated files" <#id3>`_
+
 
 Flags
 -----
@@ -120,6 +145,30 @@ Other flags:
 * ``wordpress``: The page belongs to a wordpress.
 
 
+Threads
+-------
+Dirhunt makes multiple simultaneous requests using threads. By default the number of threads is ``cpu count * 5``.
+You can change the threads count using ``--threads <count>`` (``-t <count>``). For example::
+
+    $ dirhunt <url> --threads <url>
+
+For example::
+
+    $ dirhunt http://domain1/blog/ --threads 10
+
+
+Timeout
+-------
+By default Dirhunt only waits up to 10 seconds for each url. You can increase or decrease this time using
+``--timeout``::
+
+    $ dirhunt <url> --timeout <seconds>
+
+For example::
+
+    $ dirhunt http://domain1/blog/ --timeout 15
+
+
 Comma separated files
 ---------------------
 In those parameters with arguments separated by commas, it is possible to read values from one or more local files.
@@ -134,6 +183,44 @@ Example for **interesting files** (``-f``)::
 
 It is necessary to put the complete path to the file, or the relative using ``./``. Each value of the files must be
 separated by newlines.
+
+
+Progress bar
+------------
+By default Dirhunt displays a progress bar while loading results if possible. If the progress bar causes problems, you
+can disable it using ``--progress-disabled``. By default ``--progress-enabled``.
+
+.. code::
+
+    $ dirhunt <url> --progress-disabled
+
+For example::
+
+    $ dirhunt http://domain1/blog/ --progress-disabled
+
+
+Version
+-------
+To see the Dirhunt installed version se ``--version``::
+
+    $ dirhunt --version
+    You are running Dirhunt v0.3.0 using Python 3.6.3.
+    This is the latest release
+    Installation path: /home/nekmo/Workspace/dirhunt/dirhunt
+    Current path: /home/nekmo/Workspace/dirhunt
+
+
+If you have issues with Dirhunt and you are going to open a ticket, paste this output on the issue.
+Also use this command to see if Dirhunt is out of date.
+
+.. code::
+
+    $ dirhunt --version
+    You are running Dirhunt v0.2.0 using Python 3.6.3.
+    There is a new version available: 0.3.0. Upgrade it using: sudo pip install -U dirhunt
+    Installation path: /home/nekmo/Workspace/dirhunt/dirhunt
+    Current path: /home/nekmo/Workspace/dirhunt
+
 
 
 External programs
