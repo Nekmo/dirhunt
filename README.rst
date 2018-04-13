@@ -29,6 +29,11 @@
      :alt: Requirements Status
 
 
+.. image:: https://asciinema.org/a/xPJXT0MhrvlZ8lJYJYkjxlice.png
+     :target: https://asciinema.org/a/xPJXT0MhrvlZ8lJYJYkjxlice
+     :align: center
+     :alt: Dirhunt Demo Video
+
 
 Dirhunt
 #######
