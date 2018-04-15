@@ -2,8 +2,23 @@
 History
 =======
 
-0.2.0
------
+0.3.0 (2018-04-16)
+------------------
+
+* Include option: ``--include-flags`` (issue #13)
+* Option ``--timeout`` (issue #19)
+* List all file results at end (issue #20)
+* Unit testing (issue #21)
+* Support Python 2.7 (issue #22)
+* Travis configuration (issue #24)
+* Add and change console colors (issues #25 & #28)
+* Better documentation (issue #27)
+* Dirhunt version (issue #29)
+* Error on urls undefined (issue #30)
+
+
+0.2.0 (2018-02-13)
+------------------
 
 * docs.nekmo.org documentation (issue #9)
 * Change threads number option (issue #7)
