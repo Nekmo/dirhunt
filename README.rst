@@ -54,9 +54,6 @@ the server.
 Read more about **how to use** Dirhunt `in the documentation <http://docs.nekmo.org/dirhunt/usage.html>`_.
 
 
-**DISCLAIMER**: The current branch belongs to a development version. To see the latest stable version go to
-`the master branch <https://github.com/Nekmo/dirhunt/tree/master>`_
-
 Features
 ========
 
