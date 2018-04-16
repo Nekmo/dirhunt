@@ -89,7 +89,8 @@ You can read more about this `here <#id3>`_
 
 Exclude
 -------
-Filter the results using the ``--exclude-flags`` (``-x``) parameter.
+Filter the results using the ``--exclude-flags`` (``-x``) parameter (see the `flags section <#Flags>`_ to
+see how you can filter the results).
 
 .. code::
 
@@ -98,8 +99,6 @@ Filter the results using the ``--exclude-flags`` (``-x``) parameter.
 For example::
 
     $ dirhunt http://domain1/blog/ -x http,not_found,index_of.nothing,300-500
-
-See the `flags section <#Flags>`_ to see how you can filter the results.
 
 It is also possible to read excludes from files. See `"Comma separated files" <#id3>`_
 
@@ -117,7 +116,7 @@ For example::
 
 See the `flags section <#Flags>`_ to see how you can filter the results.
 
-It is also possible to read excludes from files. See `"Comma separated files" <#id3>`_
+It is also possible to read includes from files. See `"Comma separated files" <#id3>`_
 
 
 Flags
@@ -220,7 +219,6 @@ Also use this command to see if Dirhunt is out of date.
     There is a new version available: 0.3.0. Upgrade it using: sudo pip install -U dirhunt
     Installation path: /home/nekmo/Workspace/dirhunt/dirhunt
     Current path: /home/nekmo/Workspace/dirhunt
-
 
 
 External programs
