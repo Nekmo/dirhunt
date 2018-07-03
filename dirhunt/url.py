@@ -151,6 +151,11 @@ class Url(object):
             url.path = '/'.join(directories[:level]) + '/'
             yield url
 
+    def parent(self):
+        url = self.copy()
+        url.path = url.path[:-1]
+        return url
+
     def copy(self):
         return Url(self.url)
 
