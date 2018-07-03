@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from requests import RequestException
 
 from dirhunt.url import Url
-
+from dirhunt.url_loop import is_url_loop
 
 MAX_RESPONSE_SIZE = 1024 * 512
 FLAGS_WEIGHT = {
@@ -39,6 +39,8 @@ class CrawlerUrl(object):
 
     def add_self_directories(self, exists=None, type_=None):
         for url in self.url.breadcrumb():
+            if self.url.domain == url.domain and url.path.startswith(self.url.path) and is_url_loop(url):
+                return False
             self.crawler.add_url(CrawlerUrl(self.crawler, url, self.depth - 1, self, exists, type_,
                                             timeout=self.timeout))
             # TODO: si no se puede añadir porque ya se ha añadido, establecer como que ya existe si la orden es exists

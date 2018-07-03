@@ -1,12 +1,11 @@
+# -*- coding: utf-8 -*-
+
 from dirhunt.url import Url
 
 MATCHS_LOOP_NUM = 3
 
 
 def is_url_loop(url, ignore_end=True):
-    # No necesito other, puedo hacerlo sólo con url. Recorrer directorios desde el último.
-    # Si el penúltimo directorio es igual al último, es una repetición, aplicar a las 2
-    # próximas posiciones
     url = url if isinstance(url, Url) else Url(url)
     directories = list(filter(bool, url.directories))
     directories.reverse()
