@@ -168,6 +168,19 @@ For example::
     $ dirhunt http://domain1/blog/ --timeout 15
 
 
+Depth
+-----
+Maximum links to follow without increasing directories depth. By default 3. For example in redirects
+``/index.php > /about.php > /map.php > /contactus.php`` the last page can not redirect to another page at the same
+directory level because it has exceeded the default limit of 3. Usage::
+
+    $ dirhunt <url> --max-depth <number>
+
+For example::
+
+    $ dirhunt http://domain1/blog/ --max-depth 3
+
+
 Comma separated files
 ---------------------
 In those parameters with arguments separated by commas, it is possible to read values from one or more local files.

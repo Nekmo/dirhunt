@@ -114,10 +114,11 @@ def flags_range(flags):
               help='Return only in stdout the urls of these flags')
 @click.option('--progress-enabled/--progress-disabled', default=None)
 @click.option('--timeout', default=10)
+@click.option('--max-depth', default=3, help='Maximum links to follow without increasing directories depth')
 @click.option('--version', is_flag=True, callback=print_version,
               expose_value=False, is_eager=True)
 def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, interesting_files, stdout_flags,
-         progress_enabled, timeout):
+         progress_enabled, timeout, max_depth):
     """
 
     :param int threads:
@@ -134,7 +135,7 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
     progress_enabled = (sys.stdout.isatty() or sys.stderr.isatty()) if progress_enabled is None else progress_enabled
     crawler = Crawler(max_workers=threads, interesting_extensions=interesting_extensions,
                       interesting_files=interesting_files, std=sys.stdout if sys.stdout.isatty() else sys.stderr,
-                      progress_enabled=progress_enabled, timeout=timeout)
+                      progress_enabled=progress_enabled, timeout=timeout, depth=max_depth)
     crawler.add_init_urls(*urls)
     try:
         catch_keyboard_interrupt(crawler.print_results, crawler.restart)(set(exclude_flags), set(include_flags))

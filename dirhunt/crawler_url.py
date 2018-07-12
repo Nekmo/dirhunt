@@ -39,6 +39,7 @@ class CrawlerUrl(object):
 
     def add_self_directories(self, exists=None, type_=None):
         for url in self.url.breadcrumb():
+            # TODO: self.crawler.add_url se usa en otras partes, pero PyCharm no las detecta
             if self.url.domain == url.domain and url.path.startswith(self.url.path) and is_url_loop(url):
                 return False
             self.crawler.add_url(CrawlerUrl(self.crawler, url, self.depth - 1, self, exists, type_,
