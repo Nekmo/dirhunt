@@ -168,8 +168,8 @@ For example::
     $ dirhunt http://domain1/blog/ --timeout 15
 
 
-Depth
------
+Max follow links depth
+----------------------
 Maximum links to follow without increasing directories depth. By default 3. For example in redirects
 ``/index.php > /about.php > /map.php > /contactus.php`` the last page can not redirect to another page at the same
 directory level because it has exceeded the default limit of 3. Usage::
@@ -180,6 +180,18 @@ For example::
 
     $ dirhunt http://domain1/blog/ --max-depth 3
 
+
+Not follow subdomains
+---------------------
+Dirhunt by default will follow all the subdomains of the domain urls. For example if Dirhunt finds webmail.site.com
+on site.com dirhunt will follow the link. You can disable this feature using the flag `--not-follow-subdomains`. Usage::
+
+    $ dirhunt <url> --not-follow-subdomains
+
+For example::
+
+    $ dirhunt http://domain1/blog/ --not-follow-subdomains
+    
 
 Comma separated files
 ---------------------

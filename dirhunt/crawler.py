@@ -20,7 +20,7 @@ from dirhunt.url_info import UrlsInfo
 
 class Crawler(ThreadPoolExecutor):
     def __init__(self, max_workers=None, interesting_extensions=None, interesting_files=None, std=None,
-                 progress_enabled=True, timeout=10, depth=3):
+                 progress_enabled=True, timeout=10, depth=3, not_follow_subdomains=False):
         super(Crawler, self).__init__(max_workers)
         self.domains = set()
         self.results = Queue()
@@ -37,6 +37,7 @@ class Crawler(ThreadPoolExecutor):
         self.std = std or None
         self.progress_enabled = progress_enabled
         self.timeout = timeout
+        self.not_follow_subdomains = not_follow_subdomains
         self.depth = depth
 
     def add_init_urls(self, *urls):
@@ -49,12 +50,14 @@ class Crawler(ThreadPoolExecutor):
             self.add_url(crawler_url)
 
     def in_domains(self, domain):
+        if self.not_follow_subdomains and domain not in self.domains:
+            return False
         initial_domain = domain
         while True:
             if domain in self.domains:
                 if initial_domain != domain:
                     # subdomain
-                    self.domains.add(domain)
+                    self.domains.add(initial_domain)
                 return True
             parts = domain.split('.')
             if len(parts) <= 2:
