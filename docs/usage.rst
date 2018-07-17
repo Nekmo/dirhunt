@@ -191,7 +191,7 @@ on site.com dirhunt will follow the link. You can disable this feature using the
 For example::
 
     $ dirhunt http://domain1/blog/ --not-follow-subdomains
-    
+
 
 Comma separated files
 ---------------------

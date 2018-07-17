@@ -13,6 +13,7 @@ from dirhunt.cli import random_spinner
 from dirhunt.crawler_url import CrawlerUrl
 from dirhunt.exceptions import EmptyError, RequestError, reraise_with_stack
 from dirhunt.sessions import Sessions
+from dirhunt.sources import Sources
 from dirhunt.url_info import UrlsInfo
 
 """Flags importance"""
@@ -39,6 +40,7 @@ class Crawler(ThreadPoolExecutor):
         self.timeout = timeout
         self.not_follow_subdomains = not_follow_subdomains
         self.depth = depth
+        self.sources = Sources(self.add_url)
 
     def add_init_urls(self, *urls):
         """Add urls to queue.
@@ -46,7 +48,7 @@ class Crawler(ThreadPoolExecutor):
         for crawler_url in urls:
             if not isinstance(crawler_url, CrawlerUrl):
                 crawler_url = CrawlerUrl(self, crawler_url, depth=self.depth, timeout=self.timeout)
-            self.domains.add(crawler_url.url.only_domain)
+            self.add_domain(crawler_url.url.only_domain)
             self.add_url(crawler_url)
 
     def in_domains(self, domain):
@@ -57,16 +59,23 @@ class Crawler(ThreadPoolExecutor):
             if domain in self.domains:
                 if initial_domain != domain:
                     # subdomain
-                    self.domains.add(initial_domain)
+                    self.add_domain(initial_domain)
                 return True
             parts = domain.split('.')
             if len(parts) <= 2:
                 return False
             domain = '.'.join(parts[1:])
 
+    def add_domain(self, domain):
+        if domain in self.domains:
+            return
+        self.domains.add(domain)
+        self.sources.add_domain(domain)
+
     def add_url(self, crawler_url, force=False):
         """Add url to queue"""
-
+        if not isinstance(crawler_url, CrawlerUrl):
+            crawler_url = CrawlerUrl(self, crawler_url, depth=self.depth, timeout=self.timeout)
         self.add_lock.acquire()
         url = crawler_url.url
         if not url.is_valid() or not url.only_domain or not self.in_domains(url.only_domain):
