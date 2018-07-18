@@ -1,14 +1,13 @@
+import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
-
-import os
 
 from dirhunt.exceptions import reraise_with_stack
 
 
 class Pool(ThreadPoolExecutor):
-    def __init__(self, max_workers=None, thread_name_prefix=''):
-        max_workers = max_workers or ((os.cpu_count() or 1) * 5)
-        super(Pool, self).__init__(max_workers=max_workers, thread_name_prefix=thread_name_prefix)
+    def __init__(self, max_workers=None, **kwargs):
+        max_workers = max_workers or ((multiprocessing.cpu_count() or 1) * 5)
+        super(Pool, self).__init__(max_workers=max_workers, **kwargs)
 
     def callback(self, *args, **kwargs):
         raise NotImplementedError
