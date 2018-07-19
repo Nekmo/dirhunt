@@ -14,6 +14,7 @@ from click import BadOptionUsage
 from dirhunt.crawler import Crawler
 from dirhunt.exceptions import DirHuntError
 from dirhunt.output import output_urls
+from dirhunt.sources import SOURCE_CLASSES, get_source_name
 from dirhunt.utils import lrange, catch_keyboard_interrupt, force_url
 from colorama import init
 
@@ -116,14 +117,15 @@ def flags_range(flags):
 @click.option('--timeout', default=10)
 @click.option('--max-depth', default=3, help='Maximum links to follow without increasing directories depth')
 @click.option('--not-follow-subdomains', is_flag=True, help='The subdomains will be ignored')
+@click.option('--exclude-sources', callback=comma_separated_files,
+              help='Exclude source engines. Possible options: {}'.format(', '.join(
+                  [get_source_name(src) for src in SOURCE_CLASSES])
+              ))
 @click.option('--version', is_flag=True, callback=print_version,
               expose_value=False, is_eager=True)
 def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, interesting_files, stdout_flags,
-         progress_enabled, timeout, max_depth, not_follow_subdomains):
-    """
-
-    :param int threads:
-    :type exclude_flags: list
+         progress_enabled, timeout, max_depth, not_follow_subdomains, exclude_sources):
+    """Find web directories without bruteforce
     """
     if exclude_flags and include_flags:
         raise BadOptionUsage('--exclude-flags and --include-flags are mutually exclusive.')
@@ -137,7 +139,7 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
     crawler = Crawler(max_workers=threads, interesting_extensions=interesting_extensions,
                       interesting_files=interesting_files, std=sys.stdout if sys.stdout.isatty() else sys.stderr,
                       progress_enabled=progress_enabled, timeout=timeout, depth=max_depth,
-                      not_follow_subdomains=not_follow_subdomains)
+                      not_follow_subdomains=not_follow_subdomains, exclude_sources=exclude_sources)
     crawler.add_init_urls(*urls)
     try:
         catch_keyboard_interrupt(crawler.print_results, crawler.restart)(set(exclude_flags), set(include_flags))

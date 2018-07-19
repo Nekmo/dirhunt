@@ -5,11 +5,15 @@ SOURCE_CLASSES = [
 ]
 
 
+def get_source_name(cls):
+    return cls.__name__.lower()
+
+
 class Sources(object):
 
     def __init__(self, callback, excluded_sources=()):
         self.callback = callback
-        self.sources = [cls(self.callback) for cls in SOURCE_CLASSES if cls.__name__ not in excluded_sources]
+        self.sources = [cls(self.callback) for cls in SOURCE_CLASSES if get_source_name(cls) not in excluded_sources]
 
     def add_domain(self, domain):
         for source in self.sources:

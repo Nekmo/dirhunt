@@ -184,13 +184,26 @@ For example::
 Not follow subdomains
 ---------------------
 Dirhunt by default will follow all the subdomains of the domain urls. For example if Dirhunt finds webmail.site.com
-on site.com dirhunt will follow the link. You can disable this feature using the flag `--not-follow-subdomains`. Usage::
+on site.com dirhunt will follow the link. You can disable this feature using the flag ``--not-follow-subdomains``.
+Usage::
 
     $ dirhunt <url> --not-follow-subdomains
 
 For example::
 
     $ dirhunt http://domain1/blog/ --not-follow-subdomains
+
+
+Exclude sources
+---------------
+Dirhunt by default will get urls from different sources. You can disable some or all of the engines using the
+``--exclude-sources`` option. Usage::
+
+    $ dirhunt <url> --exclude-sources <sources comma separated>
+
+For example::
+
+    $ dirhunt http://domain1/blog/ --exclude-sources robots,google
 
 
 Comma separated files
