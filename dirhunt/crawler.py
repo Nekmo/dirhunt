@@ -137,7 +137,7 @@ class Crawler(ThreadPoolExecutor):
                     and (not include or (include & result.crawler_url.flags)):
                 self.echo(result)
             self.print_progress()
-            if not self.processing:
+            if self.sources.finished() and not self.processing:
                 # Ended?
                 self.erase()
                 self.print_progress(True)

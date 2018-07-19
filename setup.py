@@ -48,7 +48,7 @@ PLATFORMS = [
     # 'win'
     # 'bsd'
     # 'ios'
-    # 'android' 
+    # 'android'
 ]
 ROOT_INCLUDE = [
     'requirements.txt',
