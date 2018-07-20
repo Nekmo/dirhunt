@@ -16,11 +16,12 @@ from dirhunt.pool import Pool
 from dirhunt.utils import colored, remove_ansi_escape
 
 MAX_RESPONSE_SIZE = 1024 * 512
+DEFAULT_UNKNOWN_SIZE = '???'
 
 
 def sizeof_fmt(num, suffix='B'):
     if num is None:
-        return '???'
+        return DEFAULT_UNKNOWN_SIZE
     if isinstance(num, str):
         num = int(num)
     for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
