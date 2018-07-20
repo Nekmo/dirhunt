@@ -9,7 +9,7 @@ import requests_mock
 from dirhunt.sessions import Sessions
 from dirhunt.url import Url
 from dirhunt.url_info import UrlInfo, sizeof_fmt, DEFAULT_UNKNOWN_SIZE, UrlsInfo
-from dirhunt.tests._compat import patch
+from dirhunt.tests._compat import patch, Mock
 
 
 class TestSizeofFmt(unittest.TestCase):
@@ -97,13 +97,11 @@ class TestUrlsInfo(unittest.TestCase):
             m.assert_not_called()
 
     def test_erase(self):
-        with patch.object(stdout, 'isatty', return_value=True):
-            with patch.object(stdout, 'write') as m:
-                UrlsInfo([], Sessions(), std=stdout).erase()
-                m.assert_called_once()
+        mstdout = Mock(**{'isatty.return_value': True})
+        UrlsInfo([], Sessions(), std=mstdout).erase()
+        mstdout.write.assert_called_once()
 
     def test_echo(self):
-        with patch.object(stdout, 'isatty', return_value=True):
-            with patch.object(stdout, 'write') as m:
-                UrlsInfo([], Sessions(), std=stdout).echo('Foo')
-                m.assert_called()
+        mstdout = Mock(**{'isatty.return_value': True})
+        UrlsInfo([], Sessions(), std=mstdout).echo('Foo')
+        mstdout.write.assert_called()
