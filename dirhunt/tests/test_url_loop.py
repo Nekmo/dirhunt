@@ -8,6 +8,9 @@ class TestUrlLoop(unittest.TestCase):
     def test_dir_loop(self):
         self.assertTrue(is_url_loop('http://localhost/a/a/a/a/a/'))
 
+    def test_start_url(self):
+        self.assertTrue(is_url_loop('http://localhost/sub/a/a/a/'))
+
     def test_group_loop(self):
         self.assertTrue(is_url_loop('http://localhost' + ('/a/b/c' * 5)))
 
