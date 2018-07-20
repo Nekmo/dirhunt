@@ -2,6 +2,18 @@
 History
 =======
 
+0.4.0 (2018-07-XX)
+------------------
+
+* Use robots.txt (issue #1)
+* Detect and mitigate recursion loops (issue #23)
+* Improved installation process compatibility (issue #35)
+* Python 3.7 compatibility (issue #34)
+* Option ``--not-allow-redirects`` (issue #15)
+* Option ``--not-follow-subdomains`` (issue #16)
+* Option ``--max-depth`` to follow link (issue #17)
+
+
 0.3.0 (2018-04-16)
 ------------------
 
