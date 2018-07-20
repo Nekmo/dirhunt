@@ -1,5 +1,7 @@
 import unittest
 
+import sys
+
 from dirhunt.exceptions import DirHuntError, catch, reraise_with_stack
 from dirhunt.tests._compat import Mock, patch
 
@@ -26,6 +28,8 @@ class TestCatch(unittest.TestCase):
         m.assert_called_once()
 
     def test_error(self):
+        if sys.version_info < (3,):
+            self.skipTest('Unsupported Mock in Python 2.7')
         m = Mock(side_effect=DirHuntError)
         with patch('sys.stderr.write') as mock_write:
             catch(m)()
@@ -35,11 +39,15 @@ class TestCatch(unittest.TestCase):
 
 class TestReraiseWithStack(unittest.TestCase):
     def test_ok(self):
+        if sys.version_info < (3,):
+            self.skipTest('Unsupported Mock in Python 2.7')
         m = Mock()
         reraise_with_stack(m)()
         m.assert_called_once()
 
     def test_error(self):
+        if sys.version_info < (3,):
+            self.skipTest('Unsupported Mock in Python 2.7')
         m = Mock(side_effect=KeyError)
         with patch('traceback.print_exc') as mock_print_exc:
             with self.assertRaises(KeyError):
