@@ -2,7 +2,8 @@ import unittest
 
 import requests_mock
 
-from dirhunt.utils import force_url, SCHEMES
+from dirhunt.tests._compat import patch, Mock
+from dirhunt.utils import force_url, SCHEMES, catch_keyboard_interrupt
 
 
 class TestForceUrl(unittest.TestCase):
@@ -28,3 +29,12 @@ class TestForceUrl(unittest.TestCase):
                 m.get('{}://domain.com'.format(prot), headers={'Location': 'alt://domain.com'},
                       status_code=301)
             self.assertEqual(force_url('domain.com'), 'http://domain.com')
+
+
+class TestCatchKeyboardInterrupt(unittest.TestCase):
+    def test_keyboard_interrupt(self):
+        m = Mock(side_effect=KeyboardInterrupt)
+        with patch('dirhunt.utils.confirm_close', side_effect=KeyboardInterrupt) as mock_confirm_close:
+            with self.assertRaises(KeyboardInterrupt):
+                catch_keyboard_interrupt(m)()
+            mock_confirm_close.assert_called_once()
