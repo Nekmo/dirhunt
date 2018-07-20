@@ -143,8 +143,9 @@ class ProcessRedirect(ProcessBase):
         self.redirector = full_url_address(response.headers.get('Location'), self.crawler_url.url)
 
     def process(self, text, soup=None):
-        self.crawler_url.crawler.add_url(CrawlerUrl(self.crawler_url.crawler, self.redirector, 3, self.crawler_url,
-                                                    timeout=self.crawler_url.timeout))
+        if not self.crawler_url.crawler.not_allow_redirects:
+            self.crawler_url.crawler.add_url(CrawlerUrl(self.crawler_url.crawler, self.redirector, 3, self.crawler_url,
+                                                        timeout=self.crawler_url.timeout))
 
     @classmethod
     def is_applicable(cls, request, text, crawler_url, soup):

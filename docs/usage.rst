@@ -206,6 +206,18 @@ For example::
     $ dirhunt http://domain1/blog/ --exclude-sources robots,google
 
 
+Not allow redirectors
+----------------------
+Dirhunt by default will follow redirectors within the website (HTTP Redirectors). You can disable this feature using
+the flag ``--not-allow-redirectors``. Usage::
+
+    $ dirhunt <url> --not-allow-redirectors
+
+For example::
+
+    $ dirhunt http://domain1/blog/ --not-allow-redirectors
+
+
 Comma separated files
 ---------------------
 In those parameters with arguments separated by commas, it is possible to read values from one or more local files.

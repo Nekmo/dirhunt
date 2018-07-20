@@ -69,7 +69,7 @@ Features
 * 404 error pages and detect **fake 404 errors**.
 * Filter results by **flags**.
 * Analyze results at end.
-* Get new directories using **robots.txt**
+* Get new directories using **robots.txt** (NEW!)
 
 
 Install
