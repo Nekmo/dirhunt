@@ -14,7 +14,7 @@ Example::
 
     Usage: dirhunt [OPTIONS] [URLS]...
 
-      :param int threads: :type exclude_flags: list
+      Find web directories without bruteforce
 
     Options:
       -t, --threads INTEGER           Number of threads to use.
@@ -30,6 +30,12 @@ Example::
                                       flags
       --progress-enabled / --progress-disabled
       --timeout INTEGER
+      --max-depth INTEGER             Maximum links to follow without increasing
+                                      directories depth
+      --not-follow-subdomains         The subdomains will be ignored
+      --exclude-sources TEXT          Exclude source engines. Possible options:
+                                      robots
+      --not-allow-redirects           Redirectors will not be followed
       --version
       --help                          Show this message and exit.
 
@@ -265,8 +271,8 @@ Also use this command to see if Dirhunt is out of date.
 .. code::
 
     $ dirhunt --version
-    You are running Dirhunt v0.2.0 using Python 3.6.3.
-    There is a new version available: 0.3.0. Upgrade it using: sudo pip install -U dirhunt
+    You are running Dirhunt v0.3.0 using Python 3.6.5.
+    There is a new version available: 0.4.0. Upgrade it using: sudo pip install -U dirhunt
     Installation path: /home/nekmo/Workspace/dirhunt/dirhunt
     Current path: /home/nekmo/Workspace/dirhunt
 
