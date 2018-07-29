@@ -57,7 +57,7 @@ def force_url(url):
     for scheme in SCHEMES:
         new_url = '{}://{}'.format(scheme, url)
         try:
-            r = requests.get(new_url, timeout=15)
+            r = requests.get(new_url, timeout=15, verify=False)
         except RequestException:
             continue
         if r.url.startswith('{}:'.format(scheme)):
