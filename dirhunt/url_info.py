@@ -44,7 +44,7 @@ class UrlInfo(object):
     def get_data(self):
         session = self.sessions.get_session()
         try:
-            resp = session.get(self.url.url, stream=True, timeout=self.timeout, allow_redirects=False)
+            resp = session.get(self.url.url, stream=True, verify=False, timeout=self.timeout, allow_redirects=False)
         except RequestException:
             raise RequestError
         try:
