@@ -1,3 +1,4 @@
+import warnings
 import requests
 
 
@@ -7,7 +8,9 @@ class Session(object):
         self.session = requests.Session()
 
     def get(self, url, **kwargs):
-        response = self.session.get(url, **kwargs)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            response = self.session.get(url, **kwargs)
         self.sessions.availables.add(self)
         return response
 
