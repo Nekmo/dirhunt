@@ -1,8 +1,8 @@
 import unittest
 
 from dirhunt.sources import Robots
+from dirhunt.sources.robots import DirhuntRobotFileParser
 from dirhunt.tests._compat import patch
-from dirhunt._compat import RobotFileParser
 
 ROBOTS = """
 User-agent: *
@@ -17,7 +17,7 @@ class TestRobots(unittest.TestCase):
             self.parse(ROBOTS.splitlines())
 
         with patch.object(Robots, 'add_result') as mock_add_result:
-            with patch.object(RobotFileParser, 'read', side_effect=read, autospec=True):
+            with patch.object(DirhuntRobotFileParser, 'read', side_effect=read, autospec=True):
                 Robots(lambda x: x).callback('domain.com')
                 mock_add_result.assert_called_once_with('http://domain.com/secret/')
 
@@ -28,6 +28,6 @@ class TestRobots(unittest.TestCase):
             self.parse(ROBOTS.splitlines())
 
         with patch.object(Robots, 'add_result') as mock_add_result:
-            with patch.object(RobotFileParser, 'read', side_effect=read, autospec=True):
+            with patch.object(DirhuntRobotFileParser, 'read', side_effect=read, autospec=True):
                 Robots(lambda x: x).callback('domain.com')
                 mock_add_result.assert_called_once_with('https://domain.com/secret/')
