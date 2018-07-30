@@ -2,7 +2,9 @@
 import functools
 import sys
 import traceback
+import ssl
 
+ssl.match_hostname = lambda cert, hostname: True
 
 class DirHuntError(Exception):
     body = ''
