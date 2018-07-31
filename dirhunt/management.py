@@ -12,7 +12,7 @@ import sys
 from click import BadOptionUsage
 
 from dirhunt.crawler import Crawler
-from dirhunt.exceptions import DirHuntError
+from dirhunt.exceptions import DirHuntError, catch
 from dirhunt.output import output_urls
 from dirhunt.sources import SOURCE_CLASSES, get_source_name
 from dirhunt.utils import lrange, catch_keyboard_interrupt, force_url
@@ -150,3 +150,7 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
     crawler.print_urls_info()
     if not sys.stdout.isatty():
         output_urls(crawler, stdout_flags)
+
+
+def main():
+    catch(hunt)()

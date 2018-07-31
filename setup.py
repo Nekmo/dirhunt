@@ -327,7 +327,8 @@ setup(
     keywords=KEYWORDS,
     scripts=scripts,
 
-    # entry_points={},
+    entry_points={'console_scripts':
+                      ['dirhunt = dirhunt.management:main']},
 
     zip_safe=False,
 )
