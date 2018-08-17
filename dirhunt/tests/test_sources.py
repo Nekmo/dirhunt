@@ -1,12 +1,10 @@
 import unittest
-from unittest.mock import call
-
 import requests_mock
 
 from dirhunt.sources import Robots, VirusTotal
 from dirhunt.sources.robots import DirhuntRobotFileParser
 from dirhunt.sources.virustotal import VT_URL, ABUSE
-from dirhunt.tests._compat import patch
+from dirhunt.tests._compat import patch, call
 
 ROBOTS = """
 User-agent: *
@@ -59,4 +57,4 @@ class TestVirusTotal(unittest.TestCase):
         m.get(url, text=ABUSE)
         with patch.object(VirusTotal, 'add_error') as mock_add_error:
             VirusTotal(lambda x: x, lambda x: x).callback(domain)
-            mock_add_error.assert_called_once()
+            mock_add_error.assert_called()
