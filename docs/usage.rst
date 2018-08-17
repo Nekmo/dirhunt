@@ -34,7 +34,7 @@ Example::
                                       directories depth
       --not-follow-subdomains         The subdomains will be ignored
       --exclude-sources TEXT          Exclude source engines. Possible options:
-                                      robots
+                                      robots, virustotal
       --not-allow-redirects           Redirectors will not be followed
       --version
       --help                          Show this message and exit.
@@ -209,7 +209,7 @@ Dirhunt by default will get urls from different sources. You can disable some or
 
 For example::
 
-    $ dirhunt http://domain1/blog/ --exclude-sources robots,google
+    $ dirhunt http://domain1/blog/ --exclude-sources robots,virustotal
 
 
 Not allow redirectors
