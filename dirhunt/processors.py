@@ -49,7 +49,7 @@ class ProcessBase(object):
     def __init__(self, response, crawler_url):
         """
 
-        :type crawler_url: CrawlerUrl
+        :type crawler_url: CrawlerUrl or None
         """
         # TODO: hay que pensar en no pasar response, text y soup por aquí para establecerlo en self,
         # para no llenar la memoria. Deben ser cosas "volátiles".
@@ -130,6 +130,21 @@ class Error(ProcessBase):
     @classmethod
     def is_applicable(cls, request, text, crawler_url, soup):
         pass
+
+
+class Message(Error):
+    def __init__(self, error, level='ERROR'):
+        super(Error, self).__init__(None, CrawlerUrl(None, ''))
+        self.error = error
+        self.level = level
+
+    def __str__(self):
+        body = colored('[{}]'.format(self.level), Back.LIGHTRED_EX, Fore.LIGHTWHITE_EX)
+        body += colored(' {}'.format(self.error), Fore.LIGHTYELLOW_EX)
+        return body
+
+    def maybe_directory(self):
+        return True
 
 
 class GenericProcessor(ProcessBase):

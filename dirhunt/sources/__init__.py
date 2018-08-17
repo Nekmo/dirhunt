@@ -1,7 +1,9 @@
 from dirhunt.sources.robots import Robots
+from dirhunt.sources.virustotal import VirusTotal
 
 SOURCE_CLASSES = [
     Robots,
+    VirusTotal,
 ]
 
 
@@ -11,9 +13,11 @@ def get_source_name(cls):
 
 class Sources(object):
 
-    def __init__(self, callback, excluded_sources=()):
+    def __init__(self, callback, error_callback, excluded_sources=()):
         self.callback = callback
-        self.sources = [cls(self.callback) for cls in SOURCE_CLASSES if get_source_name(cls) not in excluded_sources]
+        self.error_callback = error_callback
+        self.sources = [cls(self.callback, error_callback)
+                        for cls in SOURCE_CLASSES if get_source_name(cls) not in excluded_sources]
 
     def add_domain(self, domain):
         for source in self.sources:

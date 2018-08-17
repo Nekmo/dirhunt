@@ -41,7 +41,7 @@ class Crawler(ThreadPoolExecutor):
         self.timeout = timeout
         self.not_follow_subdomains = not_follow_subdomains
         self.depth = depth
-        self.sources = Sources(self.add_url, exclude_sources)
+        self.sources = Sources(self.add_url, self.add_message, exclude_sources)
         self.not_allow_redirects = not_allow_redirects
 
     def add_init_urls(self, *urls):
@@ -98,6 +98,10 @@ class Crawler(ThreadPoolExecutor):
         self.processing[url.url] = future
         self.add_lock.release()
         return future
+
+    def add_message(self, body):
+        from dirhunt.processors import Message
+        self.results.put(Message(body))
 
     def echo(self, body):
         if self.std is None:
