@@ -16,7 +16,7 @@ class Session(object):
 
 
 class Sessions(object):
-    def __init__(self):
+    def __init__(self, proxies):
         self.availables = set()
 
     def get_session(self):

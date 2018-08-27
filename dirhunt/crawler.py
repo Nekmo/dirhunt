@@ -22,12 +22,12 @@ from dirhunt.url_info import UrlsInfo
 class Crawler(ThreadPoolExecutor):
     def __init__(self, max_workers=None, interesting_extensions=None, interesting_files=None, std=None,
                  progress_enabled=True, timeout=10, depth=3, not_follow_subdomains=False, exclude_sources=(),
-                 not_allow_redirects=False):
+                 not_allow_redirects=False, proxies=None):
         super(Crawler, self).__init__(max_workers)
         self.domains = set()
         self.results = Queue()
         self.index_of_processors = []
-        self.sessions = Sessions()
+        self.sessions = Sessions(proxies)
         self.processing = {}
         self.processed = {}
         self.add_lock = Lock()
