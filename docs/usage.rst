@@ -35,6 +35,10 @@ Example::
       --not-follow-subdomains         The subdomains will be ignored
       --exclude-sources TEXT          Exclude source engines. Possible options:
                                       robots, virustotal
+      -p, --proxies TEXT              Set one or more proxies to alternate between
+                                      them
+      -d, --delay FLOAT               Delay between requests to avoid bans by the
+                                      server
       --not-allow-redirects           Redirectors will not be followed
       --version
       --help                          Show this message and exit.
@@ -152,14 +156,29 @@ Other flags:
 
 Threads
 -------
-Dirhunt makes multiple simultaneous requests using threads. By default the number of threads is ``cpu count * 5``.
-You can change the threads count using ``--threads <count>`` (``-t <count>``). For example::
+Dirhunt makes multiple simultaneous requests using threads by default. The default number of threads is
+``cpu count * 5``. If you use the ``--delay`` option, the *simultaneous requests mode* is disabled and the number of
+threads by default is ``number of proxies``. If you do not use proxies in ``--delay`` mode, the default threads
+number is 1. You can change the threads count using ``--threads <count>`` (``-t <count>``). Usage::
 
-    $ dirhunt <url> --threads <url>
+    $ dirhunt <url> --threads <count>
 
 For example::
 
     $ dirhunt http://domain1/blog/ --threads 10
+
+
+Delay
+-----
+This mode deactivates *simultaneous requests mode* and it activates a waiting time from the end of a request
+and the next one begins. By default delay is **disabled**. Use this mode only if the server is restricting requests.
+You can improve the performance of this option using multiple proxies. Usage::
+
+    $ dirhunt <url> --delay <float>
+
+For example::
+
+    $ dirhunt http://domain1/blog/ --delay 0.1
 
 
 Timeout
