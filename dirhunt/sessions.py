@@ -1,14 +1,13 @@
 import random
 import threading
 import warnings
-from queue import Queue
-from typing import Union
+from dirhunt._compat import Queue
 
 import requests
 
 
 def lock(fn):
-    def wrap(self: 'Session', *args, **kwargs):
+    def wrap(self, *args, **kwargs):
         try:
             return fn(self, *args, **kwargs)
         finally:
@@ -16,7 +15,7 @@ def lock(fn):
     return wrap
 
 
-def normalize_proxy(proxy: Union[str, None]):
+def normalize_proxy(proxy):
     if proxy is not None and proxy.lower() == 'none':
         return None
     return proxy
@@ -42,7 +41,7 @@ class Session(object):
 
 
 class Sessions(object):
-    def __init__(self, proxies=None, delay: float=0):
+    def __init__(self, proxies=None, delay=0):
         self.availables = Queue()
         self.delay = delay
         self.sessions = self.create_sessions(proxies or [None])
