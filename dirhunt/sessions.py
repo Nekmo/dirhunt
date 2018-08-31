@@ -2,6 +2,7 @@ import random
 import threading
 import warnings
 from queue import Queue
+from typing import Union
 
 import requests
 
@@ -15,14 +16,25 @@ def lock(fn):
     return wrap
 
 
+def normalize_proxy(proxy: Union[str, None]):
+    if proxy is not None and proxy.lower() == 'none':
+        return None
+    return proxy
+
+
 class Session(object):
     def __init__(self, sessions, proxy):
         self.sessions = sessions
-        self.proxy = proxy
+        self.proxy = normalize_proxy(proxy)
         self.session = requests.Session()
 
     @lock
     def get(self, url, **kwargs):
+        if self.proxy:
+            kwargs['proxies'] = {
+                'http': self.proxy,
+                'https': self.proxy,
+            }
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             response = self.session.get(url, **kwargs)

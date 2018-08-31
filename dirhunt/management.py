@@ -2,7 +2,6 @@
 
 from __future__ import print_function
 
-import multiprocessing
 import re
 import click as click
 import os
@@ -101,7 +100,7 @@ def flags_range(flags):
 
 @click.command()
 @click.argument('urls', nargs=-1, type=force_url)
-@click.option('-t', '--threads', type=int, default=(multiprocessing.cpu_count() or 1) * 5,
+@click.option('-t', '--threads', type=int,
               help='Number of threads to use.')
 @click.option('-x', '--exclude-flags', callback=comma_separated_files,
               help='Exclude results with these flags. See documentation.')

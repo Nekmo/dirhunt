@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures.thread import _python_exit
 from threading import Lock, ThreadError
@@ -23,6 +24,10 @@ class Crawler(ThreadPoolExecutor):
     def __init__(self, max_workers=None, interesting_extensions=None, interesting_files=None, std=None,
                  progress_enabled=True, timeout=10, depth=3, not_follow_subdomains=False, exclude_sources=(),
                  not_allow_redirects=False, proxies=None, delay=0):
+        if not max_workers and not delay:
+            max_workers = (multiprocessing.cpu_count() or 1) * 5
+        elif not max_workers and delay:
+            max_workers = len(proxies or [None])
         super(Crawler, self).__init__(max_workers)
         self.domains = set()
         self.results = Queue()
