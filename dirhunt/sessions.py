@@ -30,7 +30,7 @@ class Session(object):
 
 
 class Sessions(object):
-    def __init__(self, proxies=None, delay: int=0):
+    def __init__(self, proxies=None, delay: float=0):
         self.availables = Queue()
         self.delay = delay
         self.sessions = self.create_sessions(proxies or [None])
@@ -39,7 +39,7 @@ class Sessions(object):
 
     def add_available(self, session):
         if self.delay:
-            threading.Timer(self.delay, self.availables.put, session)
+            threading.Timer(self.delay, self.availables.put, [session]).start()
         else:
             self.availables.put(session)
 
