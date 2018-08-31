@@ -181,6 +181,28 @@ For example::
     $ dirhunt http://domain1/blog/ --delay 0.1
 
 
+Proxies
+-------
+You can use one or multiple proxies for your requests using ``--proxies`` option. Dirhunt will balance the load
+between proxies. If you are not restricting requests using ``--delay`` option then dirhunt will use the proxy that is
+not in use. If there is no free proxy available then dirhunt will use a random proxy. Usage::
+
+    $ dirhunt <url> --proxies <proxy 1>[, <proxy 2>]
+
+If you use "none" as a proxy then Dirhunt will not use a proxy. This is useful if you want to combine
+proxies and your real internet connection. For example::
+
+    $ dirhunt http://domain1/blog/ --proxies http://localhost:3128,none
+
+
+Dirhunt includes an alias called ``tor`` for ``socks5://127.0.0.1:9150``. For example::
+
+    $ dirhunt http://domain1/blog/ --proxies http://localhost:3128,none
+
+The proxies option allows you to improve the performance of the ``--delay`` option. The delay time is independent
+for each proxy. Use multiple proxies to improve your work.
+
+
 Timeout
 -------
 By default Dirhunt only waits up to 10 seconds for each url. You can increase or decrease this time using
