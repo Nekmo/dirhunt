@@ -18,6 +18,8 @@ def lock(fn):
 def normalize_proxy(proxy):
     if proxy is not None and proxy.lower() == 'none':
         return None
+    elif proxy is not None and proxy.lower() == 'tor':
+        return 'socks5://127.0.0.1:9150'
     return proxy
 
 
