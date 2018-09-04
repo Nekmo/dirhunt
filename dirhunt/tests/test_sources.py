@@ -35,6 +35,22 @@ class TestRobots(unittest.TestCase):
                 Robots(lambda x: x, None).callback('domain.com')
                 mock_add_result.assert_called_once_with('https://domain.com/secret/')
 
+    @requests_mock.Mocker()
+    def test_401(self, m):
+        url = 'http://domain.com/robots.txt'
+        m.get(url, status_code=401)
+        rp = DirhuntRobotFileParser(url)
+        rp.read()
+        self.assertTrue(rp.disallow_all)
+
+    @requests_mock.Mocker()
+    def test_404(self, m):
+        url = 'http://domain.com/robots.txt'
+        m.get(url, status_code=404)
+        rp = DirhuntRobotFileParser(url)
+        rp.read()
+        self.assertTrue(rp.allow_all)
+
 
 class TestVirusTotal(unittest.TestCase):
 
