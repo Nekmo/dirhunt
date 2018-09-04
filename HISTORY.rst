@@ -2,6 +2,17 @@
 History
 =======
 
+
+0.5.0 (2018-09-04)
+------------------
+
+* Command not found issue for Windows (issue #40)
+* Search on VirusTotal (issue #31)
+* Delay between requests (issue #14 & issue #48)
+* Set proxies (issue #32 & issue #47)
+* Tor proxy alias (issue #49)
+
+
 0.4.0 (2018-07-23)
 ------------------
 
