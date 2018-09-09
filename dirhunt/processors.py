@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
-import re
+import sys
 
+if sys.version_info < (3,):
+    reload(sys)
+    sys.setdefaultencoding("utf-8")
+
+import re
 from bs4 import Comment
 from colorama import Fore, Back
 
