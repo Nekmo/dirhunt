@@ -1,9 +1,11 @@
+from dirhunt.sources.google import Google
 from dirhunt.sources.robots import Robots
 from dirhunt.sources.virustotal import VirusTotal
 
 SOURCE_CLASSES = [
     Robots,
     VirusTotal,
+    Google,
 ]
 
 

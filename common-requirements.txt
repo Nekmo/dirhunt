@@ -4,3 +4,4 @@ click
 humanize
 colorama
 requests-mock
+google
