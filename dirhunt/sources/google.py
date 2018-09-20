@@ -2,10 +2,12 @@ from dirhunt.sources.base import Source
 from dirhunt._compat import URLError
 from googlesearch import search
 
+STOP_AFTER = 20
+
 
 class Google(Source):
     def callback(self, domain):
-        results = search('site:{}'.format(domain), stop=20)
+        results = search('site:{}'.format(domain), stop=STOP_AFTER)
         while True:
             try:
                 url = next(results)
