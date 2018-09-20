@@ -69,9 +69,9 @@ Features
 * 404 error pages and detect **fake 404 errors**.
 * Filter results by **flags**.
 * Analyze results at end.
-* Get new directories using **robots.txt** and **VirusTotal** (NEW!)
-* **Delay** between requests (NEW!)
-* One or multiple **proxies** option (NEW!)
+* Get new directories using **robots.txt**, **VirusTotal** & **Google** (NEW!)
+* **Delay** between requests
+* One or multiple **proxies** option
 
 
 Install

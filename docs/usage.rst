@@ -34,7 +34,7 @@ Example::
                                       directories depth
       --not-follow-subdomains         The subdomains will be ignored
       --exclude-sources TEXT          Exclude source engines. Possible options:
-                                      robots, virustotal
+                                      robots, virustotal, google
       -p, --proxies TEXT              Set one or more proxies to alternate between
                                       them
       -d, --delay FLOAT               Delay between requests to avoid bans by the
