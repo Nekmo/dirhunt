@@ -1,3 +1,4 @@
+import sys
 import unittest
 
 import requests_mock
@@ -93,6 +94,9 @@ class TestGoogle(unittest.TestCase):
 
     @patch.object(Google, 'add_error')
     def test_failure(self, m1):
+        if sys.version_info < (3,):
+            self.skipTest('Unsupported Mock usage in Python 2.7')
+
         def search_iter(*args):
             raise URLError('Test')
 
