@@ -1,8 +1,8 @@
 import unittest
-from urllib.error import URLError
 
 import requests_mock
 
+from dirhunt._compat import URLError
 from dirhunt.sources import Robots, VirusTotal, Google
 from dirhunt.sources.google import STOP_AFTER
 from dirhunt.sources.robots import DirhuntRobotFileParser
