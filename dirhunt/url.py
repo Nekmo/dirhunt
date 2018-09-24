@@ -1,8 +1,37 @@
 # -*- coding: utf-8 -*-
+import re
 from ipaddress import ip_address
 from dirhunt._compat import urlparse, urljoin
 
 import os
+
+ACCEPTED_PROTOCOLS = ['http', 'https']
+
+
+def full_url_address(address, url):
+    """
+
+    :type url: Url
+    :type address: str
+    :rtype :Url
+
+    """
+    if address is None:
+        return
+    protocol_match = address.split(':', 1)[0] if ':' in address else ''
+    protocol_match = re.match('^([A-z0-9\\-]+)$', protocol_match)
+    if protocol_match and protocol_match.group(1) not in ACCEPTED_PROTOCOLS:
+        return
+    # TODO: mejorar esto. Aceptar otros protocolos  a rechazar
+    if address.startswith('//'):
+        address = address.replace('//', '{}://'.format(url.protocol), 1)
+    if '://' not in address or address.startswith('/'):
+        url = url.copy()
+        url.path = address
+        return url
+    url = Url(address)
+    if url.is_valid():
+        return url
 
 
 class Url(object):
@@ -10,6 +39,7 @@ class Url(object):
 
     def __init__(self, address):
         self.address = address
+        self.extra = {}
 
     def is_ip(self):
         try:
@@ -98,7 +128,7 @@ class Url(object):
         :type new_value: str
         """
         for symbol, i in [('#', 5), ('?', 4), (';', 3)]:
-            if not symbol in new_value:
+            if symbol not in new_value:
                 continue
             new_value, self.urlparsed[i] = new_value.split(symbol, 1)
         new_value = new_value.replace('//', '/')
@@ -164,6 +194,9 @@ class Url(object):
             'address': self.address,
             'domain': self.domain,
         }
+
+    def add_extra(self, data):
+        self.extra.update(data)
 
     def __eq__(self, other):
         if isinstance(other, Url):

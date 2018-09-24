@@ -5,44 +5,16 @@ if sys.version_info < (3,):
     reload(sys)
     sys.setdefaultencoding("utf-8")
 
-import re
 from bs4 import Comment
 from colorama import Fore, Back
 
 from dirhunt.colors import status_code_colors
 from dirhunt.crawler_url import CrawlerUrl
-from dirhunt.url import Url
+from dirhunt.url import Url, full_url_address
 from dirhunt.url_loop import is_url_loop
 from dirhunt.utils import colored
 
 INDEX_FILES = ['index.php', 'index.html', 'index.html']
-ACCEPTED_PROTOCOLS = ['http', 'https']
-
-
-def full_url_address(address, url):
-    """
-
-    :type url: Url
-    :type address: str
-    :rtype :Url
-
-    """
-    if address is None:
-        return
-    protocol_match = address.split(':', 1)[0] if ':' in address else ''
-    protocol_match = re.match('^([A-z0-9\\-]+)$', protocol_match)
-    if protocol_match and protocol_match.group(1) not in ACCEPTED_PROTOCOLS:
-        return
-    # TODO: mejorar esto. Aceptar otros protocolos  a rechazar
-    if address.startswith('//'):
-        address = address.replace('//', '{}://'.format(url.protocol), 1)
-    if '://' not in address or address.startswith('/'):
-        url = url.copy()
-        url.path = address
-        return url
-    url = Url(address)
-    if url.is_valid():
-        return url
 
 
 class ProcessBase(object):
@@ -237,7 +209,7 @@ class ProcessHtmlRequest(ProcessBase):
 
     def assets(self, soup):
         assets = [full_url_address(link.attrs.get('href'), self.crawler_url.url)
-                   for link in soup.find_all('link')]
+                  for link in soup.find_all('link')]
         assets += [full_url_address(script.attrs.get('src'), self.crawler_url.url)
                    for script in soup.find_all('script')]
         assets += [full_url_address(img.attrs.get('src'), self.crawler_url.url)
@@ -271,7 +243,7 @@ class ProcessIndexOfRequest(ProcessHtmlRequest):
 
     def process(self, text, soup=None):
         links = [full_url_address(link.attrs.get('href'), self.crawler_url.url)
-                   for link in soup.find_all('a')]
+                 for link in soup.find_all('a')]
         for link in filter(lambda x: x.url.endswith('/'), links):
             self.add_url(link, type='directory')
         self.files = [Url(link) for link in links]
