@@ -35,8 +35,18 @@ class TestApacheDirectoryLists(DirectoryListsTestBase, unittest.TestCase):
     </body></html>    
     """
 
-    def get_beautiful_soup(self):
-        return BeautifulSoup(self.html, 'html.parser')
+    def get_beautiful_soup(self, html=None):
+        html = html or self.html
+        return BeautifulSoup(html, 'html.parser')
+
+    def test_is_applicable(self):
+        beautiful_soup = self.get_beautiful_soup()
+        self.assertTrue(ApacheDirectoryList.is_applicable(None, self.html, self.get_crawler_url(), beautiful_soup))
+
+    def test_is_not_applicable(self):
+        beautiful_soup = self.get_beautiful_soup(TestCommonDirectoryList.html)
+        self.assertFalse(ApacheDirectoryList.is_applicable(None, TestCommonDirectoryList.html,
+                                                           self.get_crawler_url(), beautiful_soup))
 
     def test_get_links(self):
         directory_list = ApacheDirectoryList(self.get_processor())
@@ -49,3 +59,14 @@ class TestApacheDirectoryLists(DirectoryListsTestBase, unittest.TestCase):
             ('http://domain.com/path/author-template.php', {'created_at': '2018-02-16 14:29', 'filesize': '16K'}),
             ('http://domain.com/path/bookmark-template.php', {'created_at': '2018-02-16 14:29', 'filesize': '11K'}),
         ])
+
+
+class TestCommonDirectoryList(CrawlerTestBase, unittest.TestCase):
+    html = """
+    <html><head><title>Index Of</title></head><body>
+    <a href="..">Top</a>
+    <a href="dir/">dir</a>
+    <a href="foo.php">foo.php</a>
+    <a href="error_log">error_log</a>
+    <a href="/spam/eggs">Eggs</a></body></html>
+    """
