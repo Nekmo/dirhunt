@@ -149,27 +149,6 @@ class TestProcessIndexOfRequest(CrawlerTestBase, unittest.TestCase):
     <a href="error_log">error_log</a>
     <a href="/spam/eggs">Eggs</a></body></html>
     """
-    html_apache = """
-    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-    <html>
-     <head>
-      <title>Index of /wp-includes</title>
-     </head>
-     <body>
-    <h1>Index of /wp-includes</h1>
-    <pre><img src="/__apache/blank.gif" alt="Icon "> <a href="?C=N;O=D">Name</a>
-    <a href="?C=M;O=A">Last modified</a>      <a href="?C=S;O=A">Size</a>  
-    <a href="?C=D;O=A">Description</a><hr>
-    <img src="/__ovh_icons/back.gif" alt="[PARENTDIR]"> <a href="/">Parent Directory</a>                             -   
-    <img src="/__apache/folder.gif" alt="[DIR]"> <a href="ID3/">ID3/</a>                    2015-09-15 14:58    -   
-    <img src="/__apache/folder.gif" alt="[DIR]"> <a href="IXR/">IXR/</a>                    2018-02-16 14:29    -   
-    <img src="/__apache/unknown.gif" alt="[   ]"> <a href="author-template.php">author-template.php</a>     
-    2018-02-16 14:29   16K  
-    <img src="/__apache/unknown.gif" alt="[   ]"> <a href="bookmark-template.php">bookmark-template.php</a>   
-    2018-02-16 14:29   11K  
-    </pre>
-    </body></html>    
-    """
 
     def test_is_applicable(self):
         crawler_url = self.get_crawler_url()
@@ -218,19 +197,6 @@ class TestProcessIndexOfRequest(CrawlerTestBase, unittest.TestCase):
         process = ProcessIndexOfRequest(None, self.get_crawler_url())
         process.process(self.html, BeautifulSoup(self.html, 'html.parser'))
         str(process)
-
-    def test_process_apache(self):
-        process = ProcessIndexOfRequest(None, self.get_crawler_url())
-        soup = BeautifulSoup(self.html_apache, 'html.parser')
-        process.process(self.html_apache, soup)
-        urls = [file.url for file in process.files if '?' not in file.full_path]
-        self.assertEqual(urls, [
-            'http://domain.com/',
-            'http://domain.com/path/ID3/',
-            'http://domain.com/path/IXR/',
-            'http://domain.com/path/author-template.php',
-            'http://domain.com/path/bookmark-template.php',
-        ])
 
 
 class TestProcessBlankPageRequest(CrawlerTestBase, unittest.TestCase):

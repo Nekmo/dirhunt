@@ -5,7 +5,7 @@ from bs4 import NavigableString, Tag
 from dirhunt.url import full_url_address, Url
 
 
-DATETIME_PATTERN = re.compile('(\d{4}-\d{2}-\d{2} +\d{2}:\d{2}(:?\:\d{2}|))')
+DATETIME_PATTERN = re.compile('(\d{4}-\d{2}-\d{2} +\d{2}:\d{2}(?:\:\d{2}|))')
 FILESIZE_PATTERN = re.compile('([\d]+\.?[\d]{0,3} ?[ptgmkb]i?b?)', re.IGNORECASE)
 
 
@@ -37,23 +37,6 @@ class ApacheDirectoryList(DirectoryListBase):
 
     def get_links(self, text, soup=None):
         """
-        soup.find('pre').contents
-
-        <class 'list'>: [<img alt="Icon " src="/__apache/blank.gif"/>, ' ',
-        <a href="?C=N;O=D">Name</a>, '\n    ',
-        <a href="?C=M;O=A">Last modified</a>, '      ',
-        <a href="?C=S;O=A">Size</a>, '  \n    ',
-        <a href="?C=D;O=A">Description</a>, <hr/>, '\n    ',
-        <img alt="[PARENTDIR]" src="/__ovh_icons/back.gif"/>, ' ', <a href="/">Parent Directory</a>, '                             -   \n    ',
-        <img alt="[DIR]" src="/__apache/folder.gif"/>, ' ',
-        <a href="ID3/">ID3/</a>, '                    2015-09-15 14:58    -   \n    ',
-        <img alt="[DIR]" src="/__apache/folder.gif"/>, ' ',
-        <a href="IXR/">IXR/</a>, '                    2018-02-16 14:29    -   \n    ',
-        <img alt="[   ]" src="/__apache/unknown.gif"/>, ' ',
-        <a href="author-template.php">author-template.php</a>, '     \n    2018-02-16 14:29   16K  \n    ',
-        <img alt="[   ]" src="/__apache/unknown.gif"/>, ' ',
-        <a href="bookmark-template.php">bookmark-template.php</a>, '   \n    2018-02-16 14:29   11K  \n    ']
-
         :param text:
         :param soup:
         :return:
@@ -62,7 +45,7 @@ class ApacheDirectoryList(DirectoryListBase):
                                soup.find('pre').contents))
         links = []
         for i, content in enumerate(contents):
-            if not is_link(content):
+            if not is_link(content) or '?' in content.attrs.get('href', ''):
                 continue
             link = Url(full_url_address(content.attrs.get('href'), self.processor.crawler_url.url))
             if i+1 < len(contents) and isinstance(contents[i+1], NavigableString):
