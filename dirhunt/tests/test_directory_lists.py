@@ -2,7 +2,7 @@ import unittest
 
 from bs4 import BeautifulSoup
 
-from dirhunt.directory_lists import ApacheDirectoryList
+from dirhunt.directory_lists import ApacheDirectoryList, CommonDirectoryList
 from dirhunt.processors import ProcessIndexOfRequest
 from dirhunt.tests.base import CrawlerTestBase
 
@@ -61,7 +61,7 @@ class TestApacheDirectoryLists(DirectoryListsTestBase, unittest.TestCase):
         ])
 
 
-class TestCommonDirectoryList(CrawlerTestBase, unittest.TestCase):
+class TestCommonDirectoryList(DirectoryListsTestBase, unittest.TestCase):
     html = """
     <html><head><title>Index Of</title></head><body>
     <a href="..">Top</a>
@@ -70,3 +70,16 @@ class TestCommonDirectoryList(CrawlerTestBase, unittest.TestCase):
     <a href="error_log">error_log</a>
     <a href="/spam/eggs">Eggs</a></body></html>
     """
+    urls = [
+        'http://domain.com/',
+        'http://domain.com/path/dir/',
+        'http://domain.com/path/foo.php',
+        'http://domain.com/path/error_log',
+        'http://domain.com/spam/eggs',
+    ]
+
+    def test_process(self):
+        directory_list = CommonDirectoryList(self.get_processor())
+        links = directory_list.get_links(self.html, BeautifulSoup(self.html, 'html.parser'))
+        urls = [link.url for link in links]
+        self.assertEqual(urls, self.urls)
