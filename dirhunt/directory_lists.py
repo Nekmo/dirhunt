@@ -6,7 +6,7 @@ from dirhunt.url import full_url_address, Url
 
 
 DATETIME_PATTERN = re.compile('(\d{4}-\d{2}-\d{2} +\d{2}:\d{2}(?:\:\d{2}|))')
-FILESIZE_PATTERN = re.compile('([\d]+\.?[\d]{0,3} ?[ptgmkb]?i?b?) *$', re.IGNORECASE)
+FILESIZE_PATTERN = re.compile('([\d]+\.?[\d]{0,3} ?[ptgmkb]?i?b?) *$', re.IGNORECASE|re.MULTILINE)
 
 
 def is_link(element):
