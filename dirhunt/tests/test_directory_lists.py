@@ -8,6 +8,10 @@ from dirhunt.tests.base import CrawlerTestBase
 
 
 class DirectoryListsTestBase(CrawlerTestBase):
+    def get_beautiful_soup(self, html=None):
+        html = html or self.html
+        return BeautifulSoup(html, 'html.parser')
+
     def get_processor(self):
         return ProcessIndexOfRequest(None, self.get_crawler_url())
 
@@ -35,9 +39,6 @@ class TestApacheDirectoryLists(DirectoryListsTestBase, unittest.TestCase):
     </body></html>    
     """
 
-    def get_beautiful_soup(self, html=None):
-        html = html or self.html
-        return BeautifulSoup(html, 'html.parser')
 
     def test_is_applicable(self):
         beautiful_soup = self.get_beautiful_soup()
@@ -80,6 +81,10 @@ class TestCommonDirectoryList(DirectoryListsTestBase, unittest.TestCase):
 
     def test_process(self):
         directory_list = CommonDirectoryList(self.get_processor())
-        links = directory_list.get_links(self.html, BeautifulSoup(self.html, 'html.parser'))
+        links = directory_list.get_links(self.html, self.get_beautiful_soup())
         urls = [link.url for link in links]
         self.assertEqual(urls, self.urls)
+
+    def test_is_applicable(self):
+        beautiful_soup = self.get_beautiful_soup()
+        self.assertTrue(CommonDirectoryList.is_applicable(None, self.html, self.get_crawler_url(), beautiful_soup))
