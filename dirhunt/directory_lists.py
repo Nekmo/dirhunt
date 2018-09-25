@@ -6,7 +6,7 @@ from dirhunt.url import full_url_address, Url
 
 
 DATETIME_PATTERN = re.compile('(\d{4}-\d{2}-\d{2} +\d{2}:\d{2}(?:\:\d{2}|))')
-FILESIZE_PATTERN = re.compile('([\d]+\.?[\d]{0,3} ?[ptgmkb]i?b?)', re.IGNORECASE)
+FILESIZE_PATTERN = re.compile('([\d]+\.?[\d]{0,3} ?[ptgmkb]?i?b?) *$', re.IGNORECASE)
 
 
 def is_link(element):
@@ -22,7 +22,7 @@ class DirectoryListBase(object):
         self.processor = processor
 
     @classmethod
-    def is_applicable(cls, request, text, crawler_url, soup):
+    def is_applicable(cls, text, processor, soup):
         raise NotImplementedError
 
     def get_links(self, text, soup=None):
@@ -32,7 +32,7 @@ class DirectoryListBase(object):
 class ApacheDirectoryList(DirectoryListBase):
 
     @classmethod
-    def is_applicable(cls, request, text, crawler_url, soup):
+    def is_applicable(cls, text, processor, soup):
         return soup.find('pre') and soup.select_one('pre > a') and soup.find('a', href='?C=N;O=D')
 
     def get_links(self, text, soup=None):
@@ -56,22 +56,30 @@ class ApacheDirectoryList(DirectoryListBase):
                     extra['created_at'] = dt[0]
                 size = FILESIZE_PATTERN.findall(text)
                 if size:
-                    extra['filesize'] = size[0]
+                    extra['filesize'] = size[0].rstrip(' ')
                 link.add_extra(extra)
-                if link.url.endswith('/'):
-                    self.processor.add_url(link, type='directory')
             links.append(link)
         return links
 
 
 class CommonDirectoryList(DirectoryListBase):
     @classmethod
-    def is_applicable(cls, request, text, crawler_url, soup):
+    def is_applicable(cls, text, processor, soup):
         return True
 
     def get_links(self, text, soup=None):
         links = [full_url_address(link.attrs.get('href'), self.processor.crawler_url.url)
                  for link in soup.find_all('a')]
-        for link in filter(lambda x: x.url.endswith('/'), links):
-            self.processor.add_url(link, type='directory')
         return [Url(link) for link in links]
+
+
+def get_directory_list(text, processor, soup):
+    for directory_list_class in DIRECTORY_LISTS:
+        if directory_list_class.is_applicable(text, processor, soup):
+            return directory_list_class(processor)
+
+
+DIRECTORY_LISTS = [
+    ApacheDirectoryList,
+    CommonDirectoryList,
+]

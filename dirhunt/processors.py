@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys
 
+from dirhunt.directory_lists import get_directory_list
+
 if sys.version_info < (3,):
     reload(sys)
     sys.setdefaultencoding("utf-8")
@@ -242,11 +244,11 @@ class ProcessIndexOfRequest(ProcessHtmlRequest):
     index_titles = ('index of', 'directory listing for')
 
     def process(self, text, soup=None):
-        links = [full_url_address(link.attrs.get('href'), self.crawler_url.url)
-                 for link in soup.find_all('a')]
+        directory_list = get_directory_list(text, self, soup)
+        links = directory_list.get_links(text, soup)
         for link in filter(lambda x: x.url.endswith('/'), links):
             self.add_url(link, type='directory')
-        self.files = [Url(link) for link in links]
+        self.files = links
 
     def interesting_ext_files(self):
         return filter(lambda x: x.name.split('.')[-1] in self.crawler_url.crawler.interesting_extensions, self.files)
@@ -265,13 +267,21 @@ class ProcessIndexOfRequest(ProcessHtmlRequest):
         name_files = list(self.interesting_name_files())
         if ext_files:
             body += colored('\n    Interesting extension files:', Fore.BLUE)
-            body += ' {}'.format(', '.join(map(lambda x: x.name, ext_files)))
+            body += ' {}'.format(', '.join(map(lambda x: self.repr_file(x), ext_files)))
         if name_files:
             body += colored('\n    Interesting file names:', Fore.MAGENTA)
-            body += ' {}'.format(', '.join(map(lambda x: x.name, name_files)))
+            body += ' {}'.format(', '.join(map(lambda x: self.repr_file(x), name_files)))
         if not ext_files and not name_files:
             body += colored(' (Nothing interesting)', Fore.LIGHTYELLOW_EX)
         return body
+
+    @classmethod
+    def repr_file(cls, file):
+        text = file.name
+        created_at, filesize = file.extra.get('created_at'), file.extra.get('filesize')
+        if created_at or filesize:
+            text += ' ({})'.format(u' ⚫ '.join(filter(bool, [created_at, filesize])))
+        return text
 
     @classmethod
     def is_applicable(cls, response, text, crawler_url, soup):
