@@ -59,7 +59,7 @@ class TestUrlInfo(unittest.TestCase):
         url_info = self._get_url_info()
         self._test_get_data(html, url_info)
         with patch.object(UrlInfo, 'multi_line') as mock_one_line:
-            url_info.line(30, len(self.url))
+            url_info.line(30, len(self.url), 0)
             mock_one_line.assert_called_once()
 
     def test_use_one_line(self):
@@ -67,20 +67,20 @@ class TestUrlInfo(unittest.TestCase):
         url_info = self._get_url_info()
         self._test_get_data(html, url_info)
         with patch.object(UrlInfo, 'one_line') as mock_one_line:
-            url_info.line(300, len(self.url))
+            url_info.line(300, len(self.url), 0)
             mock_one_line.assert_called_once()
 
     def test_one_line(self):
         html = '<html><title>Foo</title></html>'
         url_info = self._get_url_info()
         self._test_get_data(html, url_info)
-        self.assertIn(self.url, url_info.one_line(200, len(self.url)))
+        self.assertIn(self.url, url_info.one_line(200, len(self.url), 0))
 
     def test_multi_line(self):
         html = '<html><title>Foo</title></html>'
         url_info = self._get_url_info()
         self._test_get_data(html, url_info)
-        self.assertIn(self.url, url_info.multi_line(30))
+        self.assertIn(self.url, url_info.multi_line(30, 0))
 
 
 class TestUrlsInfo(unittest.TestCase):
@@ -88,7 +88,7 @@ class TestUrlsInfo(unittest.TestCase):
 
     def test_callback(self):
         with patch.object(UrlsInfo, '_get_url_info') as m:
-            UrlsInfo([self.url], Sessions()).callback(len(self.url), Url(self.url))
+            UrlsInfo([self.url], Sessions()).callback(len(self.url), Url(self.url), 0)
             m.assert_called_once()
 
     def test_start_empty(self):
