@@ -123,7 +123,7 @@ class UrlInfo(object):
         out = self.url_info
         out += colored(('{:<%d}' % url_column).format(self.url.url), Fore.LIGHTBLUE_EX) + "  "
         if self.url.extra:
-            out += ' {} '.format(format_extra(self.url.extra, extra_len))
+            out += colored(' {} '.format(format_extra(self.url.extra, extra_len)), Fore.LIGHTBLUE_EX)
         out += text
         return out
 
@@ -133,7 +133,7 @@ class UrlInfo(object):
         )
         out += colored('┗', Fore.LIGHTBLUE_EX)
         if self.url.extra:
-            out += ' {}'.format(format_extra(self.url.extra, extra_len))
+            out += colored(' {}'.format(format_extra(self.url.extra, extra_len)), Fore.LIGHTBLUE_EX)
         out += ' {}'.format(self.text[:line_size-2])
         return out
 
