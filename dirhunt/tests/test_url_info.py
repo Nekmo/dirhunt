@@ -90,6 +90,20 @@ class TestUrlInfo(unittest.TestCase):
         self._test_get_data(html, url_info)
         self.assertIn(self.url, url_info.multi_line(30, 0))
 
+    def test_one_line_extra(self):
+        html = '<html><title>Foo</title></html>'
+        url_info = self._get_url_info()
+        self._test_get_data(html, url_info)
+        url_info.url.add_extra({'created_at': 'foo'})
+        self.assertIn('[foo ]', url_info.one_line(200, len(self.url), 6))
+
+    def test_multi_line_extra(self):
+        html = '<html><title>Foo</title></html>'
+        url_info = self._get_url_info()
+        self._test_get_data(html, url_info)
+        url_info.url.add_extra({'created_at': 'foo'})
+        self.assertIn('[foo ]', url_info.multi_line(30, 6))
+
 
 class TestUrlsInfo(unittest.TestCase):
     url = 'https://domain.com/foo.php'
