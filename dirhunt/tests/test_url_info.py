@@ -8,7 +8,7 @@ import requests_mock
 
 from dirhunt.sessions import Sessions
 from dirhunt.url import Url
-from dirhunt.url_info import UrlInfo, sizeof_fmt, DEFAULT_UNKNOWN_SIZE, UrlsInfo
+from dirhunt.url_info import UrlInfo, sizeof_fmt, DEFAULT_UNKNOWN_SIZE, UrlsInfo, format_extra
 from dirhunt.tests._compat import patch, Mock
 
 
@@ -24,6 +24,14 @@ class TestSizeofFmt(unittest.TestCase):
 
     def test_yib(self):
         self.assertEqual(sizeof_fmt(1024 ** 8), '1YiB')
+
+
+class TestFormatExtra(unittest.TestCase):
+    def test_without_length(self):
+        self.assertEqual(format_extra({'created_at': 'foo', 'filesize': 'bar'}), '[foo bar]')
+
+    def test_with_length(self):
+        self.assertEqual(format_extra({'created_at': 'foo', 'filesize': 'bar'}, 12), '[foo bar   ]')
 
 
 class TestUrlInfo(unittest.TestCase):

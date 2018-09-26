@@ -34,7 +34,8 @@ def sizeof_fmt(num, suffix='B'):
 
 def format_extra(extra, length=0):
     length = max(0, length - 2)
-    return ('[{:<%d}]' % length).format(' '.join(map(itemgetter(1), sorted(extra.items()))))
+    return ('[{:<%d}]' % length).format(' '.join(map(itemgetter(1), sorted(extra.items(),
+                                                                           key=lambda x: EXTRA_ORDER.index(x[0])))))
 
 
 class UrlInfo(object):
