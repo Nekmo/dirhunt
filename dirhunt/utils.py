@@ -13,6 +13,7 @@ from ._compat import urlparse
 
 SCHEMES = ['http', 'https']
 DEFAULT_SCHEME = 'http'
+ARGUMENT_MULT = re.compile('(.+)\*(\d+)$')
 
 
 def lrange(start, end):
@@ -89,3 +90,14 @@ def flat_list(values):
         else:
             items.append(value)
     return items
+
+
+def multiplier_arg(argument):
+    matchs = ARGUMENT_MULT.match(argument)
+    if matchs is None:
+        return argument
+    return [matchs.group(1)] * int(matchs.group(2))
+
+
+def multiplier_args(arguments):
+    return flat_list([multiplier_arg(argument) for argument in arguments])

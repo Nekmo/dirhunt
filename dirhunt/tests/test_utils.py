@@ -3,7 +3,7 @@ import unittest
 import requests_mock
 
 from dirhunt.tests._compat import patch, Mock
-from dirhunt.utils import force_url, SCHEMES, catch_keyboard_interrupt, flat_list
+from dirhunt.utils import force_url, SCHEMES, catch_keyboard_interrupt, flat_list, multiplier_args
 
 
 class TestForceUrl(unittest.TestCase):
@@ -49,3 +49,14 @@ class TestFlatList(unittest.TestCase):
 
     def test_with_sublists(self):
         self.assertEqual(flat_list([1, [2, 3], 4]), [1, 2, 3, 4])
+
+
+class TestMultiplierArgs(unittest.TestCase):
+    def test_without_multiplier(self):
+        self.assertEqual(multiplier_args(['foo', 'bar']), ['foo', 'bar'])
+
+    def test_multiplier(self):
+        self.assertEqual(multiplier_args(['foo', 'bar*3']), ['foo'] + (['bar'] * 3))
+
+    def test_invalid_multiplier(self):
+        self.assertEqual(multiplier_args(['foo', 'bar*spam']), ['foo', 'bar*spam'])

@@ -14,7 +14,8 @@ from dirhunt.crawler import Crawler
 from dirhunt.exceptions import DirHuntError, catch
 from dirhunt.output import output_urls
 from dirhunt.sources import SOURCE_CLASSES, get_source_name
-from dirhunt.utils import lrange, catch_keyboard_interrupt, force_url, read_file_lines, value_is_file_path, flat_list
+from dirhunt.utils import lrange, catch_keyboard_interrupt, force_url, read_file_lines, value_is_file_path, flat_list, \
+    multiplier_args
 from colorama import init
 
 init(autoreset=True)
@@ -134,6 +135,7 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
         raise BadOptionUsage('--exclude-flags and --include-flags are mutually exclusive.')
     welcome()
     urls = flat_list(urls)
+    proxies = multiplier_args(proxies)
     if not urls:
         click.echo('•_•) OOPS! Add urls to analyze.\nFor example: dirhunt http://domain/path\n\n'
                    'Need help? Then use dirhunt --help', err=True)
