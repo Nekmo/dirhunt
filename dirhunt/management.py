@@ -96,8 +96,7 @@ def flags_range(flags):
     return flags
 
 
-
-@click.command()
+@click.command(help='One or more domain or urls. Load urls from files using the /full/path or ./relative/path.')
 @click.argument('urls', nargs=-1, type=force_url)
 @click.option('-t', '--threads', type=int,
               help='Number of threads to use.')

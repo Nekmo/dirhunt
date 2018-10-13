@@ -14,7 +14,8 @@ Example::
 
     Usage: dirhunt [OPTIONS] [URLS]...
 
-      Find web directories without bruteforce
+      One or more domain or urls. Load urls from files using the /full/path or
+      ./relative/path.
 
     Options:
       -t, --threads INTEGER           Number of threads to use.
@@ -47,8 +48,8 @@ Example::
 
 Find directories
 ----------------
-You can define one or more urls, from the same domain or different. It is better if you put urls with complete
-routes. This way Dirhunt will have easier to find directories.
+You can define one or more urls/domains, from the same domain or different. It is better if you put urls with complete
+paths. This way Dirhunt will have easier to find directories.
 
 .. code::
 
@@ -56,7 +57,13 @@ routes. This way Dirhunt will have easier to find directories.
 
 For example::
 
-    $ dirhunt http://domain1/blog/awesome-post.html http://domain1/admin/login.html http://domain2/
+    $ dirhunt http://domain1/blog/awesome-post.html http://domain1/admin/login.html http://domain2/ domain3.com
+
+
+Results for multiple sites will be displayed together. You can also load urls or domains from one or more files using
+ the full path (/path/to/file) or the relative path (./file). Examples::
+
+    dirhunt domain1.com ./file/to/domains.txt /home/user/more_domains.txt
 
 
 Interesting extensions
