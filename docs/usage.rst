@@ -207,7 +207,11 @@ Dirhunt includes an alias called ``tor`` for ``socks5://127.0.0.1:9150``. For ex
     $ dirhunt http://domain1/blog/ --proxies http://localhost:3128,none
 
 The proxies option allows you to improve the performance of the ``--delay`` option. The delay time is independent
-for each proxy. Use multiple proxies to improve your work.
+for each proxy. Use multiple proxies to improve your scan. You can repeat the same proxy several times to allow
+multiple requests from the same proxy when the delay option is used. You can also repeat a proxy several times
+to increase the use of a proxy. A shortcut to repeating a proxy is to use the mult operator (*). For example::
+
+    $ dirhunt http://domain1/blog/ --proxies http://localhost:3128,tor*8
 
 
 Timeout
