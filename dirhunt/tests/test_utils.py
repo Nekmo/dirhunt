@@ -3,7 +3,7 @@ import unittest
 import requests_mock
 
 from dirhunt.tests._compat import patch, Mock
-from dirhunt.utils import force_url, SCHEMES, catch_keyboard_interrupt
+from dirhunt.utils import force_url, SCHEMES, catch_keyboard_interrupt, flat_list
 
 
 class TestForceUrl(unittest.TestCase):
@@ -38,3 +38,14 @@ class TestCatchKeyboardInterrupt(unittest.TestCase):
             with self.assertRaises(KeyboardInterrupt):
                 catch_keyboard_interrupt(m)()
             mock_confirm_close.assert_called_once()
+
+
+class TestFlatList(unittest.TestCase):
+    def test_without_items(self):
+        self.assertEqual(flat_list([]), [])
+
+    def test_without_sublists(self):
+        self.assertEqual(flat_list([1, 2, 3]), [1, 2, 3])
+
+    def test_with_sublists(self):
+        self.assertEqual(flat_list([1, [2, 3], 4]), [1, 2, 3, 4])

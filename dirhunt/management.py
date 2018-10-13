@@ -14,7 +14,7 @@ from dirhunt.crawler import Crawler
 from dirhunt.exceptions import DirHuntError, catch
 from dirhunt.output import output_urls
 from dirhunt.sources import SOURCE_CLASSES, get_source_name
-from dirhunt.utils import lrange, catch_keyboard_interrupt, force_url
+from dirhunt.utils import lrange, catch_keyboard_interrupt, force_url, read_file_lines, value_is_file_path, flat_list
 from colorama import init
 
 init(autoreset=True)
@@ -49,9 +49,8 @@ def comma_separated_files(ctx, param, value):
     values = comma_separated(ctx, param, value)
     items = []
     for value in values:
-        if value.startswith('/') or value.startswith('./'):
-            lines = [line.rstrip('\n\r') for line in open(value).readlines()]
-            items += [line for line in lines if line]
+        if value_is_file_path(value):
+            items += read_file_lines(value)
         else:
             items.append(value)
     return items
@@ -135,6 +134,7 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
     if exclude_flags and include_flags:
         raise BadOptionUsage('--exclude-flags and --include-flags are mutually exclusive.')
     welcome()
+    urls = flat_list(urls)
     if not urls:
         click.echo('•_•) OOPS! Add urls to analyze.\nFor example: dirhunt http://domain/path\n\n'
                    'Need help? Then use dirhunt --help', err=True)

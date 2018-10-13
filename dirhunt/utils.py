@@ -42,6 +42,15 @@ def catch_keyboard_interrupt(fn, restart=None):
     return wrap
 
 
+def value_is_file_path(value):
+    return value.startswith('/') or value.startswith('./')
+
+
+def read_file_lines(file):
+    lines = [line.rstrip('\n\r') for line in open(file).readlines()]
+    return [line for line in lines if line]
+
+
 def force_url(url):
     """Transform domain.com to http://domain.com
 
@@ -54,6 +63,8 @@ def force_url(url):
     url = url.lstrip()
     if urlparse(url).scheme:
         return url
+    if value_is_file_path(url):
+        return [force_url(sub_url) for sub_url in read_file_lines(url)]
     for scheme in SCHEMES:
         new_url = '{}://{}'.format(scheme, url)
         try:
@@ -68,3 +79,13 @@ def force_url(url):
 def remove_ansi_escape(text):
     ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
     return ansi_escape.sub('', text)
+
+
+def flat_list(values):
+    items = []
+    for value in values:
+        if isinstance(value, (list, tuple)):
+            items.extend(value)
+        else:
+            items.append(value)
+    return items
