@@ -6,10 +6,10 @@ from dirhunt.tests._compat import patch, Mock
 
 class TestNormalizeProxy(unittest.TestCase):
     def test_proxy_none(self):
-        self.assertEqual(normalize_proxy('None'), None)
+        self.assertEqual(normalize_proxy('None', None), None)
 
     def test_proxy_tor(self):
-        self.assertEqual(normalize_proxy('tor'), 'socks5://127.0.0.1:9150')
+        self.assertEqual(normalize_proxy('tor', None), 'socks5://127.0.0.1:9150')
 
 
 class TestSession(unittest.TestCase):
