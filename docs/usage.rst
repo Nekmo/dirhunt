@@ -206,6 +206,20 @@ Dirhunt includes an alias called ``tor`` for ``socks5://127.0.0.1:9150``. For ex
 
     $ dirhunt http://domain1/blog/ --proxies http://localhost:3128,none
 
+Dirhunt can also search for free proxies thanks to `proxy-db <https://github.com/Nekmo/proxy-db>`_. This library
+creates a database of proxies that scores. To use a free proxy use `random`:
+
+    $ dirhunt http://domain1/blog/ --proxies random
+
+To avoid being banned you can switch between several proxies. For example:
+
+    $ dirhunt http://domain1/blog/ --proxies random*8
+
+You can also use a proxie from a country. `Here <https://dev.maxmind.com/geoip/legacy/codes/iso3166/>`_ is a
+complete list of countries. For example to navigate from Spain:
+
+    $ dirhunt http://domain1/blog/ --proxies es
+
 The proxies option allows you to improve the performance of the ``--delay`` option. The delay time is independent
 for each proxy. Use multiple proxies to improve your scan. You can repeat the same proxy several times to allow
 multiple requests from the same proxy when the delay option is used. You can also repeat a proxy several times
