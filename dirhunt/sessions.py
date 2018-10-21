@@ -67,7 +67,8 @@ class RandomProxies(object):
 
         :type item: str
         """
-        item = {'random': ''}.get(item, item).lower()
+        item = item.lower()
+        item = {'random': ''}.get(item, item)
         if item not in self.proxies_lists:
             self.proxies_lists[item] = ProxiesList(item or None)
         return self.proxies_lists[item]
