@@ -78,6 +78,7 @@ class Session(object):
     @lock
     def get(self, url, **kwargs):
         is_proxy_db = False
+        max_retries = kwargs.pop('_max_retries', 3)
         kw = kwargs.copy()
         if self.proxy and isinstance(self.proxy, Proxy):
             is_proxy_db = True
@@ -92,7 +93,8 @@ class Session(object):
             try:
                 response = self.session.get(url, **kw)  # kwargs with proxies
             except (Timeout, ConnectionError, ProxyError):
-                max_retries = kwargs.get('_max_retries', 3)
+                if is_proxy_db:
+                    self.proxy.negative()
                 if is_proxy_db and max_retries and self.proxy.get_updated_proxy().votes < MAX_NEGATIVE_VOTES:
                     # Use other random proxy (this proxy is down)
                     self.proxy = normalize_proxy(self.proxy_name, self.sessions)
@@ -100,6 +102,9 @@ class Session(object):
                     return self.get(url, _max_retries=max_retries, **kwargs)  # original kwargs
                 else:
                     raise
+            else:
+                if is_proxy_db:
+                    self.proxy.positive()
         return response
 
 
