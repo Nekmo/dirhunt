@@ -5,6 +5,7 @@ import sys
 from operator import itemgetter
 from threading import Lock
 
+import six
 from bs4 import BeautifulSoup
 from click import get_terminal_size
 from colorama import Fore
@@ -23,7 +24,7 @@ EXTRA_ORDER = ['created_at', 'filesize']
 def sizeof_fmt(num, suffix='B'):
     if num is None:
         return DEFAULT_UNKNOWN_SIZE
-    if isinstance(num, str):
+    if isinstance(num, six.string_types):
         num = int(num)
     for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
         if abs(num) < 1024.0:

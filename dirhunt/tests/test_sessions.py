@@ -1,3 +1,4 @@
+import sys
 import unittest
 
 from dirhunt.sessions import Sessions, Session, normalize_proxy
@@ -10,6 +11,17 @@ class TestNormalizeProxy(unittest.TestCase):
 
     def test_proxy_tor(self):
         self.assertEqual(normalize_proxy('tor', None), 'socks5://127.0.0.1:9150')
+
+    def test_proxy_db(self):
+        if sys.version_info < (3,):
+            self.skipTest('Unsupported Mock in Python 2.7')
+        mock = Mock()
+        mock.proxies_lists.__getitem__ = Mock()
+        mock.proxies_lists.__getitem__.return_value.__next__ =  Mock()
+        normalize_proxy('Random', mock)
+        mock.proxies_lists.__getitem__.assert_called_once()
+        mock.proxies_lists.__getitem__.return_value.__next__.assert_called_once()
+
 
 
 class TestSession(unittest.TestCase):

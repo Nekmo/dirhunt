@@ -1,4 +1,5 @@
 import random
+import sys
 import threading
 import warnings
 
@@ -10,6 +11,10 @@ from dirhunt._compat import Queue
 import requests
 from proxy_db.proxies import ProxiesList
 from proxy_db.models import Proxy
+
+
+if sys.version_info < (3, 0):
+    ConnectionError = IOError
 
 
 MAX_NEGATIVE_VOTES = -3
