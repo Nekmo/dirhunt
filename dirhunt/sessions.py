@@ -30,8 +30,8 @@ COUNTRIES = [
     "re", "ro", "rs", "ru", "rw", "sa", "sb", "sc", "sd", "se", "sg", "sh", "si", "sj", "sk", "sl",
     "sm", "sn", "so", "sr", "ss", "st", "sv", "sx", "sy", "sz", "tc", "td", "tf", "tg", "th", "tj",
     "tk", "tl", "tm", "tn", "to", "tr", "tt", "tv", "tw", "tz", "ua", "ug", "um", "us", "uy", "uz",
-    "va", "vc", "ve", "vg", "vi", "vn", "vu", "wf", "ws", "ye", "yt", "za", "zm", "zw"
-]
+    "va", "vc", "ve", "vg", "vi", "vn", "vu", "wf", "ws", "ye", "yt", "za", "zm", "zw",
+] + ['random']
 
 
 def lock(fn):
@@ -49,7 +49,7 @@ def normalize_proxy(proxy, sessions):
     elif proxy is not None and proxy.lower() == 'tor':
         return 'socks5://127.0.0.1:9150'
     elif proxy is not None and proxy.lower() in COUNTRIES:
-        return sessions.proxies_lists[proxy].find_db_proxy()
+        return next(sessions.proxies_lists[proxy], None)
     return proxy
 
 
