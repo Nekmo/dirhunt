@@ -41,9 +41,10 @@ Example::
       -d, --delay FLOAT               Delay between requests to avoid bans by the
                                       server
       --not-allow-redirects           Redirectors will not be followed
+      --limit INTEGER                 Max number of pages processed to search for
+                                      directories.
       --version
       --help                          Show this message and exit.
-
 
 
 Find directories
@@ -254,6 +255,19 @@ directory level because it has exceeded the default limit of 3. Usage::
 For example::
 
     $ dirhunt http://domain1/blog/ --max-depth 3
+
+
+Limit
+-----
+Dirhunt follows links on the page to obtain directories. In addition to the ``--max-depth`` limit, there is a
+maximum of pages processed for find links. The default limit is 1000 but can be changed using ``--limit <number>``.
+To deactivate the limit (unlimited) use zero: ``--limit 0``. Usage::
+
+    $ dirhunt <url> --limit <number>
+
+For example::
+
+    $ dirhunt http://domain1/blog/ --limit 2000
 
 
 Not follow subdomains
