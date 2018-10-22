@@ -5,7 +5,16 @@ History
 0.6.0 (2018-10-XX)
 ------------------
 
-
+* Search on Google (issue #2)
+* Find and use free random proxies (issue #33)
+* Extract dates and match different date files (issue #26)
+* Limit of processed pages (issue #51 & issue #52)
+* Mult operator (*) in argument proxies (issue #55)
+* Switch for domain list (issue #39)
+* WARNING:urllib3.connectionpool:Connection pool is full, discarding connection (isse #56)
+* TypeError: 'NoneType' object is not subscriptable in url.py, line 147 (issue #57)
+* Catch UrlInfo read exceptions (issue #58)
+* Error in resp.raw.read(MAX_RESPONSE_SIZE, decode_content=True) (issue #59)
 
 
 0.5.0 (2018-09-04)
