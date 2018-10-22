@@ -4,6 +4,7 @@ import threading
 import warnings
 
 from requests import Timeout
+from requests.adapters import HTTPAdapter
 from requests.exceptions import ProxyError
 
 from dirhunt._compat import Queue
@@ -37,6 +38,7 @@ COUNTRIES = [
     "tk", "tl", "tm", "tn", "to", "tr", "tt", "tv", "tw", "tz", "ua", "ug", "um", "us", "uy", "uz",
     "va", "vc", "ve", "vg", "vi", "vn", "vu", "wf", "ws", "ye", "yt", "za", "zm", "zw",
 ] + ['random']
+POOL_CONNECTIONS = 40
 
 
 def lock(fn):
@@ -80,6 +82,9 @@ class Session(object):
         self.proxy_name = proxy
         self.proxy = normalize_proxy(self.proxy_name, sessions)
         self.session = requests.Session()
+        adapter = HTTPAdapter(pool_connections=POOL_CONNECTIONS, pool_maxsize=POOL_CONNECTIONS)
+        self.session.mount('http://', adapter)
+        self.session.mount('https://', adapter)
 
     @lock
     def get(self, url, **kwargs):

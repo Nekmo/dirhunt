@@ -50,6 +50,7 @@ class CrawlerUrl(object):
         try:
             resp = session.get(self.url.url, stream=True, verify=False, timeout=self.timeout, allow_redirects=False)
         except RequestException as e:
+            self.crawler.current_processed_count += 1
             self.crawler.results.put(Error(self, e))
             self.close()
             return self
@@ -70,6 +71,8 @@ class CrawlerUrl(object):
             self.flags.update(processor.flags)
         if processor and isinstance(processor, ProcessIndexOfRequest):
             self.crawler.index_of_processors.append(processor)
+        else:
+            self.crawler.current_processed_count += 1
         # TODO: Podemos fijarnos en el processor.index_file. Si existe y es un 200, entonces es que existe.
         if self.exists is None and resp.status_code < 404:
             self.exists = True
