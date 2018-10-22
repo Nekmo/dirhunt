@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
+import socket
+
 from bs4 import BeautifulSoup
 from requests import RequestException
+from urllib3.exceptions import ReadTimeoutError
 
 from dirhunt.url import Url
 from dirhunt.url_loop import is_url_loop
@@ -62,7 +65,13 @@ class CrawlerUrl(object):
 
         processor = None
         if resp.status_code < 300 and self.maybe_directory():
-            text = resp.raw.read(MAX_RESPONSE_SIZE, decode_content=True)
+            try:
+                text = resp.raw.read(MAX_RESPONSE_SIZE, decode_content=True)
+            except (RequestException, ReadTimeoutError, socket.timeout) as e:
+                self.crawler.current_processed_count += 1
+                self.crawler.results.put(Error(self, e))
+                self.close()
+                return self
             soup = BeautifulSoup(text, 'html.parser')
         if self.maybe_directory():
             processor = get_processor(resp, text, self, soup) or GenericProcessor(resp, self)
