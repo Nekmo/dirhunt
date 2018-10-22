@@ -15,6 +15,14 @@ class TestCrawler(CrawlerTestBase, unittest.TestCase):
         crawler.results.put(GenericProcessor(None, crawler_url))
         crawler.print_results()
 
+    def test_print_results_limit(self):
+        crawler = self.get_crawler(limit=1)
+        crawler.current_processed_count = 1
+        crawler_url = CrawlerUrl(crawler, self.url)
+        crawler.results.put(GenericProcessor(None, crawler_url))
+        crawler.print_results()
+        self.assertTrue(crawler.closing)
+
     def test_add_url(self):
         crawler = self.get_crawler()
         crawler.domains.add('domain.com')
