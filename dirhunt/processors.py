@@ -245,8 +245,8 @@ class ProcessIndexOfRequest(ProcessHtmlRequest):
 
     def process(self, text, soup=None):
         directory_list = get_directory_list(text, self, soup)
-        links = directory_list.get_links(text, soup)
-        for link in filter(lambda x: x.url.endswith('/'), links):
+        links = [link for link in directory_list.get_links(text, soup) if link.is_valid()]
+        for link in filter(lambda x: x.is_valid() and x.url.endswith('/'), links):
             self.add_url(link, type='directory')
         self.files = links
 

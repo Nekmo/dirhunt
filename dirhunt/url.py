@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+import os
 import re
 from ipaddress import ip_address
 from dirhunt._compat import urlparse, urljoin
 
-import os
 
 ACCEPTED_PROTOCOLS = ['http', 'https']
 
