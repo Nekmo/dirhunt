@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+import socket
 import string
 import sys
 from operator import itemgetter
@@ -10,6 +11,7 @@ from bs4 import BeautifulSoup
 from click import get_terminal_size
 from colorama import Fore
 from requests import RequestException
+from urllib3.exceptions import ReadTimeoutError
 
 from dirhunt.cli import random_spinner
 from dirhunt.colors import status_code_colors
@@ -57,7 +59,7 @@ class UrlInfo(object):
             raise RequestError
         try:
             text = resp.raw.read(MAX_RESPONSE_SIZE, decode_content=True)
-        except RequestException:
+        except (RequestException, ReadTimeoutError, socket.timeout):
             raise RequestError
         try:
             soup = BeautifulSoup(text, 'html.parser')
