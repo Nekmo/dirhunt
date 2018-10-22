@@ -71,7 +71,7 @@ Features
 * Analyze results at end. It also **processes date & size** of the Index Pages (NEW!)
 * Get new directories using **robots.txt**, **VirusTotal** & **Google** (NEW!)
 * **Delay** between requests
-* One or multiple **proxies** option. It can also search for free proxies (NEW!)
+* One or multiple **proxies** option. It can also search for **free proxies** (NEW!)
 
 
 Install
