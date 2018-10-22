@@ -124,11 +124,12 @@ def flags_range(flags):
 @click.option('-d', '--delay', default=0, type=float,
               help='Delay between requests to avoid bans by the server')
 @click.option('--not-allow-redirects', is_flag=True, help='Redirectors will not be followed')
+@click.option('--limit', type=int, default=100, help='Max number of pages processed to search for directories.')
 @click.option('--version', is_flag=True, callback=print_version,
               expose_value=False, is_eager=True)
 def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, interesting_files, stdout_flags,
          progress_enabled, timeout, max_depth, not_follow_subdomains, exclude_sources, proxies, delay,
-         not_allow_redirects):
+         not_allow_redirects, limit):
     """Find web directories without bruteforce
     """
     if exclude_flags and include_flags:
@@ -146,7 +147,7 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
                       interesting_files=interesting_files, std=sys.stdout if sys.stdout.isatty() else sys.stderr,
                       progress_enabled=progress_enabled, timeout=timeout, depth=max_depth,
                       not_follow_subdomains=not_follow_subdomains, exclude_sources=exclude_sources,
-                      not_allow_redirects=not_allow_redirects, proxies=proxies, delay=delay)
+                      not_allow_redirects=not_allow_redirects, proxies=proxies, delay=delay, limit=limit)
     crawler.add_init_urls(*urls)
     try:
         catch_keyboard_interrupt(crawler.print_results, crawler.restart)(set(exclude_flags), set(include_flags))
