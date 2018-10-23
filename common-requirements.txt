@@ -1,6 +1,6 @@
 beautifulsoup4==4.6.3
 requests==2.20.0
-click
+click==7.0
 humanize
 colorama
 requests-mock
