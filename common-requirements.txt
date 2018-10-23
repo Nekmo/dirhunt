@@ -1,7 +1,7 @@
 beautifulsoup4==4.6.3
 requests==2.20.0
 click==7.0
-humanize
+humanize==0.5.1
 colorama
 requests-mock
 google
