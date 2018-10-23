@@ -3,6 +3,6 @@ requests==2.20.0
 click==7.0
 humanize==0.5.1
 colorama==0.4.0
-requests-mock
+requests-mock==1.5.2
 google
 proxy-db
