@@ -5,4 +5,4 @@ humanize==0.5.1
 colorama==0.4.0
 requests-mock==1.5.2
 google==2.0.1
-proxy-db
+proxy-db==0.2.3
