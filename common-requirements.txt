@@ -1,5 +1,5 @@
 beautifulsoup4==4.6.3
-requests
+requests==2.20.0
 click
 humanize
 colorama
