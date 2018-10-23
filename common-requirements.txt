@@ -1,4 +1,4 @@
-beautifulsoup4
+beautifulsoup4==4.6.3
 requests
 click
 humanize
