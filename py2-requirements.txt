@@ -1,3 +1,3 @@
 -r common-requirements.txt
-futures
+futures==3.2.0
 py2-ipaddress
