@@ -1,3 +1,4 @@
+dist: xenial
 language: python
 sudo: false
 python:
@@ -12,6 +13,7 @@ install:
 - if [[ $TRAVIS_PYTHON_VERSION == '3.4' ]]; then export PYVER=py34; fi
 - if [[ $TRAVIS_PYTHON_VERSION == '3.5' ]]; then export PYVER=py35; fi
 - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then export PYVER=py36; fi
+- if [[ $TRAVIS_PYTHON_VERSION == '3.7' ]]; then export PYVER=py37; fi
 script: COMMAND='coverage run' tox -e$PYVER
 after_success:
 - codecov
