@@ -60,11 +60,11 @@ class CrawlerUrl(object):
 
         self.set_type(resp.headers.get('Content-Type'))
         self.flags.add(str(resp.status_code))
+
         text = ''
         soup = None
-
         processor = None
-        if resp.status_code < 300 and self.maybe_directory():
+        if resp.status_code < 300 and self.must_be_downloaded(resp):
             try:
                 text = resp.raw.read(MAX_RESPONSE_SIZE, decode_content=True)
             except (RequestException, ReadTimeoutError, socket.timeout) as e:
@@ -72,12 +72,13 @@ class CrawlerUrl(object):
                 self.crawler.results.put(Error(self, e))
                 self.close()
                 return self
-            soup = BeautifulSoup(text, 'html.parser')
-        if self.maybe_directory():
+            soup = BeautifulSoup(text, 'html.parser') if resp.headers.get('Content-Type') == 'text/html' else None
+        if self.must_be_downloaded(resp):
             processor = get_processor(resp, text, self, soup) or GenericProcessor(resp, self)
             processor.process(text, soup)
-            self.crawler.results.put(processor)
             self.flags.update(processor.flags)
+        if self.maybe_directory():
+            self.crawler.results.put(processor)
         if processor and isinstance(processor, ProcessIndexOfRequest):
             self.crawler.index_of_processors.append(processor)
         else:
@@ -99,6 +100,11 @@ class CrawlerUrl(object):
 
     def maybe_rewrite(self):
         return self.type not in ['asset', 'directory']
+
+    def must_be_downloaded(self, response):
+        """The file must be downloaded to obtain information.
+        """
+        return self.maybe_directory() or (response.headers.get('Content-Type') in ['text/css'])
 
     def maybe_directory(self):
         return self.type not in ['asset', 'document', 'rewrite'] or self.type in ['directory']
