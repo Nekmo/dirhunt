@@ -185,6 +185,18 @@ class ProcessNotFound(ProcessBase):
         return flags
 
 
+class ProcessCssStyleSheet(ProcessBase):
+    name = 'CSS StyleSheet'
+    key_name = 'css'
+
+    def process(self, text, soup=None):
+        pass
+
+    def is_applicable(cls, response, text, crawler_url, soup):
+        return response.headers.get('Content-Type', '').lower().startswith('text/css') and response.status_code < 300 \
+               and soup is not None
+
+
 class ProcessHtmlRequest(ProcessBase):
     name = 'HTML document'
     key_name = 'html'
@@ -339,6 +351,7 @@ def get_processor(response, text, crawler_url, soup):
 PROCESSORS = [
     ProcessRedirect,
     ProcessNotFound,
+    ProcessCssStyleSheet,
     ProcessIndexOfRequest,
     ProcessBlankPageRequest,
     ProcessHtmlRequest,
