@@ -192,6 +192,7 @@ class ProcessCssStyleSheet(ProcessBase):
     def process(self, text, soup=None):
         pass
 
+    @classmethod
     def is_applicable(cls, response, text, crawler_url, soup):
         return response.headers.get('Content-Type', '').lower().startswith('text/css') and response.status_code < 300 \
                and soup is not None
