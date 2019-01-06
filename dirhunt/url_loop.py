@@ -6,6 +6,8 @@ MATCHS_LOOP_NUM = 5
 
 
 def is_url_loop(url, ignore_end=True):
+    if url is None:
+        return
     url = url if isinstance(url, Url) else Url(url)
     directories = list(filter(bool, url.directories))
     directories.reverse()
