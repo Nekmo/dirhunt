@@ -193,8 +193,10 @@ class ProcessCssStyleSheet(ProcessBase):
     def process(self, text, soup=None):
         if sys.version_info > (3,) and isinstance(text, bytes):
             text = text.decode('utf-8')
-        for url in re.findall(': *url\(["\']?(.+?)["\']?\)', text):
-            self.add_url(full_url_address(url, self.crawler_url.url), depth=0, type='asset')
+        urls = [full_url_address(url, self.crawler_url.url) for url in re.findall(': *url\(["\']?(.+?)["\']?\)', text)]
+        for url in urls:
+            self.add_url(url, depth=0, type='asset')
+        return urls
 
     @classmethod
     def is_applicable(cls, response, text, crawler_url, soup):
