@@ -68,10 +68,10 @@ Features
 * Process some html files in search of new directories.
 * 404 error pages and detect **fake 404 errors**.
 * Filter results by **flags**.
-* Analyze results at end. It also **processes date & size** of the Index Pages (NEW!)
-* Get new directories using **robots.txt**, **VirusTotal** & **Google** (NEW!)
-* **Delay** between requests
-* One or multiple **proxies** option. It can also search for **free proxies** (NEW!)
+* Analyze results at end. It also **processes date & size** of the Index Pages. (NEW!)
+* Get new directories using **robots.txt**, **VirusTotal** & **Google**. (NEW!)
+* **Delay** between requests.
+* One or multiple **proxies** option. It can also search for **free proxies**. (NEW!)
 
 
 Install
