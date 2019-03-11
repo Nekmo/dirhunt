@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Package description
+"""Find web directories without bruteforce
 """
 from setuptools import setup, find_packages, __version__ as setuptool_version
 from distutils.version import StrictVersion
