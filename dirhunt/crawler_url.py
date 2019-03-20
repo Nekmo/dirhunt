@@ -122,3 +122,12 @@ class CrawlerUrl(object):
     def close(self):
         self.crawler.processed[self.url.url] = self
         del self.crawler.processing[self.url.url]
+
+    def json(self):
+        return {
+            'flags': self.flags,
+            'depth': self.depth,
+            'url': self.url,
+            'type': self.type,
+            'exists': self.exists,
+        }
