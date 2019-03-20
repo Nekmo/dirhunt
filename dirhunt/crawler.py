@@ -179,3 +179,13 @@ class Crawler(ThreadPoolExecutor):
         self.closing = True
         self.shutdown(False)
         atexit.unregister(_python_exit)
+
+    def json(self):
+        return {
+            'current_processed_count': self.current_processed_count,
+            'domains': self.domains,
+            'index_of_processors': self.index_of_processors,
+            'processing': self.processing,
+            'processed': self.processed,
+            # TODO: self.results ?
+        }
