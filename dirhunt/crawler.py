@@ -163,7 +163,7 @@ class Crawler(ThreadPoolExecutor):
 
     def print_urls_info(self):
         if not self.index_of_processors:
-            self.echo('No interesting files detected ¯\_(ツ)_/¯')
+            self.echo(r'No interesting files detected ¯\_(ツ)_/¯')
             return
         self.echo('━' * get_terminal_size()[0])
         UrlsInfo(self.index_of_processors, self.sessions, self.std, self._max_workers, self.progress_enabled,
