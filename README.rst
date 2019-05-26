@@ -16,7 +16,7 @@
   :target: https://pypi.org/project/dirhunt/
   :alt: Python versions
 
-.. image:: https://img.shields.io/codeclimate/github/Nekmo/dirhunt.svg?style=flat-square
+.. image:: https://img.shields.io/codeclimate/coverage/Nekmo/dirhunt.svg?style=flat-square
   :target: https://codeclimate.com/github/Nekmo/dirhunt
   :alt: Code Climate
 
