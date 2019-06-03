@@ -88,6 +88,12 @@ class ProcessBase(object):
             body += '{}'.format(self.index_file.name)
         return body
 
+    def json(self):
+        return {
+            'status_code': self.status_code,
+            'crawler_url': self.crawler_url.json(),
+        }
+
 
 class Error(ProcessBase):
 
