@@ -8,7 +8,7 @@ import os
 
 import sys
 
-from click import BadOptionUsage
+from click import BadOptionUsage, Path
 
 from dirhunt.crawler import Crawler
 from dirhunt.exceptions import DirHuntError, catch
@@ -125,11 +125,12 @@ def flags_range(flags):
               help='Delay between requests to avoid bans by the server')
 @click.option('--not-allow-redirects', is_flag=True, help='Redirectors will not be followed')
 @click.option('--limit', type=int, default=1000, help='Max number of pages processed to search for directories.')
+@click.option('--to-file', type=Path(writable=True), default=1000, help='Create a report file in JSON.')
 @click.option('--version', is_flag=True, callback=print_version,
               expose_value=False, is_eager=True)
 def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, interesting_files, stdout_flags,
          progress_enabled, timeout, max_depth, not_follow_subdomains, exclude_sources, proxies, delay,
-         not_allow_redirects, limit):
+         not_allow_redirects, limit, to_file):
     """Find web directories without bruteforce
     """
     if exclude_flags and include_flags:
@@ -147,7 +148,8 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
                       interesting_files=interesting_files, std=sys.stdout if sys.stdout.isatty() else sys.stderr,
                       progress_enabled=progress_enabled, timeout=timeout, depth=max_depth,
                       not_follow_subdomains=not_follow_subdomains, exclude_sources=exclude_sources,
-                      not_allow_redirects=not_allow_redirects, proxies=proxies, delay=delay, limit=limit)
+                      not_allow_redirects=not_allow_redirects, proxies=proxies, delay=delay, limit=limit,
+                      to_file=to_file)
     crawler.add_init_urls(*urls)
     try:
         catch_keyboard_interrupt(crawler.print_results, crawler.restart)(set(exclude_flags), set(include_flags))

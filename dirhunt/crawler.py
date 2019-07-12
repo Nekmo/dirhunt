@@ -23,7 +23,7 @@ from dirhunt.url_info import UrlsInfo
 class Crawler(ThreadPoolExecutor):
     def __init__(self, max_workers=None, interesting_extensions=None, interesting_files=None, std=None,
                  progress_enabled=True, timeout=10, depth=3, not_follow_subdomains=False, exclude_sources=(),
-                 not_allow_redirects=False, proxies=None, delay=0, limit=1000):
+                 not_allow_redirects=False, proxies=None, delay=0, limit=1000, to_file=None):
         if not max_workers and not delay:
             max_workers = (multiprocessing.cpu_count() or 1) * 5
         elif not max_workers and delay:
@@ -50,6 +50,7 @@ class Crawler(ThreadPoolExecutor):
         self.not_allow_redirects = not_allow_redirects
         self.limit = limit
         self.current_processed_count = 0
+        self.to_file = to_file
 
     def add_init_urls(self, *urls):
         """Add urls to queue.
