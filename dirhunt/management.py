@@ -158,6 +158,8 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
     crawler.print_urls_info()
     if not sys.stdout.isatty():
         output_urls(crawler, stdout_flags)
+    if to_file:
+        crawler.create_report()
 
 
 def main():

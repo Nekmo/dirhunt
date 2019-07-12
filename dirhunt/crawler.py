@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures.thread import _python_exit
@@ -13,6 +14,7 @@ from dirhunt._compat import queue, Queue
 from dirhunt.cli import random_spinner
 from dirhunt.crawler_url import CrawlerUrl
 from dirhunt.exceptions import EmptyError, RequestError, reraise_with_stack
+from dirhunt.json_report import JsonReportEncoder
 from dirhunt.sessions import Sessions
 from dirhunt.sources import Sources
 from dirhunt.url_info import UrlsInfo
@@ -180,6 +182,9 @@ class Crawler(ThreadPoolExecutor):
         self.closing = True
         self.shutdown(False)
         atexit.unregister(_python_exit)
+
+    def create_report(self):
+        json.dump(self.json(), open(self.to_file, 'w'), cls=JsonReportEncoder, indent=4, sort_keys=True)
 
     def json(self):
         return {
