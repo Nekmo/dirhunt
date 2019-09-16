@@ -184,6 +184,8 @@ class Crawler(ThreadPoolExecutor):
         atexit.unregister(_python_exit)
 
     def create_report(self):
+        """Write to a file a report with current json() state. This file can be read
+        to continue an analysis."""
         json.dump(self.json(), open(self.to_file, 'w'), cls=JsonReportEncoder, indent=4, sort_keys=True)
 
     def json(self):
