@@ -148,7 +148,8 @@ class UrlsInfo(Pool):
     count = 0
     current = 0
 
-    def __init__(self, processors, sessions, std=None, max_workers=None, progress_enabled=True, timeout=10):
+    def __init__(self, processors, sessions, std=None, max_workers=None, progress_enabled=True, timeout=10,
+                 save_info=False):
         super(UrlsInfo, self).__init__(max_workers)
         self.lock = Lock()
         self.processors = processors
@@ -157,6 +158,8 @@ class UrlsInfo(Pool):
         self.spinner = random_spinner()
         self.progress_enabled = progress_enabled
         self.timeout = timeout
+        self.lines = []
+        self.save_info = save_info
 
     def callback(self, url_len, extra_len, file):
         line = None
@@ -168,6 +171,8 @@ class UrlsInfo(Pool):
             self.error_files += 1
         self.lock.acquire()
         self.erase()
+        if self.save_info:
+            self.lines.append(line)
         if line:
             self.echo(line)
         self.print_progress()

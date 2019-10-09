@@ -23,6 +23,8 @@ from dirhunt.url_info import UrlsInfo
 
 
 class Crawler(ThreadPoolExecutor):
+    urls_info = None
+
     def __init__(self, max_workers=None, interesting_extensions=None, interesting_files=None, std=None,
                  progress_enabled=True, timeout=10, depth=3, not_follow_subdomains=False, exclude_sources=(),
                  not_allow_redirects=False, proxies=None, delay=0, limit=1000, to_file=None):
@@ -169,8 +171,8 @@ class Crawler(ThreadPoolExecutor):
             self.echo(r'No interesting files detected ¯\_(ツ)_/¯')
             return
         self.echo('━' * get_terminal_size()[0])
-        UrlsInfo(self.index_of_processors, self.sessions, self.std, self._max_workers, self.progress_enabled,
-                 self.timeout).start()
+        self.urls_info = UrlsInfo(self.index_of_processors, self.sessions, self.std, self._max_workers,
+                                  self.progress_enabled, self.timeout, bool(self.to_file)).start()
 
     def restart(self):
         try:
@@ -195,5 +197,5 @@ class Crawler(ThreadPoolExecutor):
             'index_of_processors': self.index_of_processors,
             'processing': self.processing,
             'processed': self.processed,
-            # TODO: self.results ?
+            # TODO: self.urls_info.lines
         }
