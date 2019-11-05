@@ -34,6 +34,13 @@ For versions that are not in Pypi (it is a development version)::
     $ pip install git+https://github.com/Nekmo/dirhunt@<branch>#egg=dirhunt
 
 
+Optional dependencies
+---------------------
+These dependencies are required to use **SOCKS proxies**::
+
+    pip3 install 'urllib3[socks]'
+
+
 From sources
 ------------
 
