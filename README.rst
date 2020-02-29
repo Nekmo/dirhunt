@@ -80,7 +80,7 @@ If you have Pip installed on your system, you can use it to install the latest D
 
     $ sudo pip3 install dirhunt
 
-Python 2.7 & 3.4-3.7 are supported but Python 3.x is recommended. Use ``pip2`` on install for Python2.
+Python 2.7 & 3.5-3.7 are supported but Python 3.x is recommended. Use ``pip2`` on install for Python2.
 
 There are other `installation methods <http://docs.nekmo.org/dirhunt/installation.html>`_ available.
 
