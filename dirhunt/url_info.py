@@ -140,6 +140,21 @@ class UrlInfo(object):
         out += ' {}'.format(self.text[:line_size-2])
         return out
 
+    def json(self):
+        return {
+            'text': self.text,
+            'url': self.url.json(),
+            'data': {
+                'text': self.data['text'],
+                'title': self.data['title'],
+                'body': self.data['body'],
+                'resp': {
+                    'headers': dict(self.data['resp'].headers),
+                    'status_code': self.data['resp'].status_code,
+                },
+            }
+        }
+
 
 class UrlsInfo(Pool):
     url_len = 0
@@ -158,13 +173,14 @@ class UrlsInfo(Pool):
         self.spinner = random_spinner()
         self.progress_enabled = progress_enabled
         self.timeout = timeout
+        self.urls_info = []
         self.lines = []
         self.save_info = save_info
 
     def callback(self, url_len, extra_len, file):
-        line = None
+        url_info = None
         try:
-            line = self._get_url_info(url_len, extra_len, file)
+            url_info = self._get_url_info(file)
         except EmptyError:
             self.empty_files += 1
         except RequestError:
@@ -172,9 +188,10 @@ class UrlsInfo(Pool):
         self.lock.acquire()
         self.erase()
         if self.save_info:
-            self.lines.append(line)
-        if line:
-            self.echo(line)
+            self.urls_info.append(url_info)
+        if url_info:
+            size = get_terminal_size()
+            self.echo(url_info.line(size[0], url_len, extra_len))
         self.print_progress()
         self.lock.release()
 
@@ -194,9 +211,8 @@ class UrlsInfo(Pool):
         self.std.write(str(body))
         self.std.write('\n')
 
-    def _get_url_info(self, url_len, extra_len, file):
-        size = get_terminal_size()
-        return UrlInfo(self.sessions, file, self.timeout).line(size[0], url_len, extra_len)
+    def _get_url_info(self, file):
+        return UrlInfo(self.sessions, file, self.timeout)
 
     def getted_interesting_files(self):
         for processor in self.processors:

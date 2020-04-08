@@ -172,7 +172,8 @@ class Crawler(ThreadPoolExecutor):
             return
         self.echo('━' * get_terminal_size()[0])
         self.urls_info = UrlsInfo(self.index_of_processors, self.sessions, self.std, self._max_workers,
-                                  self.progress_enabled, self.timeout, bool(self.to_file)).start()
+                                  self.progress_enabled, self.timeout, bool(self.to_file))
+        self.urls_info.start()
 
     def restart(self):
         try:
@@ -191,11 +192,13 @@ class Crawler(ThreadPoolExecutor):
         json.dump(self.json(), open(self.to_file, 'w'), cls=JsonReportEncoder, indent=4, sort_keys=True)
 
     def json(self):
+        urls_infos = self.urls_info.urls_info if self.urls_info else []
+        urls_infos = [urls_info.json() for urls_info in urls_infos]
         return {
             'current_processed_count': self.current_processed_count,
             'domains': self.domains,
             'index_of_processors': self.index_of_processors,
             'processing': self.processing,
             'processed': self.processed,
-            # TODO: self.urls_info.lines
+            'urls_infos': urls_infos,
         }
