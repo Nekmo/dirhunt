@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import json
 import multiprocessing
+import os
+from hashlib import sha256
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures.thread import _python_exit
 from threading import Lock, ThreadError
@@ -22,6 +24,9 @@ from dirhunt.url_info import UrlsInfo
 """Flags importance"""
 
 
+resume_dir = os.path.expanduser('~/.cache/dirhunt/')
+
+
 class Crawler(ThreadPoolExecutor):
     urls_info = None
 
@@ -36,6 +41,8 @@ class Crawler(ThreadPoolExecutor):
         self.domains = set()
         self.results = Queue()
         self.index_of_processors = []
+        self.proxies = proxies
+        self.delay = delay
         self.sessions = Sessions(proxies, delay)
         self.processing = {}
         self.processed = {}
@@ -50,6 +57,7 @@ class Crawler(ThreadPoolExecutor):
         self.timeout = timeout
         self.not_follow_subdomains = not_follow_subdomains
         self.depth = depth
+        self.exclude_sources = exclude_sources
         self.sources = Sources(self.add_url, self.add_message, exclude_sources)
         self.not_allow_redirects = not_allow_redirects
         self.limit = limit
@@ -181,15 +189,40 @@ class Crawler(ThreadPoolExecutor):
         except (ThreadError, RuntimeError):
             pass
 
-    def close(self):
+    def options(self):
+        return {
+            'interesting_extensions': self.interesting_extensions,
+            'interesting_files': self.interesting_files,
+            'timeout': self.interesting_files,
+            'depth': self.interesting_files,
+            'not_follow_subdomains': self.not_follow_subdomains,
+            'exclude_sources': self.exclude_sources,
+            'not_allow_redirects': self.not_allow_redirects,
+            'proxies': self.proxies,
+            'delay': self.delay,
+            'limit': self.limit,
+        }
+
+    @property
+    def options_file(self):
+        checksum = sha256(json.dumps(self.options(), sort_keys=True).encode('utf-8')).hexdigest()
+        return os.path.join(resume_dir, checksum)
+
+    def get_resume_file(self):
+        return self.to_file or self.options_file
+
+    def close(self, create_resume=False):
         self.closing = True
         self.shutdown(False)
+        if create_resume:
+            self.create_report(self.get_resume_file())
         atexit.unregister(_python_exit)
 
-    def create_report(self):
+    def create_report(self, to_file):
         """Write to a file a report with current json() state. This file can be read
         to continue an analysis."""
-        json.dump(self.json(), open(self.to_file, 'w'), cls=JsonReportEncoder, indent=4, sort_keys=True)
+        os.makedirs(os.path.dirname(to_file), exist_ok=True)
+        json.dump(self.json(), open(to_file, 'w'), cls=JsonReportEncoder, indent=4, sort_keys=True)
 
     def json(self):
         urls_infos = self.urls_info.urls_info if self.urls_info else []

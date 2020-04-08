@@ -154,12 +154,15 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
     try:
         catch_keyboard_interrupt(crawler.print_results, crawler.restart)(set(exclude_flags), set(include_flags))
     except SystemExit:
-        crawler.close()
+        crawler.close(True)
+        click.echo('Created resume file "{}". Run again using the same parameters to resume.'.format(
+            crawler.get_resume_file())
+        )
     crawler.print_urls_info()
     if not sys.stdout.isatty():
         output_urls(crawler, stdout_flags)
     if to_file:
-        crawler.create_report()
+        crawler.create_report(to_file)
 
 
 def main():
