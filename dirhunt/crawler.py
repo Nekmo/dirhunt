@@ -222,7 +222,17 @@ class Crawler(ThreadPoolExecutor):
         """Write to a file a report with current json() state. This file can be read
         to continue an analysis."""
         os.makedirs(os.path.dirname(to_file), exist_ok=True)
-        json.dump(self.json(), open(to_file, 'w'), cls=JsonReportEncoder, indent=4, sort_keys=True)
+        data = self.json()
+        json.dump(data, open(to_file, 'w'), cls=JsonReportEncoder, indent=4, sort_keys=True)
+
+    def resume(self, path):
+        resume_data = json.load(open(path))
+        for url, data in resume_data['processed'].items():
+            crawler_url = CrawlerUrl(self, url, data['depth'], None, data['exists'], data['type'])
+            crawler_url.flags = set(data['flags'])
+            self.processed[url] = crawler_url
+        for url in resume_data['processing']:
+            self.add_url(url)
 
     def json(self):
         urls_infos = self.urls_info.urls_info if self.urls_info else []
@@ -231,7 +241,7 @@ class Crawler(ThreadPoolExecutor):
             'current_processed_count': self.current_processed_count,
             'domains': self.domains,
             'index_of_processors': self.index_of_processors,
-            'processing': self.processing,
+            'processing': list(self.processing.keys()),
             'processed': self.processed,
             'urls_infos': urls_infos,
         }

@@ -150,6 +150,9 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
                       not_follow_subdomains=not_follow_subdomains, exclude_sources=exclude_sources,
                       not_allow_redirects=not_allow_redirects, proxies=proxies, delay=delay, limit=limit,
                       to_file=to_file)
+    if os.path.exists(crawler.get_resume_file()):
+        click.echo('Resuming the previous program execution...')
+        crawler.resume(crawler.get_resume_file())
     crawler.add_init_urls(*urls)
     try:
         catch_keyboard_interrupt(crawler.print_results, crawler.restart)(set(exclude_flags), set(include_flags))
@@ -163,6 +166,9 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
         output_urls(crawler, stdout_flags)
     if to_file:
         crawler.create_report(to_file)
+    if not to_file and os.path.exists(crawler.get_resume_file()):
+        # The resume file exists. Deleting...
+        os.remove(crawler.get_resume_file())
 
 
 def main():
