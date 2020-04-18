@@ -31,6 +31,20 @@ def confirm_close():
         raise SystemExit
 
 
+def confirm_choices_close(choices, default_choice):
+    choices_descriptions = ['  [{}]{}'.format(choice[0].upper() if default_choice == choice[0] else choice[0],
+                                              choice[1:])
+                            for choice in choices]
+    choices_letters = [choice[0].upper() if default_choice == choice[0] else choice[0] for choice in choices]
+    choice = click.prompt(colored('\n\nAn interrupt signal has been detected. what do you want to do?\n\n' +
+                                  '\n'.join(choices_descriptions) +
+                                  '\nEnter a choice [{}]'.format('/'.join(choices_letters)),
+                                  Fore.LIGHTRED_EX), default=default_choice, show_default=False)
+    if not next(filter(lambda x: x == choice.lower(), map(lambda x: x.lower(), choices_letters)), None):
+        return default_choice
+    return choice.lower()
+
+
 def catch_keyboard_interrupt(fn, restart=None):
     def wrap(*args, **kwargs):
         while True:
@@ -40,6 +54,16 @@ def catch_keyboard_interrupt(fn, restart=None):
                 confirm_close()
             if restart:
                 restart()
+    return wrap
+
+
+def catch_keyboard_interrupt_choices(fn, choices, default_choice):
+    def wrap(*args, **kwargs):
+        while True:
+            try:
+                return fn(*args, **kwargs)
+            except KeyboardInterrupt:
+                return confirm_choices_close(choices, default_choice)
     return wrap
 
 
