@@ -221,6 +221,7 @@ class Crawler(ThreadPoolExecutor):
     def create_report(self, to_file):
         """Write to a file a report with current json() state. This file can be read
         to continue an analysis."""
+        to_file = os.path.abspath(to_file)
         os.makedirs(os.path.dirname(to_file), exist_ok=True)
         data = self.json()
         json.dump(data, open(to_file, 'w'), cls=JsonReportEncoder, indent=4, sort_keys=True)
