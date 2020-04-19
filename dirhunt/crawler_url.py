@@ -39,6 +39,7 @@ class CrawlerUrl(object):
         if url.is_valid() and (not url.path or url.path == '/'):
             self.type = 'directory'
         self.resp = None
+        self.processor_data = None
 
     def add_self_directories(self, exists=None, type_=None):
         for url in self.url.breadcrumb():
@@ -79,6 +80,8 @@ class CrawlerUrl(object):
             self.flags.update(processor.flags)
         if self.maybe_directory():
             self.crawler.results.put(processor)
+        if processor is not None:
+            self.processor_data = processor.json()
         if processor and isinstance(processor, ProcessIndexOfRequest):
             self.crawler.index_of_processors.append(processor)
         else:

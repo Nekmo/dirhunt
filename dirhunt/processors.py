@@ -90,8 +90,10 @@ class ProcessBase(object):
 
     def json(self):
         return {
+            'processor_class': '{}'.format(self.__class__.__name__),
             'status_code': self.status_code,
             'crawler_url': self.crawler_url.json(),
+            'line': str(self),
         }
 
 

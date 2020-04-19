@@ -12,6 +12,7 @@ import atexit
 import humanize as humanize
 from click import get_terminal_size
 
+from dirhunt import processors
 from dirhunt._compat import queue, Queue
 from dirhunt.cli import random_spinner
 from dirhunt.crawler_url import CrawlerUrl
@@ -228,10 +229,15 @@ class Crawler(ThreadPoolExecutor):
 
     def resume(self, path):
         resume_data = json.load(open(path))
-        for url, data in resume_data['processed'].items():
-            crawler_url = CrawlerUrl(self, url, data['depth'], None, data['exists'], data['type'])
-            crawler_url.flags = set(data['flags'])
+        for data in resume_data['processed']:
+            crawler_url_data = data['crawler_url']
+            url = crawler_url_data['url']['address']
+            crawler_url = CrawlerUrl(self, url, crawler_url_data['depth'], None, crawler_url_data['exists'],
+                                     crawler_url_data['type'])
+            crawler_url.flags = set(crawler_url_data['flags'])
+            crawler_url.processor_data = data
             self.processed[url] = crawler_url
+            self.echo(data['line'])
         for url in resume_data['processing']:
             self.add_url(url)
 
@@ -243,6 +249,6 @@ class Crawler(ThreadPoolExecutor):
             'domains': self.domains,
             'index_of_processors': self.index_of_processors,
             'processing': list(self.processing.keys()),
-            'processed': self.processed,
+            'processed': list(filter(bool, [processed.processor_data for processed in self.processed.values()])),
             'urls_infos': urls_infos,
         }
