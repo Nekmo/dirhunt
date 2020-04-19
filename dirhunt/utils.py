@@ -40,7 +40,7 @@ def confirm_choices_close(choices, default_choice):
                                   '\n'.join(choices_descriptions) +
                                   '\nEnter a choice [{}]'.format('/'.join(choices_letters)),
                                   Fore.LIGHTRED_EX), default=default_choice, show_default=False)
-    if not next(filter(lambda x: x == choice.lower(), map(lambda x: x.lower(), choices_letters)), None):
+    if not next(iter(filter(lambda x: x == choice.lower(), map(lambda x: x.lower(), choices_letters))), None):
         return default_choice
     return choice.lower()
 
