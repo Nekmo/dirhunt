@@ -2,6 +2,20 @@
 History
 =======
 
+0.7.0 (2020-04-28)
+------------------
+
+* Report to file (issue #62)
+* Resume scan after close Dirhunt (issue #53)
+* Option to stop analysis and go to results by pressing ctrl+c (issue #61)
+* Process CSS files (issue #84)
+* Catch None in function is_url_loop (issue #66)
+* Exclude sources from tests (issue #67)
+* Missing dependencies for SOCKS support (issue #72)
+* Test Python 3.8 on Travis (issue #74)
+* Remove Python 3.4 support (issue #75)
+
+
 0.6.0 (2018-11-01)
 ------------------
 
