@@ -67,6 +67,150 @@ Results for multiple sites will be displayed together. You can also load urls or
     dirhunt domain1.com ./file/to/domains.txt /home/user/more_domains.txt
 
 
+Resume analysis
+---------------
+Press ``Ctrl + c`` to pause the current scan. For example::
+
+
+    ...
+    [200] https://site.com/path/  (Generic)
+        Index file found: index.php
+    [200] https://site.com/path/foo/  (Generic)
+        Index file found: index.php
+    ◣ Started a second ago
+    ^C
+
+    An interrupt signal has been detected. what do you want to do?
+
+      [A]bort
+      [c]ontinue
+      [r]esults
+    Enter a choice [A/c/r]:
+
+
+You can continue the analysis now (choose option ``c`` ), show the current results (press ``r`` ) or
+abort now. Run the analysis again with the same parameters to pick the analysis where you left off.
+
+.. code-block:: text
+
+    An interrupt signal has been detected. what do you want to do?
+
+      [A]bort
+      [c]ontinue
+      [r]esults
+    Enter a choice [A/c/r]: A
+    Created resume file "/home/nekmo/.cache/dirhunt/ca32...". Run again using the same parameters to resume.
+
+
+Save results to file
+--------------------
+Use the ``--to-file`` option to create a JSON file with the results. The file is created even if you abort the
+current analysis. You can continue an aborted scan using the ``--to-file`` parameter again. The syntax is:
+
+.. code-block::
+
+    $ dirhunt <url> --to-file <json file>
+
+For example::
+
+    $ dirhunt http://domain1/blog/ --to-file report.json
+
+Report example:
+
+.. code-block:: json
+
+    {
+        "version": "0.7.0",
+        "current_processed_count": 10,
+        "domains": [
+            "localhost"
+        ],
+        "index_of_processors": [
+            {
+                "crawler_url": {
+                    "depth": -1,
+                    "exists": true,
+                    "flags": [
+                        "200",
+                        "index_of"
+                    ],
+                    "type": "directory",
+                    "url": {
+                        "address": "http://localhost/foo/img/",
+                        "domain": "localhost"
+                    }
+                },
+                "line": "...",
+                "processor_class": "ProcessIndexOfRequest",
+                "status_code": 200
+            }
+        ],
+        "processed": [
+            {
+                "crawler_url": {
+                    "depth": 3,
+                    "exists": null,
+                    "flags": [
+                        "404",
+                        "not_found"
+                    ],
+                    "type": null,
+                    "url": {
+                        "address": "http://localhost/folder1/",
+                        "domain": "localhost"
+                    }
+                },
+                "line": "...",
+                "processor_class": "ProcessNotFound",
+                "status_code": 404
+            }
+        ],
+        "processing": [
+            "http://localhost/other/"
+        ],
+        "urls_infos": [
+            {
+                "data": {
+                    "body": null,
+                    "resp": {
+                        "headers": {
+                            "Accept-Ranges": "bytes",
+                            "Connection": "keep-alive",
+                            "Content-Length": "24",
+                            "Content-Type": "application/octet-stream",
+                            "Date": "Mon, 27 Apr 2020 22:57:23 GMT",
+                            "ETag": "\"5ea76330-18\"",
+                            "Last-Modified": "Mon, 27 Apr 2020 22:56:48 GMT",
+                            "Server": "nginx/1.16.1"
+                        },
+                        "status_code": 200
+                    },
+                    "text": " This is a hack script!\n",
+                    "title": null
+                },
+                "text": "This is a hack script!",
+                "url": {
+                    "address": {
+                        "address": "http://localhost/foo/img/",
+                        "domain": "localhost"
+                    },
+                    "domain": "localhost"
+                }
+            }
+        ]
+    }
+
+Sections in the report:
+
+* **version**: Dirhunt version of the report. It is only possible to resume an analysis of the same version of Dirhunt.
+* **current_processed_count**: number of urls processed during the analysis.
+* **domains**: domains added to the analysis.
+* **index_of_processors**: urls processed of type *index of*.
+* **processed**: other urls processed during the analysis.
+* **processing**: urls found but not processed. There are only urls to process in case of aborting the analysis.
+* **urls_infos**: info about the detected urls.
+
+
 Interesting extensions
 ----------------------
 By default, Dirhunt will notify you if it find one of these extension file names: ``php``, ``zip``, ``sh``, ``asp``,
