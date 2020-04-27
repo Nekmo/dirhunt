@@ -8,12 +8,11 @@ from concurrent.futures.thread import _python_exit
 from threading import Lock, ThreadError
 import datetime
 
-import atexit
 import humanize as humanize
 from click import get_terminal_size
 
 from dirhunt import processors
-from dirhunt._compat import queue, Queue
+from dirhunt._compat import queue, Queue, unregister
 from dirhunt.cli import random_spinner
 from dirhunt.crawler_url import CrawlerUrl
 from dirhunt.exceptions import EmptyError, RequestError, reraise_with_stack
@@ -217,13 +216,15 @@ class Crawler(ThreadPoolExecutor):
         self.shutdown(False)
         if create_resume:
             self.create_report(self.get_resume_file())
-        atexit.unregister(_python_exit)
+        unregister(_python_exit)
 
     def create_report(self, to_file):
         """Write to a file a report with current json() state. This file can be read
         to continue an analysis."""
         to_file = os.path.abspath(to_file)
-        os.makedirs(os.path.dirname(to_file), exist_ok=True)
+        directory = os.path.dirname(to_file)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
         data = self.json()
         json.dump(data, open(to_file, 'w'), cls=JsonReportEncoder, indent=4, sort_keys=True)
 

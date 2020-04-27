@@ -87,7 +87,7 @@ class TestCrawler(CrawlerTestBase, unittest.TestCase):
         crawler.erase()
 
     @patch('dirhunt.crawler.Crawler.create_report')
-    @patch('dirhunt.crawler.atexit.unregister')
+    @patch('dirhunt.crawler.unregister')
     def test_close(self, m1, m2):
         crawler = self.get_crawler()
         crawler.close(True)
