@@ -12,10 +12,11 @@ import humanize as humanize
 from click import get_terminal_size
 
 from dirhunt import processors
+from dirhunt import __version__
 from dirhunt._compat import queue, Queue, unregister
 from dirhunt.cli import random_spinner
 from dirhunt.crawler_url import CrawlerUrl
-from dirhunt.exceptions import EmptyError, RequestError, reraise_with_stack
+from dirhunt.exceptions import EmptyError, RequestError, reraise_with_stack, IncompatibleVersionError
 from dirhunt.json_report import JsonReportEncoder
 from dirhunt.sessions import Sessions
 from dirhunt.sources import Sources
@@ -230,6 +231,12 @@ class Crawler(ThreadPoolExecutor):
 
     def resume(self, path):
         resume_data = json.load(open(path))
+        file_version = resume_data.get('version')
+        if file_version != __version__:
+            raise IncompatibleVersionError(
+                'Analysis file incompatible with the current version of dirhunt. '
+                'Dirhunt version: {}. File version: {}'.format(__version__, file_version)
+            )
         for data in resume_data['processed']:
             crawler_url_data = data['crawler_url']
             url = crawler_url_data['url']['address']
@@ -246,6 +253,7 @@ class Crawler(ThreadPoolExecutor):
         urls_infos = self.urls_info.urls_info if self.urls_info else []
         urls_infos = [urls_info.json() for urls_info in urls_infos]
         return {
+            'version': __version__,
             'current_processed_count': self.current_processed_count,
             'domains': self.domains,
             'index_of_processors': self.index_of_processors,

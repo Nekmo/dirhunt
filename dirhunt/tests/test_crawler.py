@@ -1,6 +1,7 @@
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 
+from dirhunt import __version__
 from dirhunt.tests._compat import Mock, patch
 from dirhunt.crawler import Crawler
 from dirhunt.crawler_url import CrawlerUrl
@@ -9,6 +10,7 @@ from dirhunt.tests.base import CrawlerTestBase
 
 
 REPORT_DATA = {
+    "version": __version__,
     "processed": [
         {
             "crawler_url": {

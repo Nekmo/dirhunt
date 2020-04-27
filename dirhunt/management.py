@@ -11,7 +11,7 @@ import sys
 from click import BadOptionUsage, Path
 
 from dirhunt.crawler import Crawler
-from dirhunt.exceptions import DirHuntError, catch
+from dirhunt.exceptions import DirHuntError, catch, IncompatibleVersionError
 from dirhunt.output import output_urls
 from dirhunt.sources import SOURCE_CLASSES, get_source_name
 from dirhunt.utils import lrange, catch_keyboard_interrupt, force_url, read_file_lines, value_is_file_path, flat_list, \
@@ -152,7 +152,10 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
                       to_file=to_file)
     if os.path.exists(crawler.get_resume_file()):
         click.echo('Resuming the previous program execution...')
-        crawler.resume(crawler.get_resume_file())
+        try:
+            crawler.resume(crawler.get_resume_file())
+        except IncompatibleVersionError as e:
+            click.echo(e)
     crawler.add_init_urls(*urls)
     while True:
         choice = catch_keyboard_interrupt_choices(crawler.print_results, ['abort', 'continue', 'results'], 'a')\
