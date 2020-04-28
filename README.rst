@@ -28,6 +28,9 @@
      :target: https://requires.io/github/Nekmo/dirhunt/requirements/?branch=master
      :alt: Requirements Status
 
+**DEVELOPMENT BRANCH**: The current branch is a development version. Go to the stable release by clicking
+on `the master branch <https://github.com/Nekmo/dirhunt/tree/master>`_.
+
 
 Dirhunt
 #######
