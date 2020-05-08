@@ -108,7 +108,7 @@ class TestProcessHtmlRequest(CrawlerTestBase, unittest.TestCase):
                 'http://domain.com/path/index.php',
             })
 
-    def test_links(self):
+    def test_href_links(self):
         html = """
         <a href="..">Top</a>
         <a href="dir/">dir</a>
@@ -126,6 +126,17 @@ class TestProcessHtmlRequest(CrawlerTestBase, unittest.TestCase):
                 'http://domain.com/path/foo.php',
                 'http://domain.com/spam/eggs',
             ])
+
+    def test_refresh_links(self):
+        html = """
+        <meta http-equiv="refresh" content="0;URL=/someotherdirectory">
+        """
+        with patch.object(Crawler, 'add_url') as mock_method:
+            process = ProcessHtmlRequest(None, self.get_crawler_url())
+            soup = BeautifulSoup(html, 'html.parser')
+            process.links(soup)
+            args, kwargs = mock_method.call_args_list[0]
+            self.assertEqual(args[0].url, 'http://domain.com/someotherdirectory')
 
     def test_assets(self):
         html = """

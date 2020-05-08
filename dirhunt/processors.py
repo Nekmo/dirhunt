@@ -223,6 +223,10 @@ class ProcessHtmlRequest(ProcessBase):
     def links(self, soup):
         links = [full_url_address(link.attrs.get('href'), self.crawler_url.url)
                  for link in soup.find_all('a')]
+        metas = filter(lambda meta: meta.attrs.get('http-equiv', '').lower() == 'refresh', soup.find_all('meta'))
+        metas = filter(lambda meta: '=' in meta.attrs.get('content', ''), metas)
+        links += list(map(lambda meta: full_url_address(meta.attrs['content'].split('=', 1)[1], self.crawler_url.url),
+                          metas))
         for link in filter(bool, links):
             url = Url(link)
             if not url.is_valid():
