@@ -13,6 +13,7 @@ import requests
 from proxy_db.proxies import ProxiesList
 from proxy_db.models import Proxy
 
+from dirhunt.agents import get_random_user_agent
 
 if sys.version_info < (3, 0):
     ConnectionError = IOError
@@ -82,6 +83,9 @@ class Session(object):
         self.proxy_name = proxy
         self.proxy = normalize_proxy(self.proxy_name, sessions)
         self.session = requests.Session()
+        self.session.headers = {
+            'User-Agent': get_random_user_agent(),
+        }
         adapter = HTTPAdapter(pool_connections=POOL_CONNECTIONS, pool_maxsize=POOL_CONNECTIONS)
         self.session.mount('http://', adapter)
         self.session.mount('https://', adapter)
