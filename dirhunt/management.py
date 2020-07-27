@@ -126,11 +126,12 @@ def flags_range(flags):
 @click.option('--not-allow-redirects', is_flag=True, help='Redirectors will not be followed')
 @click.option('--limit', type=int, default=1000, help='Max number of pages processed to search for directories.')
 @click.option('--to-file', type=Path(writable=True), default=None, help='Create a report file in JSON.')
+@click.option('--user-agent', type=str, default=None, help='User agent to use. By default a random browser.')
 @click.option('--version', is_flag=True, callback=print_version,
               expose_value=False, is_eager=True)
 def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, interesting_files, stdout_flags,
          progress_enabled, timeout, max_depth, not_follow_subdomains, exclude_sources, proxies, delay,
-         not_allow_redirects, limit, to_file):
+         not_allow_redirects, limit, to_file, user_agent):
     """Find web directories without bruteforce
     """
     if exclude_flags and include_flags:
@@ -149,7 +150,7 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
                       progress_enabled=progress_enabled, timeout=timeout, depth=max_depth,
                       not_follow_subdomains=not_follow_subdomains, exclude_sources=exclude_sources,
                       not_allow_redirects=not_allow_redirects, proxies=proxies, delay=delay, limit=limit,
-                      to_file=to_file)
+                      to_file=to_file, user_agent=user_agent)
     if os.path.exists(crawler.get_resume_file()):
         click.echo('Resuming the previous program execution...')
         try:

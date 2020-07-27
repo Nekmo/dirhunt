@@ -78,13 +78,13 @@ class RandomProxies(object):
 
 
 class Session(object):
-    def __init__(self, sessions, proxy):
+    def __init__(self, sessions, proxy, user_agent=None):
         self.sessions = sessions
         self.proxy_name = proxy
         self.proxy = normalize_proxy(self.proxy_name, sessions)
         self.session = requests.Session()
         self.session.headers = {
-            'User-Agent': get_random_user_agent(),
+            'User-Agent': user_agent or get_random_user_agent(),
         }
         adapter = HTTPAdapter(pool_connections=POOL_CONNECTIONS, pool_maxsize=POOL_CONNECTIONS)
         self.session.mount('http://', adapter)
@@ -124,10 +124,11 @@ class Session(object):
 
 
 class Sessions(object):
-    def __init__(self, proxies=None, delay=0):
+    def __init__(self, proxies=None, delay=0, user_agent=None):
         self.availables = Queue()
         self.proxies_lists = RandomProxies()
         self.delay = delay
+        self.user_agent = user_agent
         self.sessions = self.create_sessions(proxies or [None])
         for session in self.sessions:
             self.availables.put(session)
@@ -139,7 +140,7 @@ class Sessions(object):
             self.availables.put(session)
 
     def create_sessions(self, proxies):
-        return [Session(self, proxy) for proxy in proxies]
+        return [Session(self, proxy, self.user_agent) for proxy in proxies]
 
     def get_random_session(self):
         return random.choice(self.sessions)
