@@ -3,7 +3,7 @@
 """Find web directories without bruteforce
 """
 from setuptools import setup, find_packages, __version__ as setuptool_version
-from distutils.version import StrictVersion
+from distutils.version import LooseVersion
 from distutils.util import convert_path
 from fnmatch import fnmatchcase
 import os
@@ -189,7 +189,7 @@ def read_requirements_file(path):
 def read_requirements_files(files):
     reqs = []
     for file in files:
-        if StrictVersion(setuptool_version) >= StrictVersion('20.2'):
+        if LooseVersion(setuptool_version) >= LooseVersion('20.2'):
             reqs.extend([('{};{}'.format(req, file['marker']) if file.get('marker') else req)
                          for req in read_requirements_file(file['name'])])
         elif file.get('include', True):
