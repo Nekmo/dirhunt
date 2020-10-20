@@ -430,6 +430,7 @@ PROCESSORS = [
     ProcessRedirect,
     ProcessNotFound,
     ProcessCssStyleSheet,
+    ProcessJavaScript,
     ProcessIndexOfRequest,
     ProcessBlankPageRequest,
     ProcessHtmlRequest,
