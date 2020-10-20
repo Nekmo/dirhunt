@@ -108,7 +108,9 @@ class TestProcessJavaScript(CrawlerTestBase, unittest.TestCase):
         urls = process.process(self.js, None)
         links = [link.url for link in urls]
         self.assertEqual(links, [
-            'http://example.com', 'api/create.php?user=test', 'index.html',
+            'http://example.com/',
+            'http://domain.com/path/api/create.php',
+            'http://domain.com/path/index.html',
         ])
 
 

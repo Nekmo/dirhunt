@@ -19,32 +19,45 @@ from dirhunt.utils import colored
 
 INDEX_FILES = ['index.php', 'index.html', 'index.html']
 # Regex for JS. Source: https://github.com/GerbenJavado/LinkFinder/blob/master/linkfinder.py
-TEXT_PLAIN_PATH_REGEX = r"""
+TEXT_PLAIN_PATH_STRING_REGEX = r"""
+
   (?:"|')                               # Start newline delimiter
+
   (
     ((?:[a-zA-Z]{1,10}://|//)           # Match a scheme [a-Z]*1-10 or //
     [^"'/]{1,}\.                        # Match a domainname (any character + dot)
     [a-zA-Z]{2,}[^"']{0,})              # The domainextension and/or path
+
     |
+
     ((?:/|\.\./|\./)                    # Start with /,../,./
     [^"'><,;| *()(%%$^/\\\[\]]          # Next character can't be...
     [^"'><,;|()]{1,})                   # Rest of the characters can't be
+
     |
+
     ([a-zA-Z0-9_\-/]{1,}/               # Relative endpoint with /
     [a-zA-Z0-9_\-/]{1,}                 # Resource name
     \.(?:[a-zA-Z]{1,4}|action)          # Rest + extension (length 1-4 or action)
     (?:[\?|#][^"|']{0,}|))              # ? or # mark with parameters
+
     |
+
     ([a-zA-Z0-9_\-/]{1,}/               # REST API (no extension) with /
     [a-zA-Z0-9_\-/]{3,}                 # Proper REST endpoints usually have 3+ chars
     (?:[\?|#][^"|']{0,}|))              # ? or # mark with parameters
+
     |
+
     ([a-zA-Z0-9_\-]{1,}                 # filename
     \.(?:php|asp|aspx|jsp|json|
          action|html|js|txt|xml)        # . + extension
     (?:[\?|#][^"|']{0,}|))              # ? or # mark with parameters
+
   )
+
   (?:"|')                               # End newline delimiter
+
 """
 
 
@@ -246,7 +259,8 @@ class ProcessJavaScript(ProcessBase):
     def process(self, text, soup=None):
         if sys.version_info > (3,) and isinstance(text, bytes):
             text = text.decode('utf-8')
-        urls = [full_url_address(url, self.crawler_url.url) for url in re.findall(': *url\(["\']?(.+?)["\']?\)', text)]
+        urls = [full_url_address(url[0], self.crawler_url.url)
+                for url in re.findall(TEXT_PLAIN_PATH_STRING_REGEX, text, re.VERBOSE)]
         for url in urls:
             self.add_url(url, depth=0, type='asset')
         return urls
