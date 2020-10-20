@@ -107,7 +107,9 @@ class CrawlerUrl(object):
     def must_be_downloaded(self, response):
         """The file must be downloaded to obtain information.
         """
-        return self.maybe_directory() or (response.headers.get('Content-Type') in ['text/css'])
+        return self.maybe_directory() or (response.headers.get('Content-Type') in [
+            'text/css', 'application/javascript'
+        ])
 
     def maybe_directory(self):
         return self.type not in ['asset', 'document', 'rewrite'] or self.type in ['directory']
