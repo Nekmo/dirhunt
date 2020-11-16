@@ -78,7 +78,7 @@ class RandomProxies(object):
 
 
 class Session(object):
-    def __init__(self, sessions, proxy, user_agent=None, cookies={}, headers={}):
+    def __init__(self, sessions, proxy, user_agent=None, cookies=None, headers=None):
         self.sessions = sessions
         self.proxy_name = proxy
         self.proxy = normalize_proxy(self.proxy_name, sessions)
@@ -128,7 +128,7 @@ class Session(object):
 
 
 class Sessions(object):
-    def __init__(self, proxies=None, delay=0, user_agent=None, cookies={}, headers={}):
+    def __init__(self, proxies=None, delay=0, user_agent=None, cookies=None, headers=None):
         self.availables = Queue()
         self.proxies_lists = RandomProxies()
         self.delay = delay
