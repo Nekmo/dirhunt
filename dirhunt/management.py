@@ -134,10 +134,10 @@ def flags_range(flags):
 @click.option('--limit', type=int, default=1000, help='Max number of pages processed to search for directories.')
 @click.option('--to-file', type=Path(writable=True), default=None, help='Create a report file in JSON.')
 @click.option('-u', '--user-agent', type=str, default=None, help='User agent to use. By default a random browser.')
-@click.option('-c', '--cookies', callback=key_value, multiple=True,
-              help='Custom cookies')
-@click.option('-h', '--headers', callback=key_value, multiple=True,
-              help='Custom headers')
+@click.option('-c', '--cookie', 'cookies', callback=key_value, multiple=True,
+              help='Add a cookie to requests in the cookie_name:value format.')
+@click.option('-h', '--header', 'headers', callback=key_value, multiple=True,
+              help='Add a header to requests in the header:value format.')
 @click.option('--version', is_flag=True, callback=print_version,
               expose_value=False, is_eager=True)
 def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, interesting_files, stdout_flags,
