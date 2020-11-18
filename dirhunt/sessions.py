@@ -86,10 +86,8 @@ class Session(object):
         self.session.headers = {
             'User-Agent': user_agent or get_random_user_agent(),
         }
-        if cookies:
-            self.session.cookies.update(cookies)
-        if headers:
-            self.session.headers.update(headers)
+        self.session.cookies.update(cookies or {})
+        self.session.headers.update(headers or {})
         adapter = HTTPAdapter(pool_connections=POOL_CONNECTIONS, pool_maxsize=POOL_CONNECTIONS)
         self.session.mount('http://', adapter)
         self.session.mount('https://', adapter)
@@ -133,8 +131,8 @@ class Sessions(object):
         self.proxies_lists = RandomProxies()
         self.delay = delay
         self.user_agent = user_agent
-        self.cookies = cookies
-        self.headers = headers
+        self.cookies = cookies or {}
+        self.headers = headers or {}
         self.sessions = self.create_sessions(proxies or [None])
         for session in self.sessions:
             self.availables.put(session)
