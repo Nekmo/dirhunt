@@ -8,7 +8,7 @@ import os
 
 import sys
 
-from click import BadOptionUsage, Path
+from click import BadOptionUsage, Path, BadParameter
 
 from dirhunt.crawler import Crawler
 from dirhunt.exceptions import DirHuntError, catch, IncompatibleVersionError
@@ -20,8 +20,8 @@ from colorama import init
 
 init(autoreset=True)
 
-STATUS_CODES = lrange(100, 102+1) + lrange(200, 208+1) + [226] + lrange(300, 308+1) + lrange(400, 418+1) + \
-               lrange(421, 426+1) + [428, 429, 431, 451] + lrange(500, 511+1)
+STATUS_CODES = lrange(100, 102 + 1) + lrange(200, 208 + 1) + [226] + lrange(300, 308 + 1) + lrange(400, 418 + 1) + \
+               lrange(421, 426 + 1) + [428, 429, 431, 451] + lrange(500, 511 + 1)
 INTERESTING_EXTS = ['php', 'zip', 'sh', 'asp', 'csv', 'log']
 INTERESTING_FILES = ['access_log', 'error_log', 'error', 'logs', 'dump']
 STDOUT_FLAGS = ['blank', 'not_found.fake', 'html']
@@ -55,6 +55,13 @@ def comma_separated_files(ctx, param, value):
         else:
             items.append(value)
     return items
+
+
+def key_value(ctx, param, values):
+    items = [item.split(':', 1) for item in values]
+    if any(filter(lambda x: len(x) < 2, items)):
+        raise BadParameter('Expect a value with format key:bar', ctx, param)
+    return {x[0].strip(): x[1].strip() for x in items}
 
 
 def status_code_range(start, end):
@@ -126,12 +133,16 @@ def flags_range(flags):
 @click.option('--not-allow-redirects', is_flag=True, help='Redirectors will not be followed')
 @click.option('--limit', type=int, default=1000, help='Max number of pages processed to search for directories.')
 @click.option('--to-file', type=Path(writable=True), default=None, help='Create a report file in JSON.')
-@click.option('--user-agent', type=str, default=None, help='User agent to use. By default a random browser.')
+@click.option('-u', '--user-agent', type=str, default=None, help='User agent to use. By default a random browser.')
+@click.option('-c', '--cookie', 'cookies', callback=key_value, multiple=True,
+              help='Add a cookie to requests in the cookie_name:value format.')
+@click.option('-h', '--header', 'headers', callback=key_value, multiple=True,
+              help='Add a header to requests in the header:value format.')
 @click.option('--version', is_flag=True, callback=print_version,
               expose_value=False, is_eager=True)
 def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, interesting_files, stdout_flags,
          progress_enabled, timeout, max_depth, not_follow_subdomains, exclude_sources, proxies, delay,
-         not_allow_redirects, limit, to_file, user_agent):
+         not_allow_redirects, limit, to_file, user_agent, cookies, headers):
     """Find web directories without bruteforce
     """
     if exclude_flags and include_flags:
@@ -150,7 +161,7 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
                       progress_enabled=progress_enabled, timeout=timeout, depth=max_depth,
                       not_follow_subdomains=not_follow_subdomains, exclude_sources=exclude_sources,
                       not_allow_redirects=not_allow_redirects, proxies=proxies, delay=delay, limit=limit,
-                      to_file=to_file, user_agent=user_agent)
+                      to_file=to_file, user_agent=user_agent, cookies=cookies, headers=headers)
     if os.path.exists(crawler.get_resume_file()):
         click.echo('Resuming the previous program execution...')
         try:
@@ -159,7 +170,7 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
             click.echo(e)
     crawler.add_init_urls(*urls)
     while True:
-        choice = catch_keyboard_interrupt_choices(crawler.print_results, ['abort', 'continue', 'results'], 'a')\
+        choice = catch_keyboard_interrupt_choices(crawler.print_results, ['abort', 'continue', 'results'], 'a') \
             (set(exclude_flags), set(include_flags))
         if choice == 'a':
             crawler.close(True)
