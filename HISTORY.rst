@@ -2,6 +2,17 @@
 History
 =======
 
+0.8.0 (2020-12-14)
+------------------
+
+* Meta refresh tag not considered (issue #71)
+* Use sphinx-click for docs (issue #80)
+* Random user agent by default (issue #78)
+* Cli parameter to set the user agent (issue #79)
+* Check javascript files for dirhunt (issue #69)
+* custom Header/Cookie (issue #84)
+
+
 0.7.0 (2020-04-28)
 ------------------
 
