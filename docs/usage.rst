@@ -434,6 +434,31 @@ Example for **interesting files** (``-f``)::
 It is necessary to put the complete path to the file, or the relative using ``./``. Each value of the files must be
 separated by newlines.
 
+Custom headers
+--------------
+To add custom HTTP headers to requests you can use the ``--header`` parameter.
+
+.. code::
+
+    $ dirhunt <url> --header <Field name>:<Field value>
+
+This parameter can be used more than once, for example::
+
+    $ dirhunt http://domain1/blog/ --header "Authorization: token foo" --header "X-Server: prod"
+
+
+Custom cookies
+--------------
+To add custom cookies to requests you can use the ``--cookie`` parameter.
+
+.. code::
+
+    $ dirhunt <url> --cookie <Cookie name>:<Cookie value>
+
+This parameter can be used more than once, for example::
+
+    $ dirhunt http://domain1/blog/ --cookie "session: secret" --cookie "user: 123"
+
 
 Progress bar
 ------------
