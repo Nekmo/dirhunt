@@ -1,2 +1,10 @@
 Sphinx
 sphinx-click
+codecov>=1.4.0
+mock
+pyfakefs
+requests-mock
+google
+futures; python_version < '3'
+py2-ipaddress; python_version < '3'
+-rcommon-requirements.txt
