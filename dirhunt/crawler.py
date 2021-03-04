@@ -228,7 +228,8 @@ class Crawler(ThreadPoolExecutor):
         if not os.path.exists(directory):
             os.makedirs(directory)
         data = self.json()
-        json.dump(data, open(to_file, 'w'), cls=JsonReportEncoder, indent=4, sort_keys=True)
+        with open(to_file, 'w') as f:
+            json.dump(data, f, cls=JsonReportEncoder, indent=4, sort_keys=True)
 
     def resume(self, path):
         resume_data = json.load(open(path))
