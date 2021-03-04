@@ -4,9 +4,9 @@
 |
 
 
-.. image:: https://img.shields.io/travis/Nekmo/dirhunt.svg?style=flat-square&maxAge=2592000
-  :target: https://travis-ci.org/Nekmo/dirhunt
-  :alt: Latest Travis CI build status
+.. image:: https://img.shields.io/github/workflow/status/Nekmo/dirhunt/Tests.svg?style=flat-square&maxAge=2592000
+  :target: https://github.com/Nekmo/dirhunt/actions?query=workflow%3ATests
+  :alt: Latest Tests CI build status
 
 .. image:: https://img.shields.io/pypi/v/dirhunt.svg?style=flat-square
   :target: https://pypi.org/project/dirhunt/
