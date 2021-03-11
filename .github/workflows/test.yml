@@ -23,4 +23,5 @@ jobs:
         if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
     - name: Test with coverage
       run: |
-          python -m unittest discover
+          coverage run -m unittest discover
+          codecov
