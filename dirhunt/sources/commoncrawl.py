@@ -35,6 +35,10 @@ class CommonCrawl(Source):
             params={'url': '*.{}'.format(domain), 'output': 'json'},
             stream=True
         )
+        try:
+            response.raise_for_status()
+        except RequestException:
+            return
         for line in filter(bool, response.iter_lines()):
             data = json.loads(line)
             self.add_result(data['url'])
