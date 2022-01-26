@@ -65,11 +65,11 @@ Features
 * 404 error pages and detect **fake 404 errors**.
 * Filter results by **flags**.
 * Analyze results at end. It also **processes date & size** of the Index Pages.
-* Get new directories using **robots.txt**, **VirusTotal** & **Google**.
+* Get new directories using **robots.txt**, **VirusTotal**, **Google** & **CommonCrawl** (NEW!).
 * **Delay** between requests.
 * One or multiple **proxies** option. It can also search for **free proxies**.
-* **Save the results** to a JSON file (NEW!)
-* **Resume** the aborted scans (NEW!)
+* **Save the results** to a JSON file
+* **Resume** the aborted scans
 
 
 Install
