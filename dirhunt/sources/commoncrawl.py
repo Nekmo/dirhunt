@@ -40,5 +40,7 @@ class CommonCrawl(Source):
         except RequestException:
             return
         for line in filter(bool, response.iter_lines()):
+            if isinstance(line, bytes):
+                line = line.decode('utf-8')
             data = json.loads(line)
             self.add_result(data['url'])
