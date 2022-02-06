@@ -162,13 +162,13 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
                       not_follow_subdomains=not_follow_subdomains, exclude_sources=exclude_sources,
                       not_allow_redirects=not_allow_redirects, proxies=proxies, delay=delay, limit=limit,
                       to_file=to_file, user_agent=user_agent, cookies=cookies, headers=headers)
+    crawler.add_init_urls(*urls)
     if os.path.exists(crawler.get_resume_file()):
         click.echo('Resuming the previous program execution...')
         try:
             crawler.resume(crawler.get_resume_file())
         except IncompatibleVersionError as e:
             click.echo(e)
-    crawler.add_init_urls(*urls)
     while True:
         choice = catch_keyboard_interrupt_choices(crawler.print_results, ['abort', 'continue', 'results'], 'a') \
             (set(exclude_flags), set(include_flags))

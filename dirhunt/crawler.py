@@ -65,10 +65,12 @@ class Crawler(ThreadPoolExecutor):
         self.limit = limit
         self.current_processed_count = 0
         self.to_file = to_file
+        self.initial_urls = []
 
     def add_init_urls(self, *urls):
         """Add urls to queue.
         """
+        self.initial_urls.extend(urls)
         for crawler_url in urls:
             if not isinstance(crawler_url, CrawlerUrl):
                 crawler_url = CrawlerUrl(self, crawler_url, depth=self.depth, timeout=self.timeout)
@@ -203,6 +205,7 @@ class Crawler(ThreadPoolExecutor):
             'proxies': self.proxies,
             'delay': self.delay,
             'limit': self.limit,
+            'initial_urls': self.initial_urls,
         }
 
     @property
