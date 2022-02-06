@@ -1,7 +1,15 @@
 import socket
 import ssl
+import sys
 
 from dirhunt.sources.base import Source
+
+
+if sys.version_info < (3,):
+    ConnectionError = socket.error
+
+
+DEFAULT_SSL_PORT = 443
 
 
 def get_url(protocol, domain, path):
@@ -13,9 +21,16 @@ def get_url(protocol, domain, path):
 class CertificateSSL(Source):
     def callback(self, domain):
         ctx = ssl.create_default_context()
-        with ctx.wrap_socket(socket.socket(), server_hostname=domain) as s:
-            s.connect((domain, 443))
-            cert = s.getpeercert()
-            alt_names = cert.get('subjectAltName') or ()
+        cert = None
+        try:
+            with ctx.wrap_socket(socket.socket(), server_hostname=domain) as s:
+                s.connect((domain, DEFAULT_SSL_PORT))
+                cert = s.getpeercert()
+        except (ConnectionError, ssl.SSLError):
+            pass
+        if cert is None:
+            return
+        alt_names = cert.get('subjectAltName') or ()
         for alt_name in alt_names:
-            self.add_result('https://{}/'.format(alt_name[1]))
+            alt_name_domain = alt_name[1]
+            self.add_result('https://{}/'.format(alt_name_domain))
