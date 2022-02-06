@@ -406,6 +406,11 @@ For example::
 
     $ dirhunt http://domain1/blog/ --exclude-sources robots,virustotal
 
+Some engines like google can return errors after many requests. There is no solution to the problem except to wait a
+few minutes or hours. An error in Google can be like::
+
+    [ERROR] Error on Google Source: HTTP Error 429: Too Many Requests
+
 
 Not allow redirectors
 ----------------------
