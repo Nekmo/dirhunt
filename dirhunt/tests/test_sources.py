@@ -1,10 +1,11 @@
+import ssl
 import sys
 import unittest
 
 import requests_mock
 
 from dirhunt._compat import URLError
-from dirhunt.sources import Robots, VirusTotal, Google, CommonCrawl
+from dirhunt.sources import Robots, VirusTotal, Google, CommonCrawl, CertificateSSL
 from dirhunt.sources.commoncrawl import COMMONCRAWL_URL
 from dirhunt.sources.google import STOP_AFTER
 from dirhunt.sources.robots import DirhuntRobotFileParser
@@ -147,3 +148,29 @@ class TestCommonCrawl(unittest.TestCase):
         common_crawl.callback('domain')
 
         m2.assert_has_calls([call(COMMONCRAWL_RESULT['url'])])
+
+
+class TestCertificateSSL(unittest.TestCase):
+    @patch('dirhunt.sources.ssl.ssl')
+    def test_callback(self, m):
+        domain = 'foo.com'
+        subdomain = 'sub.foo.com'
+        with patch.object(CertificateSSL, 'add_result') as mock_add_result:
+            m.create_default_context.return_value.wrap_socket.return_value\
+                .__enter__.return_value.getpeercert.return_value = {'subjectAltName': (('DNS', subdomain),)}
+            certificate_ssl = CertificateSSL(lambda x: x, None)
+            certificate_ssl.callback(domain)
+            mock_add_result.assert_called_once_with('https://{}/'.format(subdomain))
+
+    @patch('dirhunt.sources.ssl.ssl.create_default_context', **{
+        'return_value.wrap_socket.side_effect': ssl.SSLError
+    })
+    def test_certificate_error(self, m):
+        subdomain = 'sub.foo.com'
+        with patch.object(CertificateSSL, 'add_result') as mock_add_result:
+            m.create_default_context.return_value.wrap_socket.return_value\
+                .__enter__.return_value.getpeercert.return_value = {'subjectAltName': (('DNS', subdomain),)}
+            certificate_ssl = CertificateSSL(lambda x: x, None)
+            certificate_ssl.callback('foo.com')
+            mock_add_result.assert_not_called()
+
