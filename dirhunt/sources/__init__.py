@@ -3,6 +3,7 @@ from dirhunt.sources.google import Google
 from dirhunt.sources.robots import Robots
 from dirhunt.sources.ssl import CertificateSSL
 from dirhunt.sources.virustotal import VirusTotal
+from dirhunt.sources.wayback import Wayback
 
 SOURCE_CLASSES = [
     Robots,
@@ -10,6 +11,7 @@ SOURCE_CLASSES = [
     Google,
     CommonCrawl,
     CertificateSSL,
+    Wayback,
 ]
 
 
