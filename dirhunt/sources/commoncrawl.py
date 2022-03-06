@@ -7,6 +7,7 @@ from dirhunt.sources.base import Source
 
 
 COMMONCRAWL_URL = 'https://index.commoncrawl.org/collinfo.json'
+TIMEOUT = 10
 
 
 class CommonCrawl(Source):
@@ -14,7 +15,7 @@ class CommonCrawl(Source):
         url = COMMONCRAWL_URL
         session = Sessions().get_session()
         try:
-            response = session.get(url)
+            response = session.get(url, timeout=TIMEOUT)
             response.raise_for_status()
             crawl_indexes = response.json()
         except (RequestException, ValueError, JSONDecodeError):
@@ -33,6 +34,7 @@ class CommonCrawl(Source):
         response = session.get(
             latest_crawl_index,
             params={'url': '*.{}'.format(domain), 'output': 'json'},
+            timeout=TIMEOUT,
             stream=True
         )
         try:
