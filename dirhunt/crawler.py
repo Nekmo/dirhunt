@@ -75,7 +75,7 @@ class Crawler(ThreadPoolExecutor):
             if not isinstance(crawler_url, CrawlerUrl):
                 crawler_url = CrawlerUrl(self, crawler_url, depth=self.depth, timeout=self.timeout)
             self.add_domain(crawler_url.url.only_domain)
-            self.add_url(crawler_url)
+            self.add_url(crawler_url, lock=False)
 
     def in_domains(self, domain):
         if self.not_follow_subdomains and domain not in self.domains:
@@ -98,29 +98,36 @@ class Crawler(ThreadPoolExecutor):
         self.domains.add(domain)
         self.sources.add_domain(domain)
 
-    def add_url(self, crawler_url, force=False):
+    def add_url(self, crawler_url, force=False, lock=True):
         """Add url to queue"""
+        if self.closing:
+            return
         if not isinstance(crawler_url, CrawlerUrl):
             crawler_url = CrawlerUrl(self, crawler_url, depth=self.depth, timeout=self.timeout)
-        self.add_lock.acquire()
+        if lock:
+            self.add_lock.acquire()
         url = crawler_url.url
         if not url.is_valid() or not url.only_domain or not self.in_domains(url.only_domain):
-            self.add_lock.release()
+            if lock:
+                self.add_lock.release()
             return
         if url.url in self.processing or url.url in self.processed:
-            self.add_lock.release()
+            if lock:
+                self.add_lock.release()
             return self.processing.get(url.url) or self.processed.get(url.url)
 
         fn = reraise_with_stack(crawler_url.start)
         if self.closing:
-            self.add_lock.release()
+            if lock:
+                self.add_lock.release()
             return
         if force:
             future = ThreadPoolExecutor(max_workers=1).submit(fn)
         else:
             future = self.submit(fn)
         self.processing[url.url] = future
-        self.add_lock.release()
+        if lock:
+            self.add_lock.release()
         return future
 
     def add_message(self, body):
@@ -173,6 +180,8 @@ class Crawler(ThreadPoolExecutor):
                 if self.current_processed_count >= self.limit and self.limit:
                     # Force shutdown
                     self.closing = True
+                    self.erase()
+                    self.echo('Results limit reached ({}). Finishing...'.format(self.limit))
                     self.shutdown()
                 self.erase()
                 self.print_progress(True)
@@ -252,7 +261,7 @@ class Crawler(ThreadPoolExecutor):
             self.processed[url] = crawler_url
             self.echo(data['line'])
         for url in resume_data['processing']:
-            self.add_url(url)
+            self.add_url(url, lock=False)
 
     def json(self):
         urls_infos = self.urls_info.urls_info if self.urls_info else []
