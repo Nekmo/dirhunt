@@ -26,11 +26,13 @@ class CertificateSSL(Source):
             with ctx.wrap_socket(socket.socket(), server_hostname=domain) as s:
                 s.connect((domain, DEFAULT_SSL_PORT))
                 cert = s.getpeercert()
-        except (ConnectionError, ssl.SSLError):
+        except (ConnectionError, ssl.SSLError, ValueError, socket.error):
             pass
         if cert is None:
             return
         alt_names = cert.get('subjectAltName') or ()
         for alt_name in alt_names:
             alt_name_domain = alt_name[1]
+            if alt_name_domain.startswith('*.'):
+                alt_name_domain = alt_name_domain.replace('.*', '', 1)
             self.add_result('https://{}/'.format(alt_name_domain))
