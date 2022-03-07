@@ -50,14 +50,16 @@ class CrawlerUrl(object):
 
     def start(self):
         from dirhunt.processors import get_processor, GenericProcessor, Error, ProcessIndexOfRequest
-
+        if self.crawler.closing:
+            return self
         session = self.crawler.sessions.get_session()
         try:
             with session.get(self.url.url, stream=True, verify=False, timeout=self.timeout,
                              allow_redirects=False) as resp:
                 self.set_type(resp.headers.get('Content-Type'))
                 self.flags.add(str(resp.status_code))
-
+                if self.crawler.closing:
+                    return self
                 text = ''
                 soup = None
                 processor = None
