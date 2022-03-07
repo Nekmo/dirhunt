@@ -14,7 +14,8 @@ class VirusTotal(Source):
     def callback(self, domain):
         url = VT_URL.format(domain=domain)
         session = Sessions().get_session()
-        html = session.get(url).text
+        with session.get(url) as response:
+            html = response.text
         if ABUSE in html:
             self.add_error(ABUSE_MESSAGE_ERROR.format(url=url))
             return

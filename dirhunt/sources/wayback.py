@@ -18,16 +18,13 @@ class Wayback(Source):
 
     def callback(self, domain):
         session = Sessions().get_session()
-        response = session.get(
-            WAYBACK_URL,
-            params=dict(WAYBACK_PARAMS, url='*.{}'.format(domain)),
-            stream=True
-        )
         try:
-            response.raise_for_status()
+            with session.get(WAYBACK_URL, params=dict(WAYBACK_PARAMS, url='*.{}'.format(domain)),
+                             stream=True, timeout=TIMEOUT) as response:
+                response.raise_for_status()
+                for line in filter(bool, response.iter_lines()):
+                    if isinstance(line, bytes):
+                        line = line.decode(response.encoding or DEFAULT_ENCODING)
+                    self.add_result(line)
         except RequestException:
             return
-        for line in filter(bool, response.iter_lines()):
-            if isinstance(line, bytes):
-                line = line.decode(response.encoding or DEFAULT_ENCODING)
-            self.add_result(line)

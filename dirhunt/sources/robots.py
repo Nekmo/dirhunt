@@ -16,15 +16,17 @@ class DirhuntRobotFileParser(RobotFileParser):
     def read(self):
         """Reads the robots.txt URL and feeds it to the parser."""
         try:
-            r = requests.get(self.url)
+            with requests.get(self.url) as response:
+                status_code = response.status_code
+                text = response.text
         except RequestException:
             pass
         else:
-            if r.status_code in (401, 403):
+            if status_code in (401, 403):
                 self.disallow_all = True
-            elif r.status_code >= 400 and r.status_code < 500:
+            elif status_code >= 400 and status_code < 500:
                 self.allow_all = True
-            self.parse(r.text.splitlines())
+            self.parse(text.splitlines())
 
 
 class Robots(Source):
