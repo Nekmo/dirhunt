@@ -56,7 +56,8 @@ class TestCrawler(CrawlerTestBase, unittest.TestCase):
     @patch('dirhunt.crawler.json.load', return_value=REPORT_DATA)
     @patch('dirhunt.crawler.Crawler.echo', return_value=REPORT_DATA)
     @patch('dirhunt.crawler.Crawler.add_url', return_value=REPORT_DATA)
-    def test_resume(self, m1, m2, m3):
+    @patch('builtins.open')
+    def test_resume(self, _, m1, m2, m3):
         crawler = self.get_crawler()
         crawler.resume(crawler.get_resume_file())
         m3.assert_called_once()
