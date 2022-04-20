@@ -1,6 +1,6 @@
 beautifulsoup4
 requests
-click
+click<8
 humanize
 colorama
 requests-mock
