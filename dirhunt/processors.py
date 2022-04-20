@@ -89,7 +89,7 @@ class ProcessBase(object):
             future = self.crawler_url.crawler.add_url(
                 CrawlerUrl(crawler, url, self.crawler_url.depth - 1, self, None, 'document',
                            timeout=self.crawler_url.timeout), True)
-            if self.crawler_url.crawler.closing:
+            if self.crawler_url.crawler.closing or future is None:
                 return
             result = future.result()
             if result.exists:

@@ -59,7 +59,7 @@ class TestCrawler(CrawlerTestBase, unittest.TestCase):
         crawler.resume(crawler.get_resume_file())
         m3.assert_called_once()
         m2.assert_called_once()
-        m1.assert_called_once_with(REPORT_DATA['processing'][0])
+        m1.assert_called_once_with(REPORT_DATA['processing'][0], lock=False)
 
     def test_print_results_limit(self):
         crawler = self.get_crawler(limit=1)

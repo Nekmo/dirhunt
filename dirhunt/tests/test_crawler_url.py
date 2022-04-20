@@ -12,7 +12,7 @@ from dirhunt.tests._compat import patch, Mock
 class TestCrawlerUrl(CrawlerTestBase, unittest.TestCase):
     def test_start(self):
         crawler = self.get_crawler()
-        crawler.closing = True
+        crawler.closing = False
         crawler_url = CrawlerUrl(crawler, self.url)
         crawler.processing[self.url] = crawler_url
         with requests_mock.mock() as m:
@@ -35,9 +35,11 @@ class TestCrawlerUrl(CrawlerTestBase, unittest.TestCase):
     def test_session_read_exception(self):
         crawler = self.get_crawler()
         crawler.sessions = Mock()
-        crawler.sessions.get_session.return_value.get.return_value.status_code = 200
-        crawler.sessions.get_session.return_value.get.return_value.raw.read.side_effect = \
-            requests.exceptions.ConnectTimeout()
+        crawler.sessions.get_session.return_value.get.return_value.__enter__ = Mock(**{
+            'return_value.status_code': 200,
+            'return_value.raw.read.side_effect': requests.exceptions.ConnectTimeout(),
+        })
+        crawler.sessions.get_session.return_value.get.return_value.__exit__ = Mock()
         with patch('dirhunt.crawler_url.CrawlerUrl.close') as m:
             crawler_url = CrawlerUrl(crawler, self.url)
             self.assertEqual(crawler_url.start(), crawler_url)
