@@ -1,6 +1,7 @@
 import unittest
 
 import sys
+import warnings
 
 from dirhunt.exceptions import DirHuntError, catch, reraise_with_stack
 from dirhunt.tests._compat import Mock, patch

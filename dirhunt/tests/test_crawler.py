@@ -1,5 +1,6 @@
 import unittest
 from concurrent.futures import ThreadPoolExecutor
+from unittest.mock import mock_open
 
 from dirhunt import __version__
 from dirhunt.tests._compat import Mock, patch
@@ -45,11 +46,12 @@ class TestCrawler(CrawlerTestBase, unittest.TestCase):
         crawler.print_results()
 
     @patch('dirhunt.crawler.json.dump')
-    def test_create_report(self, m):
+    @patch('builtins.open')
+    def test_create_report(self, _, mock_dump):
         crawler = self.get_crawler()
         crawler.results.put(GenericProcessor(None, CrawlerUrl(crawler, self.url)))
         crawler.create_report(crawler.get_resume_file())
-        m.assert_called_once()
+        mock_dump.assert_called_once()
 
     @patch('dirhunt.crawler.json.load', return_value=REPORT_DATA)
     @patch('dirhunt.crawler.Crawler.echo', return_value=REPORT_DATA)
