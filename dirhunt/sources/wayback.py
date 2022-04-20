@@ -12,6 +12,7 @@ WAYBACK_PARAMS = {
     'limit': '10000'
 }
 DEFAULT_ENCODING = 'utf-8'
+TIMEOUT = 10
 
 
 class Wayback(Source):

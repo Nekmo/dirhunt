@@ -31,12 +31,6 @@ class CommonCrawl(Source):
         if not latest_crawl_index:
             return
         session = Sessions().get_session()
-        response = session.get(
-            latest_crawl_index,
-            params={'url': '*.{}'.format(domain), 'output': 'json'},
-            timeout=TIMEOUT,
-            stream=True
-        )
         try:
             with session.get(latest_crawl_index, params={'url': '*.{}'.format(domain), 'output': 'json'},
                              timeout=TIMEOUT, stream=True) as response:
