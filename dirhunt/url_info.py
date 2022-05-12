@@ -54,11 +54,9 @@ class UrlInfo(object):
     def get_data(self):
         session = self.sessions.get_session()
         try:
-            resp = session.get(self.url.url, stream=True, verify=False, timeout=self.timeout, allow_redirects=False)
-        except RequestException:
-            raise RequestError
-        try:
-            text = resp.raw.read(MAX_RESPONSE_SIZE, decode_content=True)
+            with session.get(self.url.url, stream=True, verify=False, timeout=self.timeout,
+                             allow_redirects=False) as resp:
+                text = resp.raw.read(MAX_RESPONSE_SIZE, decode_content=True)
         except (RequestException, ReadTimeoutError, socket.timeout):
             raise RequestError
         try:

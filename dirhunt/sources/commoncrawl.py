@@ -15,9 +15,9 @@ class CommonCrawl(Source):
         url = COMMONCRAWL_URL
         session = Sessions().get_session()
         try:
-            response = session.get(url, timeout=TIMEOUT)
-            response.raise_for_status()
-            crawl_indexes = response.json()
+            with session.get(url, timeout=TIMEOUT) as response:
+                response.raise_for_status()
+                crawl_indexes = response.json()
         except (RequestException, ValueError, JSONDecodeError):
             return
         if not crawl_indexes:
