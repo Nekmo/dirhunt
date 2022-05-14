@@ -1,4 +1,5 @@
 from dirhunt.sources.commoncrawl import CommonCrawl
+from dirhunt.sources.crtsh import CrtSh
 from dirhunt.sources.google import Google
 from dirhunt.sources.robots import Robots
 from dirhunt.sources.ssl import CertificateSSL
@@ -10,6 +11,7 @@ SOURCE_CLASSES = [
     VirusTotal,
     Google,
     CommonCrawl,
+    CrtSh,
     CertificateSSL,
     Wayback,
 ]
