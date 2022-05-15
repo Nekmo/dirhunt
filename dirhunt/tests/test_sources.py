@@ -5,8 +5,9 @@ import unittest
 import requests_mock
 
 from dirhunt._compat import URLError
-from dirhunt.sources import Robots, VirusTotal, Google, CommonCrawl, CertificateSSL
+from dirhunt.sources import Robots, VirusTotal, Google, CommonCrawl, CertificateSSL, CrtSh
 from dirhunt.sources.commoncrawl import COMMONCRAWL_URL
+from dirhunt.sources.crtsh import CRTSH_URL
 from dirhunt.sources.google import STOP_AFTER
 from dirhunt.sources.robots import DirhuntRobotFileParser
 from dirhunt.sources.virustotal import VT_URL, ABUSE
@@ -148,6 +149,22 @@ class TestCommonCrawl(unittest.TestCase):
         common_crawl.callback('domain')
 
         m2.assert_has_calls([call(COMMONCRAWL_RESULT['url'])])
+
+
+class TestCrtSh(unittest.TestCase):
+    @requests_mock.Mocker()
+    @patch.object(CrtSh, 'add_result')
+    def test_callback(self, m, add_result_mock):
+        domain = 'domain.com'
+        m.get(f'{CRTSH_URL}?q={domain}&output=json', json=[
+            {'common_name': 'sub.domain.com'}, {'common_name': 'sub.domain.com'}, {'common_name': 'sub2.domain.com'}
+        ])
+        crtsh = CrtSh(lambda x: x, None)
+        crtsh.callback(domain)
+        add_result_mock.assert_has_calls([
+            call('https://sub.domain.com/'), call('https://sub2.domain.com/')
+        ], any_order=True)
+
 
 
 class TestCertificateSSL(unittest.TestCase):
