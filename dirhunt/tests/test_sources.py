@@ -5,12 +5,13 @@ import unittest
 import requests_mock
 
 from dirhunt._compat import URLError
-from dirhunt.sources import Robots, VirusTotal, Google, CommonCrawl, CertificateSSL, CrtSh
+from dirhunt.sources import Robots, VirusTotal, Google, CommonCrawl, CertificateSSL, CrtSh, Wayback
 from dirhunt.sources.commoncrawl import COMMONCRAWL_URL
 from dirhunt.sources.crtsh import CRTSH_URL
 from dirhunt.sources.google import STOP_AFTER
 from dirhunt.sources.robots import DirhuntRobotFileParser
 from dirhunt.sources.virustotal import VT_URL, ABUSE
+from dirhunt.sources.wayback import WAYBACK_URL, WAYBACK_PARAMS
 from dirhunt.tests._compat import patch, call, urlencode
 
 ROBOTS = """
@@ -191,3 +192,15 @@ class TestCertificateSSL(unittest.TestCase):
             certificate_ssl.callback('foo.com')
             mock_add_result.assert_not_called()
 
+
+class TestWayback(unittest.TestCase):
+    @requests_mock.Mocker()
+    @patch.object(Wayback, 'add_result')
+    def test_callback(self, m, add_result_mock):
+        domain = 'domain.com'
+        subdomains = ['sub.domain.com', 'sub2.domain.com']
+        m.get('{}?{}'.format(WAYBACK_URL, urlencode(dict(WAYBACK_PARAMS, url="*.{}".format(domain)))),
+              text='\n'.join(subdomains))
+        wayback = Wayback(lambda x: x, None)
+        wayback.callback(domain)
+        add_result_mock.assert_has_calls([call(subdomain) for subdomain in subdomains], any_order=True)

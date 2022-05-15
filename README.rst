@@ -66,7 +66,7 @@ Features
 * Filter results by **flags**.
 * Analyze results at end. It also **processes date & size** of the Index Pages.
 * Get new directories using **robots.txt**, **VirusTotal**, **Google**, **CommonCrawl** (NEW!),
-  **SSL Certificate** (NEW!) & **Crt.sh** (NEW!).
+  **SSL Certificate** (NEW!), **Crt.sh** (NEW!) & **Wayback** (NEW!).
 * **Delay** between requests.
 * One or multiple **proxies** option. It can also search for **free proxies**.
 * **Save the results** to a JSON file
