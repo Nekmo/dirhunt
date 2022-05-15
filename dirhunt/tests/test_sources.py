@@ -156,7 +156,7 @@ class TestCrtSh(unittest.TestCase):
     @patch.object(CrtSh, 'add_result')
     def test_callback(self, m, add_result_mock):
         domain = 'domain.com'
-        m.get(f'{CRTSH_URL}?q={domain}&output=json', json=[
+        m.get('{}?q={}&output=json'.format(CRTSH_URL, domain), json=[
             {'common_name': 'sub.domain.com'}, {'common_name': 'sub.domain.com'}, {'common_name': 'sub2.domain.com'}
         ])
         crtsh = CrtSh(lambda x: x, None)
