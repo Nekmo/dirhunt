@@ -2,6 +2,24 @@
 History
 =======
 
+0.8.0 (2022-05-16)
+------------------
+
+* Search paths and subdomains in commoncrawl (issue #88)
+* Error on Google Source: HTTP Error 429: Too Many Requests (issue #97)
+* Parse Content-Type correctly for use beautifulsoup (issue #101)
+* Use initial urls for the resume file (issue #99)
+* SSLCertVerificationError (issue #95)
+* wait for all connection threads before ending program bug (issue #100)
+* Search paths and subdomains in archive.org (issue #91)
+* Search subdomains in crt.sh (issue #89)
+* Hide warning InsecureRequestWarning: Unverified HTTPS request is being made. (issue #98)
+* Use "with" with requests connections (issue #105)
+* Improve performance restore session (issue #104)
+* Search subdomains in https certificate (issue #90)
+* Support Python 3.9 & Python 3.10 (issue #96)
+
+
 0.8.0 (2020-12-14)
 ------------------
 
