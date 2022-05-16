@@ -2,7 +2,7 @@
 History
 =======
 
-0.8.0 (2022-05-16)
+0.9.0 (2022-05-16)
 ------------------
 
 * Search paths and subdomains in commoncrawl (issue #88)
