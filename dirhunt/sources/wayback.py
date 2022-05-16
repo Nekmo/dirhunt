@@ -27,5 +27,6 @@ class Wayback(Source):
                     if isinstance(line, bytes):
                         line = line.decode(response.encoding or DEFAULT_ENCODING)
                     self.add_result(line)
-        except RequestException:
+        except RequestException as e:
+            self.add_error('Error on Wayback source: {}'.format(e))
             return

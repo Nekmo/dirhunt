@@ -18,7 +18,8 @@ class CommonCrawl(Source):
             with session.get(url, timeout=TIMEOUT) as response:
                 response.raise_for_status()
                 crawl_indexes = response.json()
-        except (RequestException, ValueError, JSONDecodeError):
+        except (RequestException, ValueError, JSONDecodeError) as e:
+            self.add_error('Error on CommonCrawl source: {}'.format(e))
             return
         if not crawl_indexes:
             return

@@ -1,5 +1,6 @@
 import string
 from bs4 import BeautifulSoup
+from requests import RequestException
 
 from dirhunt.sessions import Sessions
 from dirhunt.sources.base import Source
@@ -14,8 +15,12 @@ class VirusTotal(Source):
     def callback(self, domain):
         url = VT_URL.format(domain=domain)
         session = Sessions().get_session()
-        with session.get(url) as response:
-            html = response.text
+        try:
+            with session.get(url) as response:
+                html = response.text
+        except RequestException as e:
+            self.add_error('Error on Crt.sh source: {}'.format(e))
+            return
         if ABUSE in html:
             self.add_error(ABUSE_MESSAGE_ERROR.format(url=url))
             return
