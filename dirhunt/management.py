@@ -15,8 +15,8 @@ from dirhunt.exceptions import DirHuntError, catch, IncompatibleVersionError
 from dirhunt.output import output_urls
 from dirhunt.sources import SOURCE_CLASSES, get_source_name
 from dirhunt.utils import lrange, catch_keyboard_interrupt, force_url, read_file_lines, value_is_file_path, flat_list, \
-    multiplier_args, catch_keyboard_interrupt_choices
-from colorama import init
+    multiplier_args, catch_keyboard_interrupt_choices, colored
+from colorama import init, Fore
 
 init(autoreset=True)
 
@@ -173,10 +173,22 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
         choice = catch_keyboard_interrupt_choices(crawler.print_results, ['abort', 'continue', 'results'], 'a') \
             (set(exclude_flags), set(include_flags))
         if choice == 'a':
-            crawler.close(True)
-            click.echo('Created resume file "{}". Run again using the same parameters to resume.'.format(
-                crawler.get_resume_file())
-            )
+            choices = ['Yes', 'No']
+            default_choice = 'n'
+            choices_descriptions = ['  [{}]{}'.format(choice[0].upper() if default_choice == choice[0] else choice[0],choice[1:]) for choice in choices]
+            choices_letters = [choice[0].upper() if default_choice == choice[0] else choice[0] for choice in choices]
+            choice = click.prompt(colored('\n\nDo you want to create the resume file?\n\n' +
+                                  '\n'.join(choices_descriptions) +
+                                  '\nEnter a choice [{}]'.format('/'.join(choices_letters)),
+                                  Fore.LIGHTRED_EX), default=default_choice, show_default=False)
+            create_resume_file = (choice == 'y' and True) or (choice == 'n' and False)
+            if create_resume_file == True:
+                crawler.close(True)
+                click.echo('Created resume file "{}". Run again using the same parameters to resume.'.format(
+                    crawler.get_resume_file())
+                )
+            else:
+                crawler.close(False)
             return
         elif choice == 'c':
             crawler.restart()
