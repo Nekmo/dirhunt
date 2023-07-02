@@ -4,7 +4,7 @@
 |
 
 
-.. image:: https://img.shields.io/github/workflow/status/Nekmo/dirhunt/Tests.svg?style=flat-square&maxAge=2592000
+.. image:: https://img.shields.io/github/actions/workflow/status/Nekmo/dirhunt/test.yml?style=flat-square&maxAge=2592000&branch=develop
   :target: https://github.com/Nekmo/dirhunt/actions?query=workflow%3ATests
   :alt: Latest Tests CI build status
 
@@ -24,9 +24,9 @@
   :target: https://codecov.io/github/Nekmo/dirhunt
   :alt: Test coverage
 
-.. image:: https://img.shields.io/requires/github/Nekmo/dirhunt.svg?style=flat-square
-     :target: https://requires.io/github/Nekmo/dirhunt/requirements/?branch=master
-     :alt: Requirements Status
+.. image:: https://img.shields.io/github/stars/Nekmo/dirhunt?style=flat-square
+     :target: https://github.com/Nekmo/dirhunt
+     :alt: Github stars
 
 
 Dirhunt
