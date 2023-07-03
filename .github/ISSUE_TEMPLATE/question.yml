@@ -19,7 +19,7 @@ body:
       options:
         - label: I have read the documentation and I have not found it.
           required: true
-        - habel: This is a question or something else. This is not a bug report, a feature request or a documentation issue.
+        - label: This is a question or something else. This is not a bug report, a feature request or a documentation issue.
           required: true
         - label: I have searched for this issue before posting it and there isn't a duplicate.
           required: true
