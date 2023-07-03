@@ -12,7 +12,7 @@ body:
     validations:
       required: true
 
-   - type: input
+  - type: input
      id: url
      attributes:
       label: URL
