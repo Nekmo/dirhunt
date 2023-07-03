@@ -1,0 +1,91 @@
+name: Bug Report
+description: Create a report about a bug inside the application.
+body:
+
+  - type: textarea
+    id: reproducing-example
+    attributes:
+      label: Command that causes the issue
+      description: Provide the command that reproduces the problem. If possible, indicate the websites that produces the bug or attach the files.
+      placeholder: |
+        ```bash
+        ~ $ dirhunt http://example.com
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: Explain what you should expect to happen. Include reproduction steps.
+      placeholder: |
+        "I was doing... I was expecting the following to happen..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual behavior
+      description: Explain what actually happens.
+      placeholder: |
+        "This happened instead..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Traceback
+      description: |
+        The traceback (the error), if the problem is a crash.
+      placeholder: |
+        ```
+        Traceback (most recent call last):
+          File "/usr/lib/python3.11/site-packages/dirhunt/scripts/dirhunt", line 6, in <module>
+            catch(hunt)()
+        ```
+
+  - type: textarea
+    id: dirhunt-version
+    attributes:
+      label: Dirhunt version
+      description: The output of `dirhunt --version`.
+      placeholder: |
+        ```
+        You are running Dirhunt v1.0.0 using Python 3.11.3.
+        This is the latest release
+        Installation path: /usr/lib/python3.11/site-packages/dirhunt
+        Current path: /home/user/
+        ```
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system (including distribution name and version)
+      placeholder: Windows 11, macOS 13.4, Ubuntu 23.04...
+    validations:
+      required: true
+
+  - type: textarea
+    id: other-details
+    attributes:
+      label: Other details
+      placeholder: |
+        Additional details and attachments. Is it a server? Network condition?
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Read this carefully, we will close and ignore your issue if you skimmed through this.
+      options:
+        - label: The error is in the project's code, and not in my own.
+          required: true
+        - label: I have searched for this issue before posting it and there isn't an open duplicate.
+          required: true
+        - label: I ran `pip install -U dirhunt` and triggered the bug in the latest version.
+          required: true
