@@ -13,8 +13,8 @@ body:
       required: true
 
   - type: input
-     id: url
-     attributes:
+    id: url
+    attributes:
       label: URL
       description: The URL of the page with the problem.
       placeholder: https://docs.nekmo.org/dirhunt/...
