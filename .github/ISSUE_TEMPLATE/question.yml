@@ -1,6 +1,5 @@
 name: Application question
 description: Questions about Dirhunt, doubts and other issues.
-labels: [question]
 body:
 
   - type: textarea
