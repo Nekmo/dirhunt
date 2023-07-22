@@ -58,7 +58,7 @@ ROOT_INCLUDE = [
     'VERSION',
     'LICENSE.txt'
 ]
-PYTHON_VERSIONS = ['2.7', '3.7-3.11']
+PYTHON_VERSIONS = ['2.7', '3.7', '3.8', '3.9', '3.10', '3.11']
 
 ######## FIN DE LA CONFIGURACIÓN DEL PAQUTE ########
 
@@ -268,30 +268,7 @@ def frange(x, y, jump):
         x += jump
 
 
-python_versions = []
-for version in PYTHON_VERSIONS:
-    if '-' in version:
-        version = version.split('-')
-        if len(version) != 2:
-            raise ValueError('Invalid Python version range: {}'.format('-'.join(version)))
-        version = list(map(float, version))
-        version[1] += 0.1  # Para que frange incluya la última versión
-        python_versions.extend(frange(version[0], version[1], 0.1))
-    elif isinstance(version, int) or version.isdigit():
-        python_versions.append(str(version))
-    else:
-        python_versions.append(float(version))
-python_versions = map(lambda x: x if isinstance(x, str) else '%.1f' % x, python_versions)
-# Eliminar versiones 0-2.3 y 2.8-2.9
-remove_python_versions = map(str, list(frange(0, 2.3, 0.1)) + list(frange(2.8, 3.0, 0.1)))
-python_versions = list(filter(lambda x: x not in remove_python_versions, python_versions))
-for version in range(2, 4):
-    if not len(list(filter(lambda x: int(float(x)) != version, python_versions))):
-        # Sólo se encuentran versiones para la versión <version>
-        python_versions.append('%i :: Only' % version)
-        break
-CLASSIFIERS.extend(['Programming Language :: Python :: %s' % version for version in python_versions])
-
+CLASSIFIERS.extend(['Programming Language :: Python :: %s' % version for version in PYTHON_VERSIONS])
 CLASSIFIERS.extend([
     'Natural Language :: {}'.format(NATURAL_LANGUAGE),
     'Development Status :: {} - {}'.format(STATUS_LEVEL, status_name),
