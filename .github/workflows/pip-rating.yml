@@ -1,0 +1,21 @@
+name: Pip-rating
+
+on:
+  push:
+    branches:
+      - develop
+  schedule:
+    - cron: '0 0 * * SUN'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run pip-rating
+        uses: Nekmo/pip-rating@master
+        with:
+          create_badge: true
+          badge_style: flat-square
+          badge_branch: pip-rating-badge

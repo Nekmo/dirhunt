@@ -3,6 +3,9 @@
 
 |
 
+.. image:: https://raw.githubusercontent.com/Nekmo/dirhunt/pip-rating-badge/pip-rating-badge.svg
+  :target: https://github.com/Nekmo/dirhunt/actions/workflows/pip-rating.yml
+  :alt: pip-rating badge
 
 .. image:: https://img.shields.io/github/actions/workflow/status/Nekmo/dirhunt/test.yml?style=flat-square&maxAge=2592000&branch=develop
   :target: https://github.com/Nekmo/dirhunt/actions?query=workflow%3ATests
