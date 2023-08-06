@@ -16,6 +16,7 @@ jobs:
       - name: Run pip-rating
         uses: Nekmo/pip-rating@master
         with:
+          file: common-requirements.txt
           create_badge: true
           badge_style: flat-square
           badge_branch: pip-rating-badge
