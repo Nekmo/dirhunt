@@ -43,7 +43,7 @@ body:
       placeholder: |
         ```
         Traceback (most recent call last):
-          File "/usr/lib/python3.11/site-packages/dirhunt/scripts/dirhunt", line 6, in <module>
+          File "/usr/lib/python3.12/site-packages/dirhunt/scripts/dirhunt", line 6, in <module>
             catch(hunt)()
         ```
 
@@ -54,7 +54,7 @@ body:
       description: The output of `dirhunt --version`.
       placeholder: |
         ```
-        You are running Dirhunt v1.0.0 using Python 3.11.3.
+        You are running Dirhunt v1.0.0 using Python 3.12.0.
         This is the latest release
         Installation path: /usr/lib/python3.11/site-packages/dirhunt
         Current path: /home/user/
