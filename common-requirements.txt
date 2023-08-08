@@ -1,8 +1,0 @@
-beautifulsoup4
-requests
-click<8
-humanize
-colorama
-requests-mock
-google
-proxy-db
