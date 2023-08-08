@@ -21,11 +21,7 @@ EMAIL = 'contacto@nekmo.com'
 # Información del paquete
 PACKAGE_NAME = 'dirhunt'
 PACKAGE_DOWNLOAD_URL = 'https://github.com/Nekmo/dirhunt/archive/master.zip'  # .tar.gz
-REQUIREMENTS_FILES = [
-    {'name': 'common-requirements.txt'},
-    {'name': 'py2-requirements.txt', 'marker': 'python_version<"3.0"', "include": sys.version_info < (3,0)},
-    {'name': 'py3-requirements.txt', 'marker': 'python_version>"3.0"', "include": sys.version_info > (3,0)},
-]
+REQUIREMENTS_FILE = 'requirements.in'
 URL = 'https://github.com/Nekmo/dirhunt'
 STATUS_LEVEL = 3  # 1:Planning 2:Pre-Alpha 3:Alpha 4:Beta 5:Production/Stable 6:Mature 7:Inactive
 KEYWORDS = ['directories', 'websec', 'pentesting', 'security-audit']  # Palabras clave
@@ -174,28 +170,8 @@ def find_package_data(where='.', package='',
 ##############################################################################
 
 def read_requirements_file(path):
-    if not os.path.lexists(path):
-        return
     with open(path) as f:
-        lines = f.readlines()
-    for line in lines:
-        line = line.split('#', 1)[0]
-        line = line.strip()
-        if line.startswith('-'):
-            continue
-        yield line
-
-
-def read_requirements_files(files):
-    reqs = []
-    for file in files:
-        if LooseVersion(setuptool_version) >= LooseVersion('20.2'):
-            reqs.extend([('{};{}'.format(req, file['marker']) if file.get('marker') else req)
-                         for req in read_requirements_file(file['name'])])
-        elif file.get('include', True):
-            # Retrocompatibility mode for setuptools < 20.2
-            reqs.extend(list(read_requirements_file(file['name'])))
-    return reqs
+        return f.readlines()
 
 
 # Todos los módulos y submódulos a instalar (module, module.submodule, module.submodule2...)
@@ -291,7 +267,7 @@ setup(
     platforms=PLATFORMS,
 
     provides=modules,
-    install_requires=read_requirements_files(REQUIREMENTS_FILES),
+    install_requires=read_requirements_file(REQUIREMENTS_FILE),
 
     packages=packages,
     include_package_data=True,

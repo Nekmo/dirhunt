@@ -1,3 +1,0 @@
--r common-requirements.txt
-futures
-py2-ipaddress

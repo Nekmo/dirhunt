@@ -1,0 +1,8 @@
+-r requirements.in
+Sphinx
+sphinx-click
+codecov>=1.4.0
+mock
+pyfakefs
+requests-mock
+tox
