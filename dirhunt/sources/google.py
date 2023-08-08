@@ -7,12 +7,12 @@ STOP_AFTER = 20
 
 class Google(Source):
     def callback(self, domain):
-        results = search('site:{}'.format(domain), stop=STOP_AFTER)
+        results = search("site:{}".format(domain), stop=STOP_AFTER)
         while True:
             try:
                 url = next(results)
             except (IOError, URLError) as e:
-                self.add_error('Error on Google Source: {}'.format(e))
+                self.add_error("Error on Google Source: {}".format(e))
                 break
             except StopIteration:
                 break

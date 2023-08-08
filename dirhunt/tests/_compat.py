@@ -1,5 +1,3 @@
-
-
 try:
     from mock import patch, Mock, MagicMock, call
 except ImportError:

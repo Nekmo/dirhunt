@@ -8,7 +8,13 @@ import requests_mock
 
 from dirhunt.sessions import Sessions
 from dirhunt.url import Url
-from dirhunt.url_info import UrlInfo, sizeof_fmt, DEFAULT_UNKNOWN_SIZE, UrlsInfo, format_extra
+from dirhunt.url_info import (
+    UrlInfo,
+    sizeof_fmt,
+    DEFAULT_UNKNOWN_SIZE,
+    UrlsInfo,
+    format_extra,
+)
 from dirhunt.tests._compat import patch, Mock
 
 
@@ -17,25 +23,29 @@ class TestSizeofFmt(unittest.TestCase):
         self.assertEqual(sizeof_fmt(None), DEFAULT_UNKNOWN_SIZE)
 
     def test_str(self):
-        self.assertEqual(sizeof_fmt('123'), '123B')
+        self.assertEqual(sizeof_fmt("123"), "123B")
 
     def test_num(self):
-        self.assertEqual(sizeof_fmt(1024 ** 2), '1MiB')
+        self.assertEqual(sizeof_fmt(1024**2), "1MiB")
 
     def test_yib(self):
-        self.assertEqual(sizeof_fmt(1024 ** 8), '1YiB')
+        self.assertEqual(sizeof_fmt(1024**8), "1YiB")
 
 
 class TestFormatExtra(unittest.TestCase):
     def test_without_length(self):
-        self.assertEqual(format_extra({'created_at': 'foo', 'filesize': 'bar'}), '[foo bar]')
+        self.assertEqual(
+            format_extra({"created_at": "foo", "filesize": "bar"}), "[foo bar]"
+        )
 
     def test_with_length(self):
-        self.assertEqual(format_extra({'created_at': 'foo', 'filesize': 'bar'}, 12), '[foo bar   ]')
+        self.assertEqual(
+            format_extra({"created_at": "foo", "filesize": "bar"}, 12), "[foo bar   ]"
+        )
 
 
 class TestUrlInfo(unittest.TestCase):
-    url = 'https://domain.com/foo.php'
+    url = "https://domain.com/foo.php"
 
     def _get_url_info(self):
         return UrlInfo(Sessions(), Url(self.url))
@@ -47,83 +57,83 @@ class TestUrlInfo(unittest.TestCase):
             return url_info.data
 
     def test_get_data_title(self):
-        html = '<html><title>Foo</title></html>'
-        self.assertEqual(self._test_get_data(html).get('title'), 'Foo')
+        html = "<html><title>Foo</title></html>"
+        self.assertEqual(self._test_get_data(html).get("title"), "Foo")
 
     def test_get_data_body(self):
-        body = '<body><h1>Hello world</h1></body>'
-        html = '<html>{}</html>'.format(body)
-        self.assertEqual(self._test_get_data(html).get('body'), body)
+        body = "<body><h1>Hello world</h1></body>"
+        html = "<html>{}</html>".format(body)
+        self.assertEqual(self._test_get_data(html).get("body"), body)
 
     def test_get_data_invalid_html(self):
-        html = 'htm>/<><//tml'
+        html = "htm>/<><//tml"
         data = self._test_get_data(html)
-        self.assertEqual(data.get('text'), html)
-        for key in ['title', 'body']:
+        self.assertEqual(data.get("text"), html)
+        for key in ["title", "body"]:
             self.assertIsNone(data.get(key))
 
     def test_use_multi_line(self):
-        html = '<html><title>Foo</title></html>'
+        html = "<html><title>Foo</title></html>"
         url_info = self._get_url_info()
         self._test_get_data(html, url_info)
-        with patch.object(UrlInfo, 'multi_line') as mock_one_line:
+        with patch.object(UrlInfo, "multi_line") as mock_one_line:
             url_info.line(30, len(self.url), 0)
             mock_one_line.assert_called_once()
 
     def test_use_one_line(self):
-        html = '<html><title>Foo</title></html>'
+        html = "<html><title>Foo</title></html>"
         url_info = self._get_url_info()
         self._test_get_data(html, url_info)
-        with patch.object(UrlInfo, 'one_line') as mock_one_line:
+        with patch.object(UrlInfo, "one_line") as mock_one_line:
             url_info.line(300, len(self.url), 0)
             mock_one_line.assert_called_once()
 
     def test_one_line(self):
-        html = '<html><title>Foo</title></html>'
+        html = "<html><title>Foo</title></html>"
         url_info = self._get_url_info()
         self._test_get_data(html, url_info)
         self.assertIn(self.url, url_info.one_line(200, len(self.url), 0))
 
     def test_multi_line(self):
-        html = '<html><title>Foo</title></html>'
+        html = "<html><title>Foo</title></html>"
         url_info = self._get_url_info()
         self._test_get_data(html, url_info)
         self.assertIn(self.url, url_info.multi_line(30, 0))
 
     def test_one_line_extra(self):
-        html = '<html><title>Foo</title></html>'
+        html = "<html><title>Foo</title></html>"
         url_info = self._get_url_info()
         self._test_get_data(html, url_info)
-        url_info.url.add_extra({'created_at': 'foo'})
-        self.assertIn('[foo ]', url_info.one_line(200, len(self.url), 6))
+        url_info.url.add_extra({"created_at": "foo"})
+        self.assertIn("[foo ]", url_info.one_line(200, len(self.url), 6))
 
     def test_multi_line_extra(self):
-        html = '<html><title>Foo</title></html>'
+        html = "<html><title>Foo</title></html>"
         url_info = self._get_url_info()
         self._test_get_data(html, url_info)
-        url_info.url.add_extra({'created_at': 'foo'})
-        self.assertIn('[foo ]', url_info.multi_line(30, 6))
+        url_info.url.add_extra({"created_at": "foo"})
+        self.assertIn("[foo ]", url_info.multi_line(30, 6))
 
 
 class TestUrlsInfo(unittest.TestCase):
-    url = 'https://domain.com/foo.php'
+    url = "https://domain.com/foo.php"
 
     def test_callback(self):
-        with patch.object(UrlsInfo, '_get_url_info') as m:
+        with patch.object(UrlsInfo, "_get_url_info") as m:
             UrlsInfo([self.url], Sessions()).callback(len(self.url), Url(self.url), 0)
             m.assert_called_once()
 
     def test_start_empty(self):
-        with patch.object(UrlsInfo, 'submit') as m:
+        with patch.object(UrlsInfo, "submit") as m:
             UrlsInfo([], Sessions()).start()
             m.assert_not_called()
 
     def test_erase(self):
-        mstdout = Mock(**{'isatty.return_value': True})
+        mstdout = Mock(**{"isatty.return_value": True})
         UrlsInfo([], Sessions(), std=mstdout).erase()
         mstdout.write.assert_called_once()
 
     def test_echo(self):
-        mstdout = Mock(**{'isatty.return_value': True})
-        UrlsInfo([], Sessions(), std=mstdout).echo('Foo')
+        mstdout = Mock(**{"isatty.return_value": True})
+        UrlsInfo([], Sessions(), std=mstdout).echo("Foo")
         mstdout.write.assert_called()

@@ -11,14 +11,16 @@ from dirhunt.url_loop import is_url_loop
 
 MAX_RESPONSE_SIZE = 1024 * 512
 FLAGS_WEIGHT = {
-    'blank': 4,
-    'not_found.fake': 3,
-    'html': 2,
+    "blank": 4,
+    "not_found.fake": 3,
+    "html": 2,
 }
 
 
 class CrawlerUrl(object):
-    def __init__(self, crawler, url, depth=3, source=None, exists=None, type=None, timeout=10):
+    def __init__(
+        self, crawler, url, depth=3, source=None, exists=None, type=None, timeout=10
+    ):
         """
 
         :type crawler: Crawler
@@ -29,38 +31,58 @@ class CrawlerUrl(object):
         if not isinstance(url, Url):
             url = Url(url)
         if url.is_valid():
-            url.query = ''
-            url.fragment = ''
+            url.query = ""
+            url.fragment = ""
         self.url = url
         self.crawler = crawler
         self.source = source
         self.exists = exists
         self.type = type
         self.timeout = timeout
-        if url.is_valid() and (not url.path or url.path == '/'):
-            self.type = 'directory'
+        if url.is_valid() and (not url.path or url.path == "/"):
+            self.type = "directory"
         self.resp = None
         self.processor_data = None
 
     def add_self_directories(self, exists=None, type_=None):
         for url in self.url.breadcrumb():
-            self.crawler.add_url(CrawlerUrl(self.crawler, url, self.depth - 1, self, exists, type_,
-                                            timeout=self.timeout))
+            self.crawler.add_url(
+                CrawlerUrl(
+                    self.crawler,
+                    url,
+                    self.depth - 1,
+                    self,
+                    exists,
+                    type_,
+                    timeout=self.timeout,
+                )
+            )
             # TODO: si no se puede añadir porque ya se ha añadido, establecer como que ya existe si la orden es exists
 
     def start(self):
-        from dirhunt.processors import get_processor, GenericProcessor, Error, ProcessIndexOfRequest
+        from dirhunt.processors import (
+            get_processor,
+            GenericProcessor,
+            Error,
+            ProcessIndexOfRequest,
+        )
+
         if self.crawler.closing:
             return self
         session = self.crawler.sessions.get_session()
         try:
-            with session.get(self.url.url, stream=True, verify=False, timeout=self.timeout,
-                             allow_redirects=False) as resp:
-                self.set_type(resp.headers.get('Content-Type'))
+            with session.get(
+                self.url.url,
+                stream=True,
+                verify=False,
+                timeout=self.timeout,
+                allow_redirects=False,
+            ) as resp:
+                self.set_type(resp.headers.get("Content-Type"))
                 self.flags.add(str(resp.status_code))
                 if self.crawler.closing:
                     return self
-                text = ''
+                text = ""
                 soup = None
                 processor = None
                 if resp.status_code < 300 and self.must_be_downloaded(resp):
@@ -71,8 +93,14 @@ class CrawlerUrl(object):
                         self.crawler.results.put(Error(self, e))
                         self.close()
                         return self
-                    content_type = cgi.parse_header(resp.headers.get('Content-Type', ''))[0]
-                    soup = BeautifulSoup(text, 'html.parser') if content_type == 'text/html' else None
+                    content_type = cgi.parse_header(
+                        resp.headers.get("Content-Type", "")
+                    )[0]
+                    soup = (
+                        BeautifulSoup(text, "html.parser")
+                        if content_type == "text/html"
+                        else None
+                    )
         except RequestException as e:
             self.crawler.current_processed_count += 1
             self.crawler.results.put(Error(self, e))
@@ -80,7 +108,9 @@ class CrawlerUrl(object):
             return self
 
         if self.must_be_downloaded(resp):
-            processor = get_processor(resp, text, self, soup) or GenericProcessor(resp, self)
+            processor = get_processor(resp, text, self, soup) or GenericProcessor(
+                resp, self
+            )
             processor.process(text, soup)
             self.flags.update(processor.flags)
         if self.maybe_directory():
@@ -94,30 +124,39 @@ class CrawlerUrl(object):
         # TODO: Podemos fijarnos en el processor.index_file. Si existe y es un 200, entonces es que existe.
         if self.exists is None and resp.status_code < 404:
             self.exists = True
-        self.add_self_directories(True if (not self.maybe_rewrite() and self.exists) else None,
-                                  'directory' if not self.maybe_rewrite() else None)
+        self.add_self_directories(
+            True if (not self.maybe_rewrite() and self.exists) else None,
+            "directory" if not self.maybe_rewrite() else None,
+        )
         self.close()
         return self
 
     def set_type(self, content_type):
         from dirhunt.processors import INDEX_FILES
-        if not self.type and not (content_type or '').startswith('text/html'):
-            self.type = 'asset'
-        if not self.type and (content_type or '').startswith('text/html') and self.url.name in INDEX_FILES:
-            self.type = 'document'
+
+        if not self.type and not (content_type or "").startswith("text/html"):
+            self.type = "asset"
+        if (
+            not self.type
+            and (content_type or "").startswith("text/html")
+            and self.url.name in INDEX_FILES
+        ):
+            self.type = "document"
 
     def maybe_rewrite(self):
-        return self.type not in ['asset', 'directory']
+        return self.type not in ["asset", "directory"]
 
     def must_be_downloaded(self, response):
-        """The file must be downloaded to obtain information.
-        """
-        return self.maybe_directory() or (cgi.parse_header(response.headers.get('Content-Type', ''))[0] in [
-            'text/css', 'application/javascript'
-        ])
+        """The file must be downloaded to obtain information."""
+        return self.maybe_directory() or (
+            cgi.parse_header(response.headers.get("Content-Type", ""))[0]
+            in ["text/css", "application/javascript"]
+        )
 
     def maybe_directory(self):
-        return self.type not in ['asset', 'document', 'rewrite'] or self.type in ['directory']
+        return self.type not in ["asset", "document", "rewrite"] or self.type in [
+            "directory"
+        ]
 
     def result(self):
         # Cuando se ejecuta el result() de future, si ya está processed, devolverse a sí mismo
@@ -135,9 +174,9 @@ class CrawlerUrl(object):
 
     def json(self):
         return {
-            'flags': self.flags,
-            'depth': self.depth,
-            'url': self.url,
-            'type': self.type,
-            'exists': self.exists,
+            "flags": self.flags,
+            "depth": self.depth,
+            "url": self.url,
+            "type": self.type,
+            "exists": self.exists,
         }

@@ -22,12 +22,14 @@ def get_source_name(cls):
 
 
 class Sources(object):
-
     def __init__(self, callback, error_callback, excluded_sources=()):
         self.callback = callback
         self.error_callback = error_callback
-        self.sources = [cls(self.callback, error_callback)
-                        for cls in SOURCE_CLASSES if get_source_name(cls) not in excluded_sources]
+        self.sources = [
+            cls(self.callback, error_callback)
+            for cls in SOURCE_CLASSES
+            if get_source_name(cls) not in excluded_sources
+        ]
 
     def add_domain(self, domain):
         for source in self.sources:

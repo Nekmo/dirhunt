@@ -5,7 +5,7 @@ from ipaddress import ip_address
 from dirhunt._compat import urlparse, urljoin
 
 
-ACCEPTED_PROTOCOLS = ['http', 'https']
+ACCEPTED_PROTOCOLS = ["http", "https"]
 
 
 def full_url_address(address, url):
@@ -18,14 +18,14 @@ def full_url_address(address, url):
     """
     if address is None:
         return
-    protocol_match = address.split(':', 1)[0] if ':' in address else ''
-    protocol_match = re.match('^([A-z0-9\\-]+)$', protocol_match)
+    protocol_match = address.split(":", 1)[0] if ":" in address else ""
+    protocol_match = re.match("^([A-z0-9\\-]+)$", protocol_match)
     if protocol_match and protocol_match.group(1) not in ACCEPTED_PROTOCOLS:
         return
     # TODO: mejorar esto. Aceptar otros protocolos  a rechazar
-    if address.startswith('//'):
-        address = address.replace('//', '{}://'.format(url.protocol), 1)
-    if '://' not in address or address.startswith('/'):
+    if address.startswith("//"):
+        address = address.replace("//", "{}://".format(url.protocol), 1)
+    if "://" not in address or address.startswith("/"):
         url = url.copy()
         url.path = address
         return url
@@ -59,12 +59,16 @@ class Url(object):
             address = address.url
         if not self._urlparsed:
             self._urlparsed = urlparse(address)
-            self._urlparsed = list(self._urlparsed) if self._urlparsed.scheme and self._urlparsed.netloc else None
+            self._urlparsed = (
+                list(self._urlparsed)
+                if self._urlparsed.scheme and self._urlparsed.netloc
+                else None
+            )
         return self._urlparsed
 
     @property
     def protocol_domain(self):
-        return '://'.join(self.urlparsed[:2])
+        return "://".join(self.urlparsed[:2])
 
     @property
     def protocol(self):
@@ -72,24 +76,21 @@ class Url(object):
 
     @property
     def is_absolute(self):
-        """Si es sólo un path o una dirección entera
-        """
+        """Si es sólo un path o una dirección entera"""
         return bool(self.urlparsed.netloc) if self.urlparsed else False
 
     @property
     def domain_port(self):
-        """Dominio con el puerto si lo hay
-        """
+        """Dominio con el puerto si lo hay"""
         if not self.urlparsed:
             return
         netloc = self.urlparsed[1]
-        return netloc.split('@', 1)[-1] or None
+        return netloc.split("@", 1)[-1] or None
 
     @property
     def only_domain(self):
-        """Dominio sin el puerto
-        """
-        return (self.domain_port or '').split(':')[0] or None
+        """Dominio sin el puerto"""
+        return (self.domain_port or "").split(":")[0] or None
 
     @property
     def domain(self):
@@ -97,26 +98,26 @@ class Url(object):
 
     @property
     def port(self):
-        if not self.domain_port or ':' not in self.domain_port:
-            return {'http': 80, 'https': 443}.get(self.protocol)
+        if not self.domain_port or ":" not in self.domain_port:
+            return {"http": 80, "https": 443}.get(self.protocol)
         else:
-            return int(self.domain_port.split(':')[-1])
+            return int(self.domain_port.split(":")[-1])
 
     @property
     def directories(self):
-        return self.path.split('/')
+        return self.path.split("/")
 
     @property
     def full_path(self):
-        path = self.urlparsed[2] or '/'
-        path += (';' if self.urlparsed[3] else '') + self.urlparsed[3]
-        path += ('?' if self.urlparsed[4] else '') + self.urlparsed[4]
-        path += ('#' if self.urlparsed[5] else '') + self.urlparsed[5]
+        path = self.urlparsed[2] or "/"
+        path += (";" if self.urlparsed[3] else "") + self.urlparsed[3]
+        path += ("?" if self.urlparsed[4] else "") + self.urlparsed[4]
+        path += ("#" if self.urlparsed[5] else "") + self.urlparsed[5]
         return path
 
     @property
     def path(self):
-        return self.urlparsed[2] if self.urlparsed else ''
+        return self.urlparsed[2] if self.urlparsed else ""
 
     def set_children(self, children):
         self.path = children
@@ -127,24 +128,24 @@ class Url(object):
 
         :type new_value: str
         """
-        for symbol, i in [('#', 5), ('?', 4), (';', 3)]:
+        for symbol, i in [("#", 5), ("?", 4), (";", 3)]:
             if symbol not in new_value:
                 continue
             new_value, self.urlparsed[i] = new_value.split(symbol, 1)
-        new_value = new_value.replace('//', '/')
+        new_value = new_value.replace("//", "/")
         self.urlparsed[2] = urljoin(self.path, new_value)
 
     @property
     def directory_path(self):
-        if self.path.endswith('/'):
+        if self.path.endswith("/"):
             return self.path
         if not self.path:
-            return '/'
+            return "/"
         return os.path.dirname(self.path)[0]
 
     @property
     def url(self):
-        return self.urlparsed[0] + '://' + self.urlparsed[1] + self.full_path
+        return self.urlparsed[0] + "://" + self.urlparsed[1] + self.full_path
 
     @property
     def query(self):
@@ -167,18 +168,18 @@ class Url(object):
 
     @property
     def name(self):
-        path = self.urlparsed[2] or '/'
-        path += (';' if self.urlparsed[3] else '') + self.urlparsed[3]
-        return path.split('/')[-1]
+        path = self.urlparsed[2] or "/"
+        path += (";" if self.urlparsed[3] else "") + self.urlparsed[3]
+        return path.split("/")[-1]
 
     def breadcrumb(self):
-        if self.urlparsed[2] == '/':
-            directories = ['']
+        if self.urlparsed[2] == "/":
+            directories = [""]
         else:
-            directories = self.urlparsed[2].split('/')
+            directories = self.urlparsed[2].split("/")
         for level in range(len(directories)):
             url = self.copy()
-            url.path = '/'.join(directories[:level]) + '/'
+            url.path = "/".join(directories[:level]) + "/"
             yield url
 
     def parent(self):
@@ -191,8 +192,8 @@ class Url(object):
 
     def json(self):
         return {
-            'address': self.address,
-            'domain': self.domain,
+            "address": self.address,
+            "domain": self.domain,
         }
 
     def add_extra(self, data):
@@ -204,4 +205,4 @@ class Url(object):
         return self.url == other
 
     def __str__(self):
-        return '<Url {}>'.format(self.url)
+        return "<Url {}>".format(self.url)

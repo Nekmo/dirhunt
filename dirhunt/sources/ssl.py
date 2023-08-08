@@ -13,9 +13,8 @@ DEFAULT_SSL_PORT = 443
 
 
 def get_url(protocol, domain, path):
-    path = path.lstrip('/')
-    return '{protocol}://{domain}/{path}'.format(**locals())
-
+    path = path.lstrip("/")
+    return "{protocol}://{domain}/{path}".format(**locals())
 
 
 class CertificateSSL(Source):
@@ -30,9 +29,9 @@ class CertificateSSL(Source):
             pass
         if cert is None:
             return
-        alt_names = cert.get('subjectAltName') or ()
+        alt_names = cert.get("subjectAltName") or ()
         for alt_name in alt_names:
             alt_name_domain = alt_name[1]
-            if alt_name_domain.startswith('*.'):
-                alt_name_domain = alt_name_domain.replace('.*', '', 1)
-            self.add_result('https://{}/'.format(alt_name_domain))
+            if alt_name_domain.startswith("*."):
+                alt_name_domain = alt_name_domain.replace(".*", "", 1)
+            self.add_result("https://{}/".format(alt_name_domain))

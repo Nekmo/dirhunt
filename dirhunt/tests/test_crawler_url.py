@@ -16,7 +16,7 @@ class TestCrawlerUrl(CrawlerTestBase, unittest.TestCase):
         crawler_url = CrawlerUrl(crawler, self.url)
         crawler.processing[self.url] = crawler_url
         with requests_mock.mock() as m:
-            m.get(self.url, headers={'Content-Type': 'text/html'})
+            m.get(self.url, headers={"Content-Type": "text/html"})
             crawler_url.start()
         self.assertIn(self.url, crawler.processed)
         self.assertNotIn(self.url, crawler.processing)
@@ -26,7 +26,7 @@ class TestCrawlerUrl(CrawlerTestBase, unittest.TestCase):
     def test_session_exception(self, req_mock):
         req_mock.get(self.url, exc=requests.exceptions.ConnectTimeout)
         crawler = self.get_crawler()
-        with patch('dirhunt.crawler_url.CrawlerUrl.close') as m:
+        with patch("dirhunt.crawler_url.CrawlerUrl.close") as m:
             crawler_url = CrawlerUrl(crawler, self.url)
             self.assertEqual(crawler_url.start(), crawler_url)
             self.assertEqual(crawler.current_processed_count, 1)
@@ -35,12 +35,14 @@ class TestCrawlerUrl(CrawlerTestBase, unittest.TestCase):
     def test_session_read_exception(self):
         crawler = self.get_crawler()
         crawler.sessions = Mock()
-        crawler.sessions.get_session.return_value.get.return_value.__enter__ = Mock(**{
-            'return_value.status_code': 200,
-            'return_value.raw.read.side_effect': requests.exceptions.ConnectTimeout(),
-        })
+        crawler.sessions.get_session.return_value.get.return_value.__enter__ = Mock(
+            **{
+                "return_value.status_code": 200,
+                "return_value.raw.read.side_effect": requests.exceptions.ConnectTimeout(),
+            }
+        )
         crawler.sessions.get_session.return_value.get.return_value.__exit__ = Mock()
-        with patch('dirhunt.crawler_url.CrawlerUrl.close') as m:
+        with patch("dirhunt.crawler_url.CrawlerUrl.close") as m:
             crawler_url = CrawlerUrl(crawler, self.url)
             self.assertEqual(crawler_url.start(), crawler_url)
             self.assertEqual(crawler.current_processed_count, 1)

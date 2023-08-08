@@ -8,8 +8,8 @@ from dirhunt._compat import RobotFileParser, URLError
 
 
 def get_url(protocol, domain, path):
-    path = path.lstrip('/')
-    return '{protocol}://{domain}/{path}'.format(**locals())
+    path = path.lstrip("/")
+    return "{protocol}://{domain}/{path}".format(**locals())
 
 
 class DirhuntRobotFileParser(RobotFileParser):
@@ -30,14 +30,14 @@ class DirhuntRobotFileParser(RobotFileParser):
 
 
 class Robots(Source):
-    def callback(self, domain, protocol='http'):
+    def callback(self, domain, protocol="http"):
         rp = DirhuntRobotFileParser()
-        rp.set_url(get_url(protocol, domain, 'robots.txt'))
+        rp.set_url(get_url(protocol, domain, "robots.txt"))
         try:
             rp.read()
         except (IOError, URLError):
-            if protocol == 'http':
-                self.callback(domain, 'https')
+            if protocol == "http":
+                self.callback(domain, "https")
             return
         entries = list(rp.entries)
         if rp.default_entry:

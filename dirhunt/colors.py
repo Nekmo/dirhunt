@@ -4,7 +4,7 @@ from colorama import Fore
 def status_code_colors(status_code):
     if 100 <= status_code < 200:
         return Fore.WHITE
-    elif  200 == status_code:
+    elif 200 == status_code:
         return Fore.LIGHTGREEN_EX
     elif 200 < status_code < 300:
         return Fore.GREEN
