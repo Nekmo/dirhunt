@@ -10,6 +10,7 @@ import sys
 
 from click import BadOptionUsage, Path, BadParameter
 
+from dirhunt.configuration import ConfigurationDict, Configuration
 from dirhunt.crawler import Crawler
 from dirhunt.exceptions import DirHuntError, catch, IncompatibleVersionError
 from dirhunt.output import output_urls
@@ -180,10 +181,10 @@ def flags_range(flags):
     help="Return only in stdout the urls of these flags",
 )
 @click.option("--progress-enabled/--progress-disabled", default=None)
-@click.option("--timeout", default=10)
+@click.option("--timeout", default=Configuration.timeout)
 @click.option(
     "--max-depth",
-    default=3,
+    default=Configuration.max_depth,
     help="Maximum links to follow without increasing directories depth",
 )
 @click.option(
@@ -205,7 +206,7 @@ def flags_range(flags):
 @click.option(
     "-d",
     "--delay",
-    default=0,
+    default=Configuration.delay,
     type=float,
     help="Delay between requests to avoid bans by the server",
 )
@@ -215,7 +216,7 @@ def flags_range(flags):
 @click.option(
     "--limit",
     type=int,
-    default=1000,
+    default=Configuration.limit,
     help="Max number of pages processed to search for directories.",
 )
 @click.option(
@@ -250,105 +251,15 @@ def flags_range(flags):
 @click.option(
     "--version", is_flag=True, callback=print_version, expose_value=False, is_eager=True
 )
-def hunt(
-    urls,
-    threads,
-    exclude_flags,
-    include_flags,
-    interesting_extensions,
-    interesting_files,
-    interesting_keywords,
-    stdout_flags,
-    progress_enabled,
-    timeout,
-    max_depth,
-    not_follow_subdomains,
-    exclude_sources,
-    proxies,
-    delay,
-    not_allow_redirects,
-    limit,
-    to_file,
-    user_agent,
-    cookies,
-    headers,
-):
+def hunt(**kwargs: ConfigurationDict):
     """Find web directories without bruteforce"""
-    if exclude_flags and include_flags:
-        raise BadOptionUsage(
-            "--exclude-flags and --include-flags are mutually exclusive."
-        )
-    welcome()
-    urls = flat_list(urls)
-    proxies = multiplier_args(proxies)
-    if not urls:
-        click.echo(
-            "•_•) OOPS! Add urls to analyze.\nFor example: dirhunt http://domain/path\n\n"
-            "Need help? Then use dirhunt --help",
-            err=True,
-        )
-        return
-    exclude_flags, include_flags = flags_range(exclude_flags), flags_range(
-        include_flags
-    )
-    progress_enabled = (
-        (sys.stdout.isatty() or sys.stderr.isatty())
-        if progress_enabled is None
-        else progress_enabled
-    )
-    crawler = Crawler(
-        max_workers=threads,
-        interesting_extensions=interesting_extensions,
-        interesting_files=interesting_files,
-        interesting_keywords=interesting_keywords,
-        std=sys.stdout if sys.stdout.isatty() else sys.stderr,
-        progress_enabled=progress_enabled,
-        timeout=timeout,
-        depth=max_depth,
-        not_follow_subdomains=not_follow_subdomains,
-        exclude_sources=exclude_sources,
-        not_allow_redirects=not_allow_redirects,
-        proxies=proxies,
-        delay=delay,
-        limit=limit,
-        to_file=to_file,
-        user_agent=user_agent,
-        cookies=cookies,
-        headers=headers,
-    )
-    crawler.add_init_urls(*urls)
-    if os.path.exists(crawler.get_resume_file()):
-        click.echo("Resuming the previous program execution...")
-        try:
-            crawler.resume(crawler.get_resume_file())
-        except IncompatibleVersionError as e:
-            click.echo(e)
-    while True:
-        choice = catch_keyboard_interrupt_choices(
-            crawler.print_results, ["abort", "continue", "results"], "a"
-        )(set(exclude_flags), set(include_flags))
-        if choice == "a":
-            crawler.close(True)
-            click.echo(
-                'Created resume file "{}". Run again using the same parameters to resume.'.format(
-                    crawler.get_resume_file()
-                )
-            )
-            return
-        elif choice == "c":
-            crawler.restart()
-            continue
-        else:
-            break
-    crawler.print_urls_info()
-    if not sys.stdout.isatty():
-        output_urls(crawler, stdout_flags)
-    if to_file:
-        crawler.create_report(to_file)
-    if not to_file and os.path.exists(crawler.get_resume_file()):
-        # The resume file exists. Deleting...
-        os.remove(crawler.get_resume_file())
+    configuration = Configuration(**kwargs)
+    pass
 
 
 def main():
     catch(hunt)()
+
+
+if __name__ == "__main__":
+    main()
