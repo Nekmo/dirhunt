@@ -7,9 +7,25 @@ from bs4 import BeautifulSoup
 
 from dirhunt.crawler import Crawler
 from dirhunt.processors import ProcessHtmlRequest, ProcessIndexOfRequest, ProcessBlankPageRequest, ProcessNotFound, \
-    ProcessRedirect, Error, ProcessCssStyleSheet, ProcessJavaScript
+    ProcessRedirect, Error, ProcessCssStyleSheet, ProcessJavaScript, ProcessBase
 from dirhunt.tests.base import CrawlerTestBase
 from dirhunt.tests.test_directory_lists import TestCommonDirectoryList
+
+
+class TestProcessBase(CrawlerTestBase, unittest.TestCase):
+    html = "text html"
+
+    def test_search_keywords(self):
+        """Test search keywords in HTML"""
+        with requests_mock.mock() as m:
+            m.register_uri('GET', 'http://test.com', text=self.html, headers={'Content-Type': 'text/html'},
+                           status_code=300)
+            r = requests.get('http://test.com')
+            crawler_url = self.get_crawler_url()
+            crawler_url.crawler.interesting_keywords = ['text']
+            process_base = ProcessBase(r, crawler_url)
+            process_base.search_keywords(self.html)
+            self.assertEqual({'text'}, process_base.keywords_found)
 
 
 class TestError(CrawlerTestBase, unittest.TestCase):
