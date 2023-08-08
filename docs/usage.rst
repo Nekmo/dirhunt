@@ -458,6 +458,11 @@ Example for **interesting files** (``-f``)::
 It is necessary to put the complete path to the file, or the relative using ``./``. Each value of the files must be
 separated by newlines.
 
+This is also possible with urls even if they are not separated by commas. For example::
+
+    $ dirhunt http://domain1/blog/ ./urls1.txt http://domain2/blog/ ./urls2.txt
+
+
 Custom headers
 --------------
 To add custom HTTP headers to requests you can use the ``--header`` parameter.
