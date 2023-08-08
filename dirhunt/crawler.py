@@ -31,8 +31,8 @@ resume_dir = os.path.expanduser('~/.cache/dirhunt/')
 class Crawler(ThreadPoolExecutor):
     urls_info = None
 
-    def __init__(self, max_workers=None, interesting_extensions=None, interesting_files=None, std=None,
-                 progress_enabled=True, timeout=10, depth=3, not_follow_subdomains=False, exclude_sources=(),
+    def __init__(self, max_workers=None, interesting_extensions=None, interesting_files=None, interesting_keywords=None,
+                 std=None, progress_enabled=True, timeout=10, depth=3, not_follow_subdomains=False, exclude_sources=(),
                  not_allow_redirects=False, proxies=None, delay=0, limit=1000, to_file=None, user_agent=None,
                  cookies=None, headers=None):
         if not max_workers and not delay:
@@ -53,6 +53,7 @@ class Crawler(ThreadPoolExecutor):
         self.start_dt = datetime.datetime.now()
         self.interesting_extensions = interesting_extensions or []
         self.interesting_files = interesting_files or []
+        self.interesting_keywords = interesting_keywords or []
         self.closing = False
         self.std = std or None
         self.progress_enabled = progress_enabled
@@ -206,8 +207,9 @@ class Crawler(ThreadPoolExecutor):
         return {
             'interesting_extensions': self.interesting_extensions,
             'interesting_files': self.interesting_files,
-            'timeout': self.interesting_files,
-            'depth': self.interesting_files,
+            'interesting_keywords': self.interesting_keywords,
+            'timeout': self.timeout,
+            'depth': self.depth,
             'not_follow_subdomains': self.not_follow_subdomains,
             'exclude_sources': self.exclude_sources,
             'not_allow_redirects': self.not_allow_redirects,

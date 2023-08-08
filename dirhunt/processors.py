@@ -78,6 +78,7 @@ class ProcessBase(object):
             self.status_code = response.status_code
         # TODO: procesar otras cosas (css, etc.)
         self.crawler_url = crawler_url
+        self.keywords_found = set()
 
     def search_index_files(self):
         if self.crawler_url.type not in ['directory', None]:
@@ -95,6 +96,13 @@ class ProcessBase(object):
             if result.exists:
                 self.index_file = url
                 break
+
+    def search_keywords(self, text):
+        if sys.version_info > (3,) and isinstance(text, bytes):
+            text = text.decode('utf-8')
+        for keyword in self.crawler_url.crawler.interesting_keywords:
+            if keyword in text:
+                self.keywords_found.add(keyword)
 
     @classmethod
     def is_applicable(cls, request, text, crawler_url, soup):
@@ -127,6 +135,9 @@ class ProcessBase(object):
         if self.index_file:
             body += colored('\n    Index file found: ', Fore.BLUE)
             body += '{}'.format(self.index_file.name)
+        if self.keywords_found:
+            body += colored('\n    Keywords found: ', Fore.BLUE)
+            body += ', '.join(self.keywords_found)
         return body
 
     def json(self):
@@ -242,6 +253,7 @@ class ProcessCssStyleSheet(ProcessBase):
     def process(self, text, soup=None):
         if sys.version_info > (3,) and isinstance(text, bytes):
             text = text.decode('utf-8')
+        self.search_keywords(text)
         urls = [full_url_address(url, self.crawler_url.url) for url in re.findall(': *url\(["\']?(.+?)["\']?\)', text)]
         for url in urls:
             self.add_url(url, depth=0, type='asset')
@@ -259,6 +271,7 @@ class ProcessJavaScript(ProcessBase):
     def process(self, text, soup=None):
         if sys.version_info > (3,) and isinstance(text, bytes):
             text = text.decode('utf-8')
+        self.search_keywords(text)
         urls = [full_url_address(url[0], self.crawler_url.url)
                 for url in re.findall(TEXT_PLAIN_PATH_STRING_REGEX, text, re.VERBOSE)]
         for url in urls:
@@ -276,6 +289,7 @@ class ProcessHtmlRequest(ProcessBase):
     key_name = 'html'
 
     def process(self, text, soup=None):
+        self.search_keywords(text)
         self.assets(soup)
         self.links(soup)
         self.search_index_files()
@@ -334,6 +348,7 @@ class ProcessIndexOfRequest(ProcessHtmlRequest):
     index_titles = ('index of', 'directory listing for')
 
     def process(self, text, soup=None):
+        self.search_keywords(text)
         directory_list = get_directory_list(text, self, soup)
         links = [link for link in directory_list.get_links(text, soup) if link.is_valid()]
         for link in filter(lambda x: x.is_valid() and x.url.endswith('/'), links):

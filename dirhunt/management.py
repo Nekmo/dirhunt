@@ -116,6 +116,8 @@ def flags_range(flags):
               help='The files found with these extensions are interesting')
 @click.option('-f', '--interesting-files', callback=comma_separated_files, default=','.join(INTERESTING_FILES),
               help='The files with these names are interesting')
+@click.option('-k', '--interesting-keywords', callback=comma_separated_files, default='',
+              help='The files with these keywords in their content are interesting')
 @click.option('--stdout-flags', callback=comma_separated_files, default=','.join(STDOUT_FLAGS),
               help='Return only in stdout the urls of these flags')
 @click.option('--progress-enabled/--progress-disabled', default=None)
@@ -140,8 +142,8 @@ def flags_range(flags):
               help='Add a header to requests in the header:value format.')
 @click.option('--version', is_flag=True, callback=print_version,
               expose_value=False, is_eager=True)
-def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, interesting_files, stdout_flags,
-         progress_enabled, timeout, max_depth, not_follow_subdomains, exclude_sources, proxies, delay,
+def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, interesting_files, interesting_keywords,
+         stdout_flags, progress_enabled, timeout, max_depth, not_follow_subdomains, exclude_sources, proxies, delay,
          not_allow_redirects, limit, to_file, user_agent, cookies, headers):
     """Find web directories without bruteforce
     """
@@ -157,7 +159,8 @@ def hunt(urls, threads, exclude_flags, include_flags, interesting_extensions, in
     exclude_flags, include_flags = flags_range(exclude_flags), flags_range(include_flags)
     progress_enabled = (sys.stdout.isatty() or sys.stderr.isatty()) if progress_enabled is None else progress_enabled
     crawler = Crawler(max_workers=threads, interesting_extensions=interesting_extensions,
-                      interesting_files=interesting_files, std=sys.stdout if sys.stdout.isatty() else sys.stderr,
+                      interesting_files=interesting_files, interesting_keywords=interesting_keywords,
+                      std=sys.stdout if sys.stdout.isatty() else sys.stderr,
                       progress_enabled=progress_enabled, timeout=timeout, depth=max_depth,
                       not_follow_subdomains=not_follow_subdomains, exclude_sources=exclude_sources,
                       not_allow_redirects=not_allow_redirects, proxies=proxies, delay=delay, limit=limit,
