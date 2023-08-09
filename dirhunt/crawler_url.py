@@ -1,26 +1,44 @@
 # -*- coding: utf-8 -*-
 import cgi
-import socket
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Literal
 
+from aiohttp import ClientResponse
 from aiohttp.web_response import Response
 from bs4 import BeautifulSoup
 from requests import RequestException
-from urllib3.exceptions import ReadTimeoutError
+import charset_normalizer as chardet
 
 from dirhunt.url import Url
 
+RESPONSE_CHUNK = 1024 * 4
 MAX_RESPONSE_SIZE = 1024 * 512
 FLAGS_WEIGHT = {
     "blank": 4,
     "not_found.fake": 3,
     "html": 2,
 }
+URL_TYPES = Literal["index_file",]  # index.php, index.html, index.htm, etc.
+DEFAULT_ENCODING = "utf-8"
 
 
 if TYPE_CHECKING:
     from dirhunt.crawler import Crawler
     from dirhunt.processors import ProcessBase
+
+
+async def get_content(response: "ClientResponse") -> str:
+    try:
+        encoding = response.get_encoding()
+    except RuntimeError:
+        # aiohttp can't detect encoding if the content is not available
+        encoding = None
+    data = b""
+    async for chunk in response.content.iter_chunked(RESPONSE_CHUNK):
+        data += chunk
+        if not chunk or len(data) >= MAX_RESPONSE_SIZE:
+            break
+    encoding = encoding or chardet.detect(data)["encoding"]
+    return data.decode(encoding or DEFAULT_ENCODING, errors="ignore")
 
 
 class CrawlerUrlRequest:
@@ -38,7 +56,6 @@ class CrawlerUrlRequest:
             Error,
         )
 
-        text = ""
         try:
             await self.crawler.domain_semaphore.acquire(self.crawler_url.url.domain)
             pass
@@ -53,31 +70,9 @@ class CrawlerUrlRequest:
                 self.response = response
                 processor = get_processor(self)
                 if processor and processor.requires_content:
-                    encoding = response.get_encoding()
-                    self.content = (
-                        await response.content.read(MAX_RESPONSE_SIZE)
-                    ).decode(encoding, errors="ignore")
+                    self.content = await get_content(response)
                 if processor.has_descendants:
                     processor = get_processor(self)
-                # text = ""
-                # soup = None
-                # processor = None
-                # if response.status_code < 300 and self.must_be_downloaded(response):
-                #     try:
-                #         text = response.raw.read(MAX_RESPONSE_SIZE, decode_content=True)
-                #     except (RequestException, ReadTimeoutError, socket.timeout) as e:
-                #         self.crawler.current_processed_count += 1
-                #         self.crawler.results.put(Error(self, e))
-                #         self.close()
-                #         return self
-                #     content_type = cgi.parse_header(
-                #         response.headers.get("Content-Type", "")
-                #     )[0]
-                #     soup = (
-                #         BeautifulSoup(text, "html.parser")
-                #         if content_type == "text/html"
-                #         else None
-                #     )
         except RequestException as e:
             self.crawler.current_processed_count += 1
             processor = Error(self, e)
@@ -104,16 +99,19 @@ class CrawlerUrl:
         self,
         crawler: "Crawler",
         target_url: str,
-        depth=3,
-        source=None,
-        exists=None,
-        url_type=None,
+        depth: int = 3,
+        source: Optional["CrawlerUrl"] = None,
+        exists: bool = None,
+        url_type: Optional[URL_TYPES] = None,
     ):
         """
 
         :type crawler: Crawler instance
         :type target_url: Uniform Resource Identifier as string
         :type depth: int maximum depth to crawl respect to the initial url
+        :type source: CrawlerUrl instance. Optional.
+        :type exists: bool. If exists is True the path surely exists. Optional.
+        :type url_type: str. Optional.
         """
         self.target_url = target_url
         url = Url(target_url)
@@ -152,7 +150,11 @@ class CrawlerUrl:
 
         crawler_url_request = CrawlerUrlRequest(self)
         processor = await crawler_url_request.retrieve()
-        if processor is not None and not isinstance(processor, GenericProcessor):
+        if (
+            processor is not None
+            and not isinstance(processor, GenericProcessor)
+            and self.url_type not in {"asset", "index_file"}
+        ):
             self.crawler.console.print(processor.get_text())
         # if self.must_be_downloaded(response):
         #     processor = get_processor(response, text, self, soup) or GenericProcessor(
@@ -174,11 +176,10 @@ class CrawlerUrl:
             and crawler_url_request.response.status < 404
         ):
             self.exists = True
-        # TODO: uncomment
-        # await self.add_self_directories(
-        #     True if (not self.maybe_rewrite() and self.exists) else None,
-        #     "directory" if not self.maybe_rewrite() else None,
-        # )
+        await self.add_self_directories(
+            True if (not self.maybe_rewrite() and self.exists) else None,
+            "directory" if not self.maybe_rewrite() else None,
+        )
 
     def set_type(self, content_type):
         from dirhunt.processors import INDEX_FILES

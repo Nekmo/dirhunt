@@ -29,6 +29,7 @@ from dirhunt.exceptions import (
 from dirhunt.json_report import JsonReportEncoder
 from dirhunt.sessions import Sessions, Session
 from dirhunt.sources import Sources
+from dirhunt.url import Url
 from dirhunt.url_info import UrlsInfo
 
 """Flags importance"""
@@ -82,19 +83,24 @@ class Crawler:
     async def start(self):
         """Add urls to process."""
         for url in self.configuration.urls:
-            await self.add_crawler_url(
-                CrawlerUrl(self, url, depth=self.configuration.max_depth)
-            )
+            crawler_url = CrawlerUrl(self, url, depth=self.configuration.max_depth)
+            self.domains.add(crawler_url.url.domain)
+            await self.add_crawler_url(crawler_url)
+
         while self.tasks:
             await asyncio.wait(self.tasks)
+        await self.session.close()
 
     async def add_crawler_url(self, crawler_url: CrawlerUrl) -> Optional[asyncio.Task]:
         """Add crawler_url to tasks"""
-        if crawler_url.url.url in self.crawler_urls:
+        if (
+            crawler_url in self.crawler_urls
+            or crawler_url.url.domain not in self.domains
+        ):
             return
+        self.crawler_urls.add(crawler_url)
         task = self.loop.create_task(crawler_url.retrieve())
         self.tasks.add(task)
-        self.crawler_urls.add(crawler_url)
         task.add_done_callback(self.tasks.discard)
         return task
 

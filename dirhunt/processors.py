@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import re
 import sys
-from typing import List, Type
+from itertools import chain
+from typing import List, Type, Iterator, Optional
 
 from aiohttp.web_response import Response
 from rich.text import Text
@@ -21,7 +22,7 @@ from dirhunt.url import Url, full_url_address
 from dirhunt.url_loop import is_url_loop
 from dirhunt.utils import colored
 
-INDEX_FILES = ["index.php", "index.html", "index.html"]
+INDEX_FILES = ["index.php", "index.html", "index.htm"]
 # Regex for JS. Source: https://github.com/GerbenJavado/LinkFinder/blob/master/linkfinder.py
 TEXT_PLAIN_PATH_STRING_REGEX = r"""
 
@@ -75,7 +76,7 @@ class ProcessBase:
     # to get the correct processor
     has_descendants = False
 
-    def __init__(self, crawler_url_request):
+    def __init__(self, crawler_url_request: "CrawlerUrlRequest"):
         """
         :type crawler_url_request: CrawlerUrlRequest
         """
@@ -86,6 +87,7 @@ class ProcessBase:
         self.keywords_found = set()
 
     async def search_index_files(self):
+        """Search for index files in the directory. For example index.php, index.html, etc."""
         if self.crawler_url.url_type not in ["directory", None]:
             return
         crawler = self.crawler_url.crawler
@@ -96,9 +98,9 @@ class ProcessBase:
                 crawler,
                 url,
                 self.crawler_url.depth - 1,
-                self,
+                self.crawler_url,
                 None,
-                "document",
+                "index_file",
             )
             await self.crawler_url.crawler.add_crawler_url(sub_crawler_url)
             if sub_crawler_url.exists and sub_crawler_url.processor.status_code == 200:
@@ -125,6 +127,7 @@ class ProcessBase:
         return self.crawler_url.maybe_directory()
 
     def get_url_line_text(self):
+        """Return a Text object with the url info in a line."""
         text = Text()
         text.append(
             "[{}]".format(self.status_code), status_code_colors(self.status_code)
@@ -133,7 +136,12 @@ class ProcessBase:
         text.append(" ({})".format(self.name or self.__class__.__name__), "gold1")
         return text
 
-    async def add_url(self, url: Url, depth: int = 3, **kwargs):
+    async def add_url(self, url: Url, depth: int = 3, **kwargs) -> None:
+        """Add a new url to the crawler.
+
+        :param url: Url to add
+        :param depth: Depth of the url
+        """
         if is_url_loop(url):
             return
         await self.crawler_url.crawler.add_crawler_url(
@@ -142,7 +150,8 @@ class ProcessBase:
             )
         )
 
-    def get_text(self):
+    def get_text(self) -> Text:
+        """Return a Text object with the info of the processor."""
         text = self.get_url_line_text()
         if self.index_file:
             text.append("\n    Index file found: ", "blue1")
@@ -152,7 +161,7 @@ class ProcessBase:
             text.append(", ".join(self.keywords_found))
         return text
 
-    def json(self):
+    def json(self) -> dict:
         return {
             "processor_class": "{}".format(self.__class__.__name__),
             "status_code": self.status_code,
@@ -202,67 +211,90 @@ class Message(Error):
 
 
 class GenericProcessor(ProcessBase):
+    """Generic processor. It's used when the processor is not found.
+    It's the last processor to be executed. It's always applicable.
+    """
+
     name = "Generic"
     key_name = "generic"
 
-    async def process(self, text, soup=None):
+    async def process(self, crawler_url_request: "CrawlerUrlRequest") -> None:
+        """Process the request. This method will search for index files
+        in the directory.
+        """
         await self.search_index_files()
 
     @classmethod
-    def is_applicable(cls, crawler_url_request: "CrawlerUrlRequest"):
+    def is_applicable(cls, crawler_url_request: "CrawlerUrlRequest") -> bool:
+        """This processor is always applicable."""
         return True
 
 
 class ProcessRedirect(ProcessBase):
+    """Processor for redirects. It's applicable when the response status code is 3xx."""
+
     name = "Redirect"
     key_name = "redirect"
     redirector = None
 
     def __init__(self, crawler_url_request: "CrawlerUrlRequest"):
+        """Initialize the processor."""
         super(ProcessRedirect, self).__init__(crawler_url_request)
         self.redirector = full_url_address(
             crawler_url_request.response.headers.get("Location"), self.crawler_url.url
         )
 
-    async def process(self, crawler_url_request: "CrawlerUrlRequest"):
+    async def process(self, crawler_url_request: "CrawlerUrlRequest") -> None:
+        """Process the request. This method will add the redirector url to the crawler."""
         if not self.crawler_url.crawler.configuration.not_allow_redirects:
             await self.add_url(self.redirector)
 
     @classmethod
-    def is_applicable(cls, crawler_url_request: "CrawlerUrlRequest"):
+    def is_applicable(cls, crawler_url_request: "CrawlerUrlRequest") -> bool:
+        """This processor is applicable when the response status code is 3xx."""
         return (
             crawler_url_request.response is not None
             and 300 <= crawler_url_request.response.status < 400
+            # if we are searching for index files, we don't want to follow redirects
+            and crawler_url_request.crawler_url.url_type != "index_file"
         )
 
-    def __str__(self):
-        body = super(ProcessRedirect, self).__str__()
-        body += colored("\n    Redirect to: ", Fore.BLUE)
-        body += "{}".format(self.redirector.address)
-        return body
+    def get_text(self) -> Text:
+        """Return a Text object with the info of the processor."""
+        text = super(ProcessRedirect, self).get_text()
+        text.append("\n    Redirect to: ", "blue1")
+        text.append("{}".format(self.redirector))
+        return text
 
 
 class ProcessNotFound(ProcessBase):
+    """Processor for 404 errors. It's applicable when the response status code is 404."""
+
     name = "Not Found"
     key_name = "not_found"
 
-    async def process(self, text, soup=None):
+    async def process(self, crawler_url_request: "CrawlerUrlRequest") -> None:
+        """Process the request. This method will search for index files."""
         await self.search_index_files()
 
     @classmethod
-    def is_applicable(cls, crawler_url_request: "CrawlerUrlRequest"):
+    def is_applicable(cls, crawler_url_request: "CrawlerUrlRequest") -> None:
+        """This processor is applicable when the response status code is 404."""
         return (
             crawler_url_request.response is not None
             and crawler_url_request.response.status == 404
         )
 
-    def __str__(self):
-        body = self.url_line()
+    def get_text(self) -> Text:
+        """Return a Text object with the info of the processor."""
+        text = self.get_url_line_text()
         if self.crawler_url.exists:
-            body += colored(" (FAKE 404)", Fore.YELLOW)
+            text.append(" (FAKE 404)", "gold1")
         if self.index_file:
-            body += "\n    Index file found: {}".format(self.index_file.name)
-        return body
+            text.append(
+                "\n    Index file found: {}".format(self.index_file.name), "blue1"
+            )
+        return text
 
     @property
     def flags(self):
@@ -273,24 +305,27 @@ class ProcessNotFound(ProcessBase):
 
 
 class ProcessCssStyleSheet(ProcessBase):
+    """Processor for CSS stylesheets. It's applicable when the response content type is text/css."""
+
     name = "CSS StyleSheet"
     key_name = "css"
     requires_content = True
 
-    def process(self, text, soup=None):
-        if sys.version_info > (3,) and isinstance(text, bytes):
-            text = text.decode("utf-8")
-        self.search_keywords(text)
+    async def process(self, crawler_url_request: "CrawlerUrlRequest") -> None:
+        """Process the request. This method will search for urls in the CSS stylesheet."""
+        self.search_keywords(crawler_url_request.content)
         urls = [
             full_url_address(url, self.crawler_url.url)
-            for url in re.findall(": *url\([\"']?(.+?)[\"']?\)", text)
+            for url in re.findall(
+                ": *url\([\"']?(.+?)[\"']?\)", crawler_url_request.content
+            )
         ]
         for url in urls:
-            self.add_url(url, depth=0, type="asset")
-        return urls
+            await self.add_url(url, depth=0, url_type="asset")
 
     @classmethod
-    def is_applicable(cls, crawler_url_request: "CrawlerUrlRequest"):
+    def is_applicable(cls, crawler_url_request: "CrawlerUrlRequest") -> bool:
+        """This processor is applicable when the response content type is text/css."""
         return (
             crawler_url_request.response is not None
             and crawler_url_request.response.headers.get("Content-Type", "")
@@ -301,24 +336,27 @@ class ProcessCssStyleSheet(ProcessBase):
 
 
 class ProcessJavaScript(ProcessBase):
+    """Processor for JavaScript files. It's applicable when the response content type is application/javascript."""
+
     name = "JavaScript"
     key_name = "js"
     requires_content = True
 
-    def process(self, text, soup=None):
-        if sys.version_info > (3,) and isinstance(text, bytes):
-            text = text.decode("utf-8")
-        self.search_keywords(text)
+    async def process(self, crawler_url_request: "CrawlerUrlRequest") -> None:
+        """Process the request. This method will search for urls in the JavaScript file."""
+        self.search_keywords(crawler_url_request.content)
         urls = [
             full_url_address(url[0], self.crawler_url.url)
-            for url in re.findall(TEXT_PLAIN_PATH_STRING_REGEX, text, re.VERBOSE)
+            for url in re.findall(
+                TEXT_PLAIN_PATH_STRING_REGEX, crawler_url_request.content, re.VERBOSE
+            )
         ]
         for url in urls:
-            self.add_url(url, depth=0, type="asset")
-        return urls
+            await self.add_url(url, depth=0, url_type="asset")
 
     @classmethod
-    def is_applicable(cls, crawler_url_request: "CrawlerUrlRequest"):
+    def is_applicable(cls, crawler_url_request: "CrawlerUrlRequest") -> bool:
+        """This processor is applicable when the response content type is application/javascript."""
         return (
             crawler_url_request.response is not None
             and crawler_url_request.response.headers.get("Content-Type", "")
@@ -329,18 +367,22 @@ class ProcessJavaScript(ProcessBase):
 
 
 class ProcessHtmlRequest(ProcessBase):
+    """Processor for HTML documents. It's applicable when the response content type is text/html."""
+
     name = "HTML document"
     key_name = "html"
     requires_content = True
     has_descendants = True
 
-    async def process(self, crawler_url_request: "CrawlerUrlRequest"):
+    async def process(self, crawler_url_request: "CrawlerUrlRequest") -> None:
+        """Process the request. This method will search for urls in the HTML document."""
         self.search_keywords(crawler_url_request.content)
-        self.assets(crawler_url_request.soup)
-        self.links(crawler_url_request.soup)
+        await self.assets(crawler_url_request.soup)
+        await self.links(crawler_url_request.soup)
         await self.search_index_files()
 
-    def links(self, soup):
+    async def links(self, soup) -> None:
+        """Search for links in the HTML document and add them to Crawler."""
         links = [
             full_url_address(link.attrs.get("href"), self.crawler_url.url)
             for link in soup.find_all("a")
@@ -369,9 +411,10 @@ class ProcessHtmlRequest(ProcessBase):
                 depth -= 1
             if depth <= 0:
                 continue
-            self.add_url(link, depth)
+            await self.add_url(link, depth)
 
-    def assets(self, soup):
+    async def assets(self, soup) -> None:
+        """Search for assets in the HTML document and add them to Crawler."""
         assets = [
             full_url_address(link.attrs.get("href"), self.crawler_url.url)
             for link in soup.find_all("link")
@@ -386,9 +429,9 @@ class ProcessHtmlRequest(ProcessBase):
         ]
         for asset in filter(bool, assets):
             self.analyze_asset(asset)
-            self.add_url(asset, type="asset")
+            await self.add_url(asset, url_type="asset")
 
-    def analyze_asset(self, asset):
+    def analyze_asset(self, asset) -> None:
         """
 
         :type asset: Url
@@ -402,7 +445,7 @@ class ProcessHtmlRequest(ProcessBase):
             self.crawler_url.depth -= 1
 
     @classmethod
-    def is_applicable(cls, crawler_url_request: "CrawlerUrlRequest"):
+    def is_applicable(cls, crawler_url_request: "CrawlerUrlRequest") -> bool:
         return (
             crawler_url_request.response is not None
             and crawler_url_request.response.headers.get("Content-Type", "")
@@ -413,6 +456,10 @@ class ProcessHtmlRequest(ProcessBase):
 
 
 class ProcessIndexOfRequest(ProcessHtmlRequest):
+    """Processor for Index Of pages. It's applicable when the response content
+    type is text/html and the page contains a list of links to files and directories.
+    """
+
     name = "Index Of"
     key_name = "index_of"
     files = None
@@ -420,59 +467,74 @@ class ProcessIndexOfRequest(ProcessHtmlRequest):
     requires_content = True
     has_descendants = False
 
-    def process(self, text, soup=None):
-        self.search_keywords(text)
-        directory_list = get_directory_list(text, self, soup)
+    async def process(self, crawler_url_request: "CrawlerUrlRequest") -> None:
+        """Process the request. This method will search for urls in the Index Of page."""
+        self.search_keywords(crawler_url_request.content)
+        directory_list = get_directory_list(
+            crawler_url_request.content, self, crawler_url_request.soup
+        )
         links = [
-            link for link in directory_list.get_links(text, soup) if link.is_valid()
+            link
+            for link in directory_list.get_links(
+                crawler_url_request.content, crawler_url_request.soup
+            )
+            if link.is_valid()
         ]
         for link in filter(lambda x: x.is_valid() and x.url.endswith("/"), links):
-            self.add_url(link, type="directory")
+            await self.add_url(link, url_type="directory")
         self.files = links
 
-    def interesting_ext_files(self):
+    def interesting_ext_files(self) -> Iterator[Url]:
+        """Return a list of files with interesting extensions."""
         return filter(
             lambda x: x.name.split(".")[-1]
-            in self.crawler_url.crawler.interesting_extensions,
+            in self.crawler_url.crawler.configuration.interesting_extensions,
             self.files,
         )
 
-    def interesting_name_files(self):
+    def interesting_name_files(self) -> Iterator[Url]:
+        """Return a list of files with interesting names."""
         return filter(
-            lambda x: x.name in self.crawler_url.crawler.interesting_files, self.files
+            lambda x: x.name
+            in self.crawler_url.crawler.configuration.interesting_files,
+            self.files,
         )
 
-    def interesting_files(self):
-        for iterator in [self.interesting_ext_files(), self.interesting_name_files()]:
-            for file in iterator:
-                yield file
+    def interesting_files(self) -> Iterator[Url]:
+        """Return a list of files with interesting extensions or names."""
+        return chain(self.interesting_ext_files(), self.interesting_name_files())
 
-    def __str__(self):
-        body = super(ProcessIndexOfRequest, self).__str__()
+    def get_text(self) -> Text:
+        """Return the text to be displayed in the console."""
+        text = super(ProcessIndexOfRequest, self).get_text()
         ext_files = list(self.interesting_ext_files())
         name_files = list(self.interesting_name_files())
         if ext_files:
-            body += colored("\n    Interesting extension files:", Fore.BLUE)
-            body += " {}".format(", ".join(map(lambda x: self.repr_file(x), ext_files)))
+            text.append("\n    Interesting extension files:", "blue1")
+            text.append(
+                " {}".format(", ".join(map(lambda x: self.repr_file(x), ext_files)))
+            )
         if name_files:
-            body += colored("\n    Interesting file names:", Fore.MAGENTA)
-            body += " {}".format(
-                ", ".join(map(lambda x: self.repr_file(x), name_files))
+            text.append("\n    Interesting file names:", "deep_sky_blue1")
+            text.append(
+                " {}".format(", ".join(map(lambda x: self.repr_file(x), name_files)))
             )
         if not ext_files and not name_files:
-            body += colored(" (Nothing interesting)", Fore.LIGHTYELLOW_EX)
-        return body
-
-    @classmethod
-    def repr_file(cls, file):
-        text = file.name
-        created_at, filesize = file.extra.get("created_at"), file.extra.get("filesize")
-        if created_at or filesize:
-            text += " ({})".format(" ⚫ ".join(filter(bool, [created_at, filesize])))
+            text.append(" (Nothing interesting)", "gold1")
         return text
 
     @classmethod
-    def is_applicable(cls, crawler_url_request: "CrawlerUrlRequest"):
+    def repr_file(cls, file) -> str:
+        """Return a string representation of a file."""
+        body = file.name
+        created_at, filesize = file.extra.get("created_at"), file.extra.get("filesize")
+        if created_at or filesize:
+            body += " ({})".format(" ⚫ ".join(filter(bool, [created_at, filesize])))
+        return body
+
+    @classmethod
+    def is_applicable(cls, crawler_url_request: "CrawlerUrlRequest") -> bool:
+        """Return True if the request is applicable to this processor."""
         if (
             not super(ProcessIndexOfRequest, cls).is_applicable(crawler_url_request)
             or crawler_url_request.content is None
@@ -498,13 +560,16 @@ class ProcessIndexOfRequest(ProcessHtmlRequest):
 
 
 class ProcessBlankPageRequest(ProcessHtmlRequest):
+    """Processor for blank pages. It's applicable when the response content is empty."""
+
     name = "Blank page"
     key_name = "blank"
     requires_content = True
     has_descendants = False
 
     @classmethod
-    def is_applicable(cls, crawler_url_request: "CrawlerUrlRequest"):
+    def is_applicable(cls, crawler_url_request: "CrawlerUrlRequest") -> bool:
+        """Return True if the request is applicable to this processor."""
         if (
             not super(ProcessBlankPageRequest, cls).is_applicable(crawler_url_request)
             or crawler_url_request.content is None
@@ -533,7 +598,8 @@ class ProcessBlankPageRequest(ProcessHtmlRequest):
         return True
 
 
-def get_processor(crawler_url_request: "CrawlerUrlRequest"):
+def get_processor(crawler_url_request: "CrawlerUrlRequest") -> Optional["ProcessBase"]:
+    """Return the processor for the given request."""
     for processor_class in PROCESSORS:
         if processor_class.is_applicable(crawler_url_request):
             return processor_class(crawler_url_request)
