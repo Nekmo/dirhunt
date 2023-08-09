@@ -38,7 +38,8 @@ class Configuration:
     """
 
     urls: List[str] = field(default_factory=list)
-    threads: int = 10
+    threads: int = 4
+    concurrency: int = 10
     exclude_flags: List[str] = field(default_factory=list)
     include_flags: List[str] = field(default_factory=list)
     interesting_extensions: List[str] = field(default_factory=list)

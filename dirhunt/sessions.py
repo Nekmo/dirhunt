@@ -3,6 +3,7 @@ import sys
 import threading
 import warnings
 
+from aiohttp import ClientSession
 from requests import Timeout
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ProxyError
@@ -316,60 +317,8 @@ class RandomProxies(object):
         return self.proxies_lists[item]
 
 
-class Session(object):
-    def __init__(self, sessions, proxy, user_agent=None, cookies=None, headers=None):
-        self.sessions = sessions
-        self.proxy_name = proxy
-        self.proxy = normalize_proxy(self.proxy_name, sessions)
-        self.session = requests.Session()
-        self.session.headers = {
-            "User-Agent": user_agent or get_random_user_agent(),
-        }
-        self.session.cookies.update(cookies or {})
-        self.session.headers.update(headers or {})
-        adapter = HTTPAdapter(
-            pool_connections=POOL_CONNECTIONS, pool_maxsize=POOL_CONNECTIONS
-        )
-        self.session.mount("http://", adapter)
-        self.session.mount("https://", adapter)
-
-    @lock
-    def get(self, url, **kwargs):
-        is_proxy_db = False
-        max_retries = kwargs.pop("_max_retries", 3)
-        kw = kwargs.copy()
-        if self.proxy and isinstance(self.proxy, Proxy):
-            is_proxy_db = True
-            kw["proxies"] = self.proxy
-        elif self.proxy:
-            kw["proxies"] = {
-                "http": self.proxy,
-                "https": self.proxy,
-            }
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            try:
-                response = self.session.get(url, **kw)  # kwargs with proxies
-            except (Timeout, ConnectionError, ProxyError):
-                if is_proxy_db:
-                    self.proxy.negative()
-                if (
-                    is_proxy_db
-                    and max_retries
-                    and self.proxy.get_updated_proxy().votes < MAX_NEGATIVE_VOTES
-                ):
-                    # Use other random proxy (this proxy is down)
-                    self.proxy = normalize_proxy(self.proxy_name, self.sessions)
-                    max_retries -= 1
-                    return self.get(
-                        url, _max_retries=max_retries, **kwargs
-                    )  # original kwargs
-                else:
-                    raise
-            else:
-                if is_proxy_db:
-                    self.proxy.positive()
-        return response
+class Session(ClientSession):
+    pass
 
 
 class Sessions(object):

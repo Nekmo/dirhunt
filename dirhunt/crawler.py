@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import json
 import multiprocessing
 import os
+from asyncio import Semaphore
 from hashlib import sha256
-from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures.thread import _python_exit
 from threading import Lock, ThreadError
 import datetime
@@ -15,6 +16,7 @@ from dirhunt import processors
 from dirhunt import __version__
 from dirhunt._compat import queue, Queue, unregister
 from dirhunt.cli import random_spinner
+from dirhunt.configuration import Configuration
 from dirhunt.crawler_url import CrawlerUrl
 from dirhunt.exceptions import (
     EmptyError,
@@ -23,7 +25,7 @@ from dirhunt.exceptions import (
     IncompatibleVersionError,
 )
 from dirhunt.json_report import JsonReportEncoder
-from dirhunt.sessions import Sessions
+from dirhunt.sessions import Sessions, Session
 from dirhunt.sources import Sources
 from dirhunt.url_info import UrlsInfo
 
@@ -33,62 +35,63 @@ from dirhunt.url_info import UrlsInfo
 resume_dir = os.path.expanduser("~/.cache/dirhunt/")
 
 
-class Crawler(ThreadPoolExecutor):
+class DomainSemaphore:
+    """Asyncio Semaphore per domain."""
+
+    def __init__(self, concurrency: int):
+        """Initialize DomainSemaphore."""
+        self.concurrency = concurrency
+        self.semaphores = {}
+
+    async def acquire(self, domain: str):
+        """Acquire semaphore for domain."""
+        if domain not in self.semaphores:
+            self.semaphores[domain] = Semaphore(self.concurrency)
+        await self.semaphores[domain].acquire()
+
+    def release(self, domain: str):
+        """Release semaphore for domain."""
+        self.semaphores[domain].release()
+
+
+class Crawler:
     urls_info = None
 
-    def __init__(
-        self,
-        max_workers=None,
-        interesting_extensions=None,
-        interesting_files=None,
-        interesting_keywords=None,
-        std=None,
-        progress_enabled=True,
-        timeout=10,
-        depth=3,
-        not_follow_subdomains=False,
-        exclude_sources=(),
-        not_allow_redirects=False,
-        proxies=None,
-        delay=0,
-        limit=1000,
-        to_file=None,
-        user_agent=None,
-        cookies=None,
-        headers=None,
-    ):
-        if not max_workers and not delay:
-            max_workers = (multiprocessing.cpu_count() or 1) * 5
-        elif not max_workers and delay:
-            max_workers = len(proxies or [None])
-        super(Crawler, self).__init__(max_workers)
+    def __init__(self, configuration: Configuration, loop: asyncio.AbstractEventLoop):
+        """Initialize Crawler.
+        :param configuration: Configuration instance
+        :param loop: asyncio loop
+        """
+        self.configuration = configuration
+        self.loop = loop
+        self.tasks = set()
+        self.session = Session()
+        self.domain_semaphore = DomainSemaphore(configuration.concurrency)
         self.domains = set()
         self.results = Queue()
         self.index_of_processors = []
-        self.proxies = proxies
-        self.delay = delay
-        self.sessions = Sessions(proxies, delay, user_agent, cookies, headers)
         self.processing = {}
         self.processed = {}
         self.add_lock = Lock()
-        self.spinner = random_spinner()
         self.start_dt = datetime.datetime.now()
-        self.interesting_extensions = interesting_extensions or []
-        self.interesting_files = interesting_files or []
-        self.interesting_keywords = interesting_keywords or []
-        self.closing = False
-        self.std = std or None
-        self.progress_enabled = progress_enabled
-        self.timeout = timeout
-        self.not_follow_subdomains = not_follow_subdomains
-        self.depth = depth
-        self.exclude_sources = exclude_sources
-        self.sources = Sources(self.add_url, self.add_message, exclude_sources)
-        self.not_allow_redirects = not_allow_redirects
-        self.limit = limit
         self.current_processed_count = 0
-        self.to_file = to_file
-        self.initial_urls = []
+
+    async def start(self):
+        """Add urls to process."""
+        for url in self.configuration.urls:
+            await self.add_crawler_url(
+                CrawlerUrl(self, url, depth=self.configuration.max_depth)
+            )
+        await asyncio.wait(self.tasks)
+
+    async def add_crawler_url(self, crawler_url: CrawlerUrl):
+        """Add crawler_url to tasks"""
+        if crawler_url.url.url in self.processing:
+            return
+        task = self.loop.create_task(crawler_url.retrieve())
+        self.tasks.add(task)
+        self.processing[crawler_url.url.url] = task
+        task.add_done_callback(lambda: self.tasks.discard(task))
 
     def add_init_urls(self, *urls):
         """Add urls to queue."""
@@ -121,44 +124,6 @@ class Crawler(ThreadPoolExecutor):
             return
         self.domains.add(domain)
         self.sources.add_domain(domain)
-
-    def add_url(self, crawler_url, force=False, lock=True):
-        """Add url to queue"""
-        if self.closing:
-            return
-        if not isinstance(crawler_url, CrawlerUrl):
-            crawler_url = CrawlerUrl(
-                self, crawler_url, depth=self.depth, timeout=self.timeout
-            )
-        if lock:
-            self.add_lock.acquire()
-        url = crawler_url.url
-        if (
-            not url.is_valid()
-            or not url.only_domain
-            or not self.in_domains(url.only_domain)
-        ):
-            if lock:
-                self.add_lock.release()
-            return
-        if url.url in self.processing or url.url in self.processed:
-            if lock:
-                self.add_lock.release()
-            return self.processing.get(url.url) or self.processed.get(url.url)
-
-        fn = reraise_with_stack(crawler_url.start)
-        if self.closing:
-            if lock:
-                self.add_lock.release()
-            return
-        if force:
-            future = ThreadPoolExecutor(max_workers=1).submit(fn)
-        else:
-            future = self.submit(fn)
-        self.processing[url.url] = future
-        if lock:
-            self.add_lock.release()
-        return future
 
     def add_message(self, body):
         from dirhunt.processors import Message

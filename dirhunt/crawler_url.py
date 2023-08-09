@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import cgi
 import socket
+from typing import TYPE_CHECKING
 
 from bs4 import BeautifulSoup
 from requests import RequestException
 from urllib3.exceptions import ReadTimeoutError
 
 from dirhunt.url import Url
-from dirhunt.url_loop import is_url_loop
 
 MAX_RESPONSE_SIZE = 1024 * 512
 FLAGS_WEIGHT = {
@@ -17,19 +17,30 @@ FLAGS_WEIGHT = {
 }
 
 
+if TYPE_CHECKING:
+    from dirhunt.crawler import Crawler
+
+
 class CrawlerUrl(object):
     def __init__(
-        self, crawler, url, depth=3, source=None, exists=None, type=None, timeout=10
+        self,
+        crawler: "Crawler",
+        target_url: str,
+        depth=3,
+        source=None,
+        exists=None,
+        url_type=None,
     ):
         """
 
-        :type crawler: Crawler
-        :type depth: int Máxima recursión sin haber subido respecto esta url
+        :type crawler: Crawler instance
+        :type target_url: Uniform Resource Identifier as string
+        :type depth: int maximum depth to crawl respect to the initial url
         """
+        self.target_url = target_url
+        url = Url(target_url)
         self.flags = set()
         self.depth = depth
-        if not isinstance(url, Url):
-            url = Url(url)
         if url.is_valid():
             url.query = ""
             url.fragment = ""
@@ -37,29 +48,27 @@ class CrawlerUrl(object):
         self.crawler = crawler
         self.source = source
         self.exists = exists
-        self.type = type
-        self.timeout = timeout
+        self.url_type = url_type
         if url.is_valid() and (not url.path or url.path == "/"):
             self.type = "directory"
         self.resp = None
         self.processor_data = None
 
-    def add_self_directories(self, exists=None, type_=None):
+    def add_self_directories(self, exists=None, url_type=None):
         for url in self.url.breadcrumb():
-            self.crawler.add_url(
+            self.crawler.add_crawler_url(
                 CrawlerUrl(
                     self.crawler,
                     url,
                     self.depth - 1,
                     self,
                     exists,
-                    type_,
-                    timeout=self.timeout,
+                    url_type,
                 )
             )
             # TODO: si no se puede añadir porque ya se ha añadido, establecer como que ya existe si la orden es exists
 
-    def start(self):
+    async def retrieve(self):
         from dirhunt.processors import (
             get_processor,
             GenericProcessor,
@@ -67,21 +76,16 @@ class CrawlerUrl(object):
             ProcessIndexOfRequest,
         )
 
-        if self.crawler.closing:
-            return self
-        session = self.crawler.sessions.get_session()
         try:
-            with session.get(
+            await self.crawler.domain_semaphore.acquire(self.url.domain)
+            async with self.crawler.session.get(
                 self.url.url,
-                stream=True,
-                verify=False,
-                timeout=self.timeout,
+                verify_ssl=False,
+                timeout=self.crawler.configuration.timeout,
                 allow_redirects=False,
             ) as resp:
                 self.set_type(resp.headers.get("Content-Type"))
-                self.flags.add(str(resp.status_code))
-                if self.crawler.closing:
-                    return self
+                self.flags.add(str(resp.status))
                 text = ""
                 soup = None
                 processor = None
@@ -106,6 +110,8 @@ class CrawlerUrl(object):
             self.crawler.results.put(Error(self, e))
             self.close()
             return self
+        finally:
+            self.crawler.domain_semaphore.release(self.url.domain)
 
         if self.must_be_downloaded(resp):
             processor = get_processor(resp, text, self, soup) or GenericProcessor(

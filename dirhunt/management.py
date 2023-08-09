@@ -2,13 +2,14 @@
 
 from __future__ import print_function
 
+import asyncio
 import re
 import click as click
 import os
 
 import sys
 
-from click import BadOptionUsage, Path, BadParameter
+from click import BadOptionUsage, Path, BadParameter, UsageError
 
 from dirhunt.configuration import ConfigurationDict, Configuration
 from dirhunt.crawler import Crawler
@@ -142,6 +143,12 @@ def flags_range(flags):
 @click.argument("urls", nargs=-1, type=force_url)
 @click.option("-t", "--threads", type=int, help="Number of threads to use.")
 @click.option(
+    "--concurrency",
+    type=int,
+    default=Configuration.concurrency,
+    help="Number of concurrent requests to domains.",
+)
+@click.option(
     "-x",
     "--exclude-flags",
     callback=comma_separated_files,
@@ -253,8 +260,25 @@ def flags_range(flags):
 )
 def hunt(**kwargs: ConfigurationDict):
     """Find web directories without bruteforce"""
+    # Prepare configuration
+    kwargs["urls"] = flat_list(kwargs["urls"])
+    kwargs["proxies"] = multiplier_args(kwargs["proxies"])
+    kwargs["exclude_flags"] = flags_range(kwargs["exclude_flags"])
+    kwargs["include_flags"] = flags_range(kwargs["include_flags"])
+    if kwargs["exclude_flags"] and kwargs["include_flags"]:
+        raise UsageError("--exclude-flags and --include-flags are mutually exclusive.")
     configuration = Configuration(**kwargs)
-    pass
+    welcome()
+    if not configuration.urls:
+        click.echo(
+            "•_•) OOPS! Add urls to analyze.\nFor example: dirhunt http://domain/path\n\n"
+            "Need help? Then use dirhunt --help",
+            err=True,
+        )
+        return
+    loop = asyncio.get_event_loop()
+    crawler = Crawler(configuration, loop)
+    loop.run_until_complete(crawler.start())
 
 
 def main():
