@@ -20,6 +20,7 @@ def lrange(start, end):
     return list(range(start, end))
 
 
+# TODO: remove
 def colored(text, *colors):
     return "".join(colors) + text + Fore.RESET + Back.RESET
 

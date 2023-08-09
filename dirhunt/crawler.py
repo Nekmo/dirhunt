@@ -8,9 +8,11 @@ from hashlib import sha256
 from concurrent.futures.thread import _python_exit
 from threading import Lock, ThreadError
 import datetime
+from typing import Optional
 
 import humanize as humanize
 from click import get_terminal_size
+from rich.console import Console
 
 from dirhunt import processors
 from dirhunt import __version__
@@ -65,12 +67,13 @@ class Crawler:
         self.configuration = configuration
         self.loop = loop
         self.tasks = set()
+        self.crawler_urls = set()
+        self.domains = set()
+        self.console = Console(highlight=False)
         self.session = Session()
         self.domain_semaphore = DomainSemaphore(configuration.concurrency)
-        self.domains = set()
         self.results = Queue()
         self.index_of_processors = []
-        self.processing = {}
         self.processed = {}
         self.add_lock = Lock()
         self.start_dt = datetime.datetime.now()
@@ -82,16 +85,18 @@ class Crawler:
             await self.add_crawler_url(
                 CrawlerUrl(self, url, depth=self.configuration.max_depth)
             )
-        await asyncio.wait(self.tasks)
+        while self.tasks:
+            await asyncio.wait(self.tasks)
 
-    async def add_crawler_url(self, crawler_url: CrawlerUrl):
+    async def add_crawler_url(self, crawler_url: CrawlerUrl) -> Optional[asyncio.Task]:
         """Add crawler_url to tasks"""
-        if crawler_url.url.url in self.processing:
+        if crawler_url.url.url in self.crawler_urls:
             return
         task = self.loop.create_task(crawler_url.retrieve())
         self.tasks.add(task)
-        self.processing[crawler_url.url.url] = task
-        task.add_done_callback(lambda: self.tasks.discard(task))
+        self.crawler_urls.add(crawler_url)
+        task.add_done_callback(self.tasks.discard)
+        return task
 
     def add_init_urls(self, *urls):
         """Add urls to queue."""

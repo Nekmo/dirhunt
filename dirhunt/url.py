@@ -204,5 +204,8 @@ class Url(object):
             other = other.url
         return self.url == other
 
-    def __str__(self):
-        return "<Url {}>".format(self.url)
+    def __repr__(self):
+        return f"<Url {self.url}>"
+
+    def __str__(self) -> str:
+        return self.url

@@ -3,14 +3,14 @@ from colorama import Fore
 
 def status_code_colors(status_code):
     if 100 <= status_code < 200:
-        return Fore.WHITE
+        return "white"
     elif 200 == status_code:
-        return Fore.LIGHTGREEN_EX
+        return "green1"
     elif 200 < status_code < 300:
-        return Fore.GREEN
+        return "green3"
     elif 300 <= status_code < 400:
-        return Fore.LIGHTBLUE_EX
+        return "deep_sky_blue1"
     elif 500 == status_code:
-        return Fore.LIGHTMAGENTA_EX
+        return "magenta1"
     else:
-        return Fore.MAGENTA
+        return "medium_orchid1"
