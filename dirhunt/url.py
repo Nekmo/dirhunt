@@ -34,7 +34,7 @@ def full_url_address(address, url):
         return url
 
 
-class Url(object):
+class Url:
     _urlparsed = None
 
     def __init__(self, address):
@@ -76,12 +76,12 @@ class Url(object):
 
     @property
     def is_absolute(self):
-        """Si es sólo un path o una dirección entera"""
+        """"""
         return bool(self.urlparsed.netloc) if self.urlparsed else False
 
     @property
     def domain_port(self):
-        """Dominio con el puerto si lo hay"""
+        """Domain with port"""
         if not self.urlparsed:
             return
         netloc = self.urlparsed[1]
@@ -89,7 +89,7 @@ class Url(object):
 
     @property
     def only_domain(self):
-        """Dominio sin el puerto"""
+        """Return domain without port"""
         return (self.domain_port or "").split(":")[0] or None
 
     @property

@@ -321,6 +321,8 @@ class ProcessCssStyleSheet(ProcessBase):
             )
         ]
         for url in urls:
+            if url is None:
+                continue
             await self.add_url(url, depth=0, url_type="asset")
 
     @classmethod

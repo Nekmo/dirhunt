@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import datetime
+import functools
 import json
 import os
 from asyncio import Semaphore, Task
@@ -90,9 +91,8 @@ class Crawler:
 
     async def add_crawler_url(self, crawler_url: CrawlerUrl) -> Optional[asyncio.Task]:
         """Add crawler_url to tasks"""
-        if (
-            crawler_url in self.crawler_urls
-            or crawler_url.url.domain not in self.domains
+        if crawler_url in self.crawler_urls or not self.in_domains(
+            crawler_url.url.domain
         ):
             return
         self.current_processed_count += 1
@@ -100,6 +100,25 @@ class Crawler:
         return self.add_task(
             crawler_url.retrieve(), name=f"crawlerurl-{self.current_processed_count}"
         )
+
+    async def add_domain(self, domain: str):
+        """Add domain to domains."""
+        if domain in self.domains:
+            return
+        self.domains.add(domain)
+        await self.sources.add_domain(domain)
+
+    @functools.lru_cache(maxsize=128)
+    def in_domains(self, target_domain):
+        if target_domain in self.domains:
+            return True
+        if self.configuration.not_follow_subdomains:
+            return False
+        for domain in self.domains:
+            if target_domain.endswith(f".{domain}"):
+                self.domains.add(target_domain)
+                return True
+        return False
 
     def print_error(self, message: str):
         """Print error message to console."""
@@ -118,28 +137,6 @@ class Crawler:
                 )
             self.add_domain(crawler_url.url.only_domain)
             self.add_url(crawler_url, lock=False)
-
-    def in_domains(self, domain):
-        if self.not_follow_subdomains and domain not in self.domains:
-            return False
-        initial_domain = domain
-        while True:
-            if domain in self.domains:
-                if initial_domain != domain:
-                    # subdomain
-                    self.add_domain(initial_domain)
-                return True
-            parts = domain.split(".")
-            if len(parts) <= 2:
-                return False
-            domain = ".".join(parts[1:])
-
-    async def add_domain(self, domain: str):
-        """Add domain to domains."""
-        if domain in self.domains:
-            return
-        self.domains.add(domain)
-        await self.sources.add_domain(domain)
 
     def add_task(
         self, coro: Coroutine[Any, Any, Any], name: Optional[str] = None

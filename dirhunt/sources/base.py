@@ -5,7 +5,6 @@ from functools import cached_property
 from pathlib import Path
 from typing import List, Iterable, Optional
 
-import aiofiles
 from aiohttp import ClientError
 from platformdirs import user_cache_dir
 from typing_extensions import TYPE_CHECKING
@@ -84,7 +83,3 @@ class SourceBase:
         await self.sources.crawler.add_crawler_url(
             CrawlerUrl(self.sources.crawler, url)
         )
-
-    def add_error(self, message):
-        if self.error_callback:
-            self.error_callback(message)

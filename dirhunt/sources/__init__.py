@@ -21,7 +21,7 @@ SOURCE_CLASSES: List[Type["SourceBase"]] = [
     # VirusTotal,
     # Google,
     CommonCrawl,
-    # CrtSh,
+    CrtSh,
     # CertificateSSL,
     # Wayback,
 ]
