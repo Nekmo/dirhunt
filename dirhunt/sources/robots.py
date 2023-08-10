@@ -3,7 +3,7 @@ from itertools import chain
 import requests
 from requests import RequestException
 
-from dirhunt.sources.base import Source
+from dirhunt.sources.base import SourceBase
 from dirhunt._compat import RobotFileParser, URLError
 
 
@@ -29,7 +29,7 @@ class DirhuntRobotFileParser(RobotFileParser):
             self.parse(text.splitlines())
 
 
-class Robots(Source):
+class Robots(SourceBase):
     def callback(self, domain, protocol="http"):
         rp = DirhuntRobotFileParser()
         rp.set_url(get_url(protocol, domain, "robots.txt"))

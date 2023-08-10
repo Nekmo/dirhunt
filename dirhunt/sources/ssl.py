@@ -2,7 +2,7 @@ import socket
 import ssl
 import sys
 
-from dirhunt.sources.base import Source
+from dirhunt.sources.base import SourceBase
 
 
 if sys.version_info < (3,):
@@ -17,7 +17,7 @@ def get_url(protocol, domain, path):
     return "{protocol}://{domain}/{path}".format(**locals())
 
 
-class CertificateSSL(Source):
+class CertificateSSL(SourceBase):
     def callback(self, domain):
         ctx = ssl.create_default_context()
         cert = None

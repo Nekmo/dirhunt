@@ -1,41 +1,37 @@
 # -*- coding: utf-8 -*-
 import asyncio
-import json
-import multiprocessing
-import os
-from asyncio import Semaphore
-from hashlib import sha256
-from concurrent.futures.thread import _python_exit
-from threading import Lock, ThreadError
 import datetime
-from typing import Optional
+import json
+import os
+from asyncio import Semaphore, Task
+from concurrent.futures.thread import _python_exit
+from hashlib import sha256
+from threading import Lock, ThreadError
+from typing import Optional, Set, Coroutine, Any
 
 import humanize as humanize
 from click import get_terminal_size
 from rich.console import Console
+from rich.text import Text
+from rich.traceback import install
 
-from dirhunt import processors
 from dirhunt import __version__
 from dirhunt._compat import queue, Queue, unregister
-from dirhunt.cli import random_spinner
 from dirhunt.configuration import Configuration
 from dirhunt.crawler_url import CrawlerUrl
 from dirhunt.exceptions import (
-    EmptyError,
-    RequestError,
-    reraise_with_stack,
     IncompatibleVersionError,
 )
 from dirhunt.json_report import JsonReportEncoder
-from dirhunt.sessions import Sessions, Session
+from dirhunt.sessions import Session
 from dirhunt.sources import Sources
-from dirhunt.url import Url
 from dirhunt.url_info import UrlsInfo
 
 """Flags importance"""
 
 
 resume_dir = os.path.expanduser("~/.cache/dirhunt/")
+install(show_locals=True)
 
 
 class DomainSemaphore:
@@ -67,9 +63,9 @@ class Crawler:
         """
         self.configuration = configuration
         self.loop = loop
-        self.tasks = set()
-        self.crawler_urls = set()
-        self.domains = set()
+        self.tasks: Set[Task] = set()
+        self.crawler_urls: Set[CrawlerUrl] = set()
+        self.domains: Set[str] = set()
         self.console = Console(highlight=False)
         self.session = Session()
         self.domain_semaphore = DomainSemaphore(configuration.concurrency)
@@ -78,13 +74,14 @@ class Crawler:
         self.processed = {}
         self.add_lock = Lock()
         self.start_dt = datetime.datetime.now()
-        self.current_processed_count = 0
+        self.current_processed_count: int = 0
+        self.sources = Sources(self)
 
     async def start(self):
         """Add urls to process."""
         for url in self.configuration.urls:
             crawler_url = CrawlerUrl(self, url, depth=self.configuration.max_depth)
-            self.domains.add(crawler_url.url.domain)
+            await self.add_domain(crawler_url.url.domain)
             await self.add_crawler_url(crawler_url)
 
         while self.tasks:
@@ -98,11 +95,18 @@ class Crawler:
             or crawler_url.url.domain not in self.domains
         ):
             return
+        self.current_processed_count += 1
         self.crawler_urls.add(crawler_url)
-        task = self.loop.create_task(crawler_url.retrieve())
-        self.tasks.add(task)
-        task.add_done_callback(self.tasks.discard)
-        return task
+        return self.add_task(
+            crawler_url.retrieve(), name=f"crawlerurl-{self.current_processed_count}"
+        )
+
+    def print_error(self, message: str):
+        """Print error message to console."""
+        text = Text()
+        text.append("[ERROR] ", style="red")
+        text.append(message)
+        self.console.print(text)
 
     def add_init_urls(self, *urls):
         """Add urls to queue."""
@@ -130,11 +134,20 @@ class Crawler:
                 return False
             domain = ".".join(parts[1:])
 
-    def add_domain(self, domain):
+    async def add_domain(self, domain: str):
+        """Add domain to domains."""
         if domain in self.domains:
             return
         self.domains.add(domain)
-        self.sources.add_domain(domain)
+        await self.sources.add_domain(domain)
+
+    def add_task(
+        self, coro: Coroutine[Any, Any, Any], name: Optional[str] = None
+    ) -> Task:
+        task = self.loop.create_task(coro, name=name)
+        self.tasks.add(task)
+        task.add_done_callback(self.tasks.discard)
+        return task
 
     def add_message(self, body):
         from dirhunt.processors import Message

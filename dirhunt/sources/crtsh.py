@@ -1,6 +1,6 @@
 from requests.exceptions import RequestException
 from dirhunt.sessions import Sessions
-from dirhunt.sources.base import Source
+from dirhunt.sources.base import SourceBase
 
 
 CRTSH_URL = "https://crt.sh/"
@@ -8,7 +8,7 @@ USER_AGENT = "dirhunt"
 TIMEOUT = 10
 
 
-class CrtSh(Source):
+class CrtSh(SourceBase):
     def callback(self, domain):
         session = Sessions().get_session()
         try:

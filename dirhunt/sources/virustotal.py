@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from requests import RequestException
 
 from dirhunt.sessions import Sessions
-from dirhunt.sources.base import Source
+from dirhunt.sources.base import SourceBase
 
 
 ABUSE = "VirusTotal is trying to prevent scraping and abuse, we are going to bother"
@@ -11,7 +11,7 @@ VT_URL = "https://www.virustotal.com/es/domain/{domain}/information/"
 ABUSE_MESSAGE_ERROR = "VirusTotal abuse has failed (scraping detected). Validate the captcha manually: {url}"
 
 
-class VirusTotal(Source):
+class VirusTotal(SourceBase):
     def callback(self, domain):
         url = VT_URL.format(domain=domain)
         session = Sessions().get_session()

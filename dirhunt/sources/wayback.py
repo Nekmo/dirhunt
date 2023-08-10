@@ -2,7 +2,7 @@ import json
 
 from requests.exceptions import RequestException
 from dirhunt.sessions import Sessions
-from dirhunt.sources.base import Source
+from dirhunt.sources.base import SourceBase
 
 
 WAYBACK_URL = "https://web.archive.org/cdx/search/cdx"
@@ -12,7 +12,7 @@ BASE64_URL = "%22data:%3C;base64"
 TIMEOUT = 10
 
 
-class Wayback(Source):
+class Wayback(SourceBase):
     def callback(self, domain):
         session = Sessions().get_session()
         try:
