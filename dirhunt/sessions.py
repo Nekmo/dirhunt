@@ -4,9 +4,11 @@ import threading
 import warnings
 
 from aiohttp import ClientSession
+from multidict import CIMultiDict
 from requests import Timeout
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ProxyError
+from typing_extensions import TYPE_CHECKING
 
 from dirhunt._compat import Queue
 
@@ -16,8 +18,9 @@ from proxy_db.models import Proxy
 
 from dirhunt.agents import get_random_user_agent
 
-if sys.version_info < (3, 0):
-    ConnectionError = IOError
+
+if TYPE_CHECKING:
+    from dirhunt.crawler import Crawler
 
 
 MAX_NEGATIVE_VOTES = -3
@@ -318,7 +321,14 @@ class RandomProxies(object):
 
 
 class Session(ClientSession):
-    pass
+    def __init__(self, crawler: "Crawler", **kwargs):
+        headers = kwargs.pop("headers", {})
+        headers = CIMultiDict(headers)
+        if "User-Agent" not in headers:
+            headers["User-Agent"] = (
+                crawler.configuration.user_agent or get_random_user_agent()
+            )
+        super().__init__(headers=headers, **kwargs)
 
 
 class Sessions(object):

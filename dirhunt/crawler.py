@@ -14,7 +14,6 @@ import humanize as humanize
 from click import get_terminal_size
 from rich.console import Console
 from rich.text import Text
-from rich.traceback import install
 
 from dirhunt import __version__
 from dirhunt._compat import queue, Queue, unregister
@@ -32,7 +31,6 @@ from dirhunt.url_info import UrlsInfo
 
 
 resume_dir = os.path.expanduser("~/.cache/dirhunt/")
-install(show_locals=True)
 
 
 class DomainSemaphore:
@@ -68,7 +66,7 @@ class Crawler:
         self.crawler_urls: Set[CrawlerUrl] = set()
         self.domains: Set[str] = set()
         self.console = Console(highlight=False)
-        self.session = Session()
+        self.session = Session(self)
         self.domain_semaphore = DomainSemaphore(configuration.concurrency)
         self.results = Queue()
         self.index_of_processors = []

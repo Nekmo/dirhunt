@@ -61,7 +61,9 @@ class SourceBase:
             try:
                 urls = await self.search_by_domain(domain)
             except ClientError as e:
-                self.sources.crawler.print_error(str(e))
+                self.sources.crawler.print_error(
+                    f"Failed to retrieve {domain} using the source {self.get_source_name()}: {e}"
+                )
                 urls = []
             else:
                 self.save_to_cache(urls)
