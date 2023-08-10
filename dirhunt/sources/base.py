@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import json
 import os
@@ -11,6 +12,8 @@ from typing_extensions import TYPE_CHECKING
 
 from dirhunt import __version__
 from dirhunt.crawler_url import CrawlerUrl
+from dirhunt.exceptions import SourceError
+from dirhunt.utils import get_message_from_exception
 
 if TYPE_CHECKING:
     from dirhunt.sources import Sources
@@ -18,6 +21,8 @@ if TYPE_CHECKING:
 
 class SourceBase:
     max_cache_age = datetime.timedelta(days=7)
+    wait_locks = {}
+    wait_between_requests = None
 
     def __init__(self, sources: "Sources", domain: str):
         self.sources = sources
@@ -55,20 +60,27 @@ class SourceBase:
 
     async def retrieve_urls(self, domain: str):
         urls = None
+        acquired_lock = False
         if not self.is_cache_expired:
             urls = self.get_from_cache()
+        if not urls and self.wait_between_requests:
+            acquired_lock = True
+            await self.acquire_wait_lock()
         if urls is None:
             try:
                 urls = await self.search_by_domain(domain)
-            except ClientError as e:
+            except (ClientError, SourceError, asyncio.TimeoutError) as e:
                 self.sources.crawler.print_error(
-                    f"Failed to retrieve {domain} using the source {self.get_source_name()}: {e}"
+                    f"Failed to retrieve {domain} using the source {self.get_source_name()}: "
+                    f"{get_message_from_exception(e)}"
                 )
                 urls = []
             else:
                 self.save_to_cache(urls)
         for url in urls:
             await self.add_url(url)
+        if acquired_lock:
+            await self.release_wait_lock()
 
     def save_to_cache(self, urls: Iterable[str]) -> None:
         cache_data = {
@@ -85,3 +97,15 @@ class SourceBase:
         await self.sources.crawler.add_crawler_url(
             CrawlerUrl(self.sources.crawler, url)
         )
+
+    async def acquire_wait_lock(self):
+        """Acquire wait lock."""
+        if self.get_source_name() not in self.wait_locks:
+            self.wait_locks[self.get_source_name()] = asyncio.Lock()
+        await self.wait_locks[self.get_source_name()].acquire()
+
+    async def release_wait_lock(self):
+        """Release wait lock."""
+        if self.get_source_name() in self.wait_locks:
+            await asyncio.sleep(self.wait_between_requests)
+            self.wait_locks[self.get_source_name()].release()

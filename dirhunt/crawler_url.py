@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import cgi
 from typing import TYPE_CHECKING, Any, Optional, Literal
 
-from aiohttp import ClientResponse
+from aiohttp import ClientResponse, ClientError
 from aiohttp.web_response import Response
 from bs4 import BeautifulSoup
-from requests import RequestException
 import charset_normalizer as chardet
 
 from dirhunt.url import Url
+from dirhunt.utils import get_message_from_exception
 
 RESPONSE_CHUNK = 1024 * 4
 MAX_RESPONSE_SIZE = 1024 * 512
@@ -42,7 +43,7 @@ async def get_content(response: "ClientResponse") -> str:
 
 
 class CrawlerUrlRequest:
-    response = Optional[Response]
+    response: Optional[Response] = None
     content: Optional[str] = None
     _soup: Optional[BeautifulSoup] = None
 
@@ -50,15 +51,14 @@ class CrawlerUrlRequest:
         self.crawler_url = crawler_url
         self.crawler = crawler_url.crawler
 
-    async def retrieve(self) -> "ProcessBase":
+    async def retrieve(self) -> Optional["ProcessBase"]:
         from dirhunt.processors import (
             get_processor,
-            Error,
         )
 
+        processor = None
         try:
             await self.crawler.domain_semaphore.acquire(self.crawler_url.url.domain)
-            pass
             async with self.crawler.session.get(
                 self.crawler_url.url.url,
                 verify_ssl=False,
@@ -73,9 +73,11 @@ class CrawlerUrlRequest:
                     self.content = await get_content(response)
                 if processor.has_descendants:
                     processor = get_processor(self)
-        except RequestException as e:
+        except (ClientError, asyncio.TimeoutError) as e:
             self.crawler.current_processed_count += 1
-            processor = Error(self, e)
+            self.crawler.print_error(
+                f"Request error to {self.crawler_url.url}: {get_message_from_exception(e)}"
+            )
         else:
             await processor.process(self)
         finally:

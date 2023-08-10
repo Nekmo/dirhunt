@@ -441,8 +441,8 @@ class ProcessHtmlRequest(ProcessBase):
         if "wordpress" not in self.crawler_url.flags and "wp-content" in asset.path:
             self.crawler_url.flags.update({"wordpress"})
             # Override type always except for root path
-            self.crawler_url.type = (
-                "rewrite" if self.crawler_url.type != "directory" else "directory"
+            self.crawler_url.url_type = (
+                "rewrite" if self.crawler_url.url_type != "directory" else "directory"
             )
             self.crawler_url.depth -= 1
 

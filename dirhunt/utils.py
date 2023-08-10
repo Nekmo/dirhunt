@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 import string
+from typing import Union, Type
 
 import click
 import requests
@@ -14,6 +15,18 @@ from ._compat import urlparse
 SCHEMES = ["http", "https"]
 DEFAULT_SCHEME = "http"
 ARGUMENT_MULT = re.compile("(.+)\*(\d+)$")
+
+
+def get_message_from_exception(exception: Union[Exception, Type[Exception]]) -> str:
+    if isinstance(exception, Exception):
+        exception_name = exception.__class__.__name__
+    else:
+        exception_name = exception.__name__
+    exception_body = str(exception)
+    if exception_body:
+        return "{}: {}".format(exception_name, exception_body)
+    else:
+        return exception_name
 
 
 def lrange(start, end):

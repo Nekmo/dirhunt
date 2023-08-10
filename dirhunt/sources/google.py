@@ -6,6 +6,9 @@ from http.cookies import Morsel, SimpleCookie
 from pathlib import Path
 from typing import Iterable, Optional
 
+from bs4 import BeautifulSoup
+
+from dirhunt.exceptions import SourceError
 from dirhunt.sources.base import SourceBase
 
 TIMEOUT = 10
@@ -15,6 +18,8 @@ GOOGLE_SEARCH_URL = "https://www.google.com/search"
 
 
 class Google(SourceBase):
+    wait_between_requests = WAIT
+
     @property
     def google_cookies(self) -> Optional[Morsel]:
         return self.sources.crawler.session.cookie_jar._cookies.get(("google.com", "/"))
@@ -62,8 +67,6 @@ class Google(SourceBase):
 
     async def search_by_domain(self, domain: str) -> Iterable[str]:
         """Search by domain in Google."""
-        # TODO: lock for concurrent requests.
-        # Load cookies from file if exists or request to Google if not.
         cookies_path_exists = self.google_cookies_path.exists()
         if not self.google_cookies and cookies_path_exists:
             self.load_cookies()
@@ -91,5 +94,12 @@ class Google(SourceBase):
                 "btnG": "Google Search",
             },
         )
-        # TODO:
-        return []
+        soup = BeautifulSoup(text, "html.parser")
+
+        urls = [
+            a["href"].replace("/url?q=", "").split("&sa=", 1)[0]
+            for a in soup.find_all("a", {"class": "fuLhoc ZWRArf"})
+        ]
+        if not urls:
+            raise SourceError("Google search not found urls")
+        return urls

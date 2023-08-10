@@ -31,6 +31,10 @@ class IncompatibleVersionError(DirHuntError):
     pass
 
 
+class SourceError(DirHuntError):
+    pass
+
+
 def catch(fn):
     def wrap(*args, **kwargs):
         try:
