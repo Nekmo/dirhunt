@@ -70,6 +70,7 @@ class ProcessBase:
     name = ""
     key_name = ""
     index_file = None
+    status: int = 0
     status_code = 0  # TODO: rename to status
     requires_content = False
     # If the processor has descendants, use get_processor after retrieve the content
@@ -81,6 +82,7 @@ class ProcessBase:
         :type crawler_url_request: CrawlerUrlRequest
         """
         if crawler_url_request.response is not None:
+            self.status = crawler_url_request.response.status
             self.status_code = crawler_url_request.response.status
         # The crawler_url_request takes a lot of memory, so we don't save it
         self.crawler_url = crawler_url_request.crawler_url
@@ -246,7 +248,10 @@ class ProcessRedirect(ProcessBase):
 
     async def process(self, crawler_url_request: "CrawlerUrlRequest") -> None:
         """Process the request. This method will add the redirector url to the crawler."""
-        if not self.crawler_url.crawler.configuration.not_allow_redirects:
+        if (
+            not self.crawler_url.crawler.configuration.not_allow_redirects
+            and self.redirector
+        ):
             await self.add_url(self.redirector)
 
     @classmethod

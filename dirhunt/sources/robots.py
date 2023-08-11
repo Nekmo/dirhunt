@@ -1,10 +1,12 @@
 from itertools import chain
+from typing import Iterable
 
-import requests
-from requests import RequestException
-
+from dirhunt.exceptions import SourceError
 from dirhunt.sources.base import SourceBase
-from dirhunt._compat import RobotFileParser, URLError
+from dirhunt._compat import RobotFileParser
+
+
+PROTOCOLS = ["https", "http"]
 
 
 def get_url(protocol, domain, path):
@@ -12,35 +14,27 @@ def get_url(protocol, domain, path):
     return "{protocol}://{domain}/{path}".format(**locals())
 
 
-class DirhuntRobotFileParser(RobotFileParser):
-    def read(self):
-        """Reads the robots.txt URL and feeds it to the parser."""
-        try:
-            with requests.get(self.url) as response:
-                status_code = response.status_code
-                text = response.text
-        except RequestException:
-            pass
-        else:
-            if status_code in (401, 403):
-                self.disallow_all = True
-            elif status_code >= 400 and status_code < 500:
-                self.allow_all = True
-            self.parse(text.splitlines())
-
-
 class Robots(SourceBase):
-    def callback(self, domain, protocol="http"):
-        rp = DirhuntRobotFileParser()
-        rp.set_url(get_url(protocol, domain, "robots.txt"))
-        try:
-            rp.read()
-        except (IOError, URLError):
-            if protocol == "http":
-                self.callback(domain, "https")
-            return
+    async def search_by_domain(self, domain: str) -> Iterable[str]:
+        if domain not in self.sources.crawler.domain_protocols:
+            raise SourceError(f"Protocol not available for domain: {domain}")
+        protocols = self.sources.crawler.domain_protocols[domain]
+        protocols = filter(lambda x: x in PROTOCOLS, protocols)
+        protocols = sorted(protocols, key=lambda x: PROTOCOLS.index(x))
+        protocol = protocols[0]
+        rp = RobotFileParser()
+        async with self.sources.crawler.session.get(
+            get_url(protocol, domain, "robots.txt")
+        ) as response:
+            if response.status == 404:
+                return []
+            response.raise_for_status()
+            lines = (await response.text()).splitlines()
+            rp.parse(lines)
         entries = list(rp.entries)
         if rp.default_entry:
             entries.append(rp.default_entry)
-        for ruleline in chain(*[entry.rulelines for entry in entries]):
-            self.add_result(get_url(protocol, domain, ruleline.path))
+        return [
+            get_url(protocol, domain, ruleline.path)
+            for ruleline in chain(*[entry.rulelines for entry in entries])
+        ]

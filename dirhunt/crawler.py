@@ -5,10 +5,11 @@ import functools
 import json
 import os
 from asyncio import Semaphore, Task
+from collections import defaultdict
 from concurrent.futures.thread import _python_exit
 from hashlib import sha256
 from threading import Lock, ThreadError
-from typing import Optional, Set, Coroutine, Any
+from typing import Optional, Set, Coroutine, Any, Dict
 
 import humanize as humanize
 from click import get_terminal_size
@@ -23,6 +24,7 @@ from dirhunt.exceptions import (
     IncompatibleVersionError,
 )
 from dirhunt.json_report import JsonReportEncoder
+from dirhunt.processors import ProcessBase
 from dirhunt.sessions import Session
 from dirhunt.sources import Sources
 from dirhunt.url_info import UrlsInfo
@@ -75,6 +77,7 @@ class Crawler:
         self.start_dt = datetime.datetime.now()
         self.current_processed_count: int = 0
         self.sources = Sources(self)
+        self.domain_protocols: Dict[str, set] = defaultdict(set)
 
     async def start(self):
         """Add urls to process."""
@@ -82,6 +85,7 @@ class Crawler:
             crawler_url = CrawlerUrl(self, url, depth=self.configuration.max_depth)
             await self.add_domain(crawler_url.url.domain)
             await self.add_crawler_url(crawler_url)
+            self.add_domain_protocol(crawler_url)
 
         while self.tasks:
             await asyncio.wait(self.tasks)
@@ -124,6 +128,16 @@ class Crawler:
         text.append("[ERROR] ", style="red")
         text.append(message)
         self.console.print(text)
+
+    def print_processor(self, processor: ProcessBase):
+        """Print processor to console."""
+        if 300 > processor.status >= 200:
+            self.add_domain_protocol(processor.crawler_url)
+        self.console.print(processor.get_text())
+
+    def add_domain_protocol(self, crawler_url: "CrawlerUrl"):
+        """Add domain protocol"""
+        self.domain_protocols[crawler_url.url.domain].add(crawler_url.url.protocol)
 
     def add_init_urls(self, *urls):
         """Add urls to queue."""

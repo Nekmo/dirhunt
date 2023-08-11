@@ -157,7 +157,7 @@ class CrawlerUrl:
             and not isinstance(processor, GenericProcessor)
             and self.url_type not in {"asset", "index_file"}
         ):
-            self.crawler.console.print(processor.get_text())
+            self.crawler.print_processor(processor)
         # if self.must_be_downloaded(response):
         #     processor = get_processor(response, text, self, soup) or GenericProcessor(
         #         response, self
