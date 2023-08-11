@@ -162,3 +162,14 @@ def multiplier_arg(argument):
 
 def multiplier_args(arguments):
     return flat_list([multiplier_arg(argument) for argument in arguments])
+
+
+def retry_error(fn, exception):
+    def wrap(*args, **kwargs):
+        while True:
+            try:
+                return fn(*args, **kwargs)
+            except exception:
+                pass
+
+    return wrap

@@ -14,7 +14,7 @@ from requests import RequestException
 from urllib3.exceptions import ReadTimeoutError
 
 from dirhunt.cli import random_spinner
-from dirhunt.colors import status_code_colors
+from dirhunt.console import status_code_colors
 from dirhunt.exceptions import EmptyError, RequestError
 from dirhunt.pool import Pool
 from dirhunt.utils import colored, remove_ansi_escape

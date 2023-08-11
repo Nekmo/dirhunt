@@ -2,7 +2,7 @@ import unittest
 
 from colorama import Fore
 
-from dirhunt.colors import status_code_colors
+from dirhunt.console import status_code_colors
 
 
 class TestColors(unittest.TestCase):

@@ -202,6 +202,10 @@ class CrawlerUrl:
         ):
             self.url_type = "document"
 
+    @property
+    def finished(self) -> bool:
+        return self.processor is not None
+
     def maybe_rewrite(self):
         return self.url_type not in ["asset", "directory"]
 

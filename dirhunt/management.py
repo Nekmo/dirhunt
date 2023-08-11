@@ -282,7 +282,14 @@ def hunt(**kwargs: ConfigurationDict):
         return
     loop = asyncio.get_event_loop()
     crawler = Crawler(configuration, loop)
-    loop.run_until_complete(crawler.start())
+    while True:
+        try:
+            loop.run_until_complete(crawler.start())
+        except KeyboardInterrupt:
+            click.echo("Goodbye!")
+            input()
+        else:
+            break
 
 
 def main():

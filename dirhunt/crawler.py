@@ -28,6 +28,7 @@ from dirhunt.processors import ProcessBase
 from dirhunt.sessions import Session
 from dirhunt.sources import Sources
 from dirhunt.url_info import UrlsInfo
+from dirhunt.utils import retry_error
 
 """Flags importance"""
 
@@ -56,6 +57,7 @@ class DomainSemaphore:
 
 class Crawler:
     urls_info = None
+    started = False
 
     def __init__(self, configuration: Configuration, loop: asyncio.AbstractEventLoop):
         """Initialize Crawler.
@@ -81,15 +83,26 @@ class Crawler:
 
     async def start(self):
         """Add urls to process."""
+        if self.started:
+            await self.restart()
+            return
         for url in self.configuration.urls:
             crawler_url = CrawlerUrl(self, url, depth=self.configuration.max_depth)
             await self.add_domain(crawler_url.url.domain)
             await self.add_crawler_url(crawler_url)
             self.add_domain_protocol(crawler_url)
+        self.started = True
+        await self.run_tasks()
 
+    async def run_tasks(self) -> None:
+        """Run asyncio tasks."""
         while self.tasks:
             await asyncio.wait(self.tasks)
         await self.session.close()
+
+    async def restart(self):
+        """Restart crawler."""
+        await self.run_tasks()
 
     async def add_crawler_url(self, crawler_url: CrawlerUrl) -> Optional[asyncio.Task]:
         """Add crawler_url to tasks"""
@@ -97,10 +110,16 @@ class Crawler:
             crawler_url.url.domain
         ):
             return
+        # TODO: move to CrawlerUrl after retrieve the data
         self.current_processed_count += 1
         self.crawler_urls.add(crawler_url)
+        await self.add_crawler_url_task(crawler_url)
+
+    async def add_crawler_url_task(self, crawler_url) -> asyncio.Task:
+        """Add crawler_url to tasks"""
         return self.add_task(
-            crawler_url.retrieve(), name=f"crawlerurl-{self.current_processed_count}"
+            retry_error(crawler_url.retrieve, KeyboardInterrupt)(),
+            name=f"crawlerurl-{self.current_processed_count}",
         )
 
     async def add_domain(self, domain: str):
@@ -112,6 +131,7 @@ class Crawler:
 
     @functools.lru_cache(maxsize=128)
     def in_domains(self, target_domain):
+        """Check if target_domain is in domains."""
         if target_domain in self.domains:
             return True
         if self.configuration.not_follow_subdomains:
@@ -138,6 +158,11 @@ class Crawler:
     def add_domain_protocol(self, crawler_url: "CrawlerUrl"):
         """Add domain protocol"""
         self.domain_protocols[crawler_url.url.domain].add(crawler_url.url.protocol)
+
+    @property
+    def pending_crawler_urls(self):
+        """Return pending crawler_urls without finished."""
+        return filter(lambda x: not x.finished, self.crawler_urls)
 
     def add_init_urls(self, *urls):
         """Add urls to queue."""
@@ -244,12 +269,6 @@ class Crawler:
             bool(self.to_file),
         )
         self.urls_info.start()
-
-    def restart(self):
-        try:
-            self.add_lock.release()
-        except (ThreadError, RuntimeError):
-            pass
 
     def options(self):
         return {

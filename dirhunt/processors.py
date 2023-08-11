@@ -16,7 +16,7 @@ if sys.version_info < (3,):
 from bs4 import Comment
 from colorama import Fore, Back
 
-from dirhunt.colors import status_code_colors
+from dirhunt.console import status_code_colors
 from dirhunt.crawler_url import CrawlerUrl, CrawlerUrlRequest
 from dirhunt.url import Url, full_url_address
 from dirhunt.url_loop import is_url_loop

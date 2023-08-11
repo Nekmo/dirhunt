@@ -1,7 +1,5 @@
-from colorama import Fore
-
-
 def status_code_colors(status_code):
+    """Return a color for a status code."""
     if 100 <= status_code < 200:
         return "white"
     elif 200 == status_code:
