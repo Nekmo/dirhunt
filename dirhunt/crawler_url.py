@@ -81,7 +81,6 @@ class CrawlerUrlRequest:
                 await asyncio.sleep(RETRIES_WAIT)
                 return await self.retrieve(retries - 1)
             else:
-                self.crawler.current_processed_count += 1
                 self.crawler.print_error(
                     f"Request error to {self.crawler_url.url}: {get_message_from_exception(e)}"
                 )
@@ -159,6 +158,7 @@ class CrawlerUrl:
 
         crawler_url_request = CrawlerUrlRequest(self)
         processor = await crawler_url_request.retrieve()
+        self.crawler.current_processed_count += 1
         if (
             processor is not None
             and not isinstance(processor, GenericProcessor)

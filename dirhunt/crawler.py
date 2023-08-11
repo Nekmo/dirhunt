@@ -15,6 +15,13 @@ import humanize as humanize
 from click import get_terminal_size
 from rich.console import Console
 from rich.text import Text
+from rich.progress import (
+    Progress,
+    TaskProgressColumn,
+    TimeRemainingColumn,
+    BarColumn,
+    TextColumn,
+)
 
 from dirhunt import __version__
 from dirhunt._compat import queue, Queue, unregister
@@ -77,9 +84,19 @@ class Crawler:
         self.processed = {}
         self.add_lock = Lock()
         self.start_dt = datetime.datetime.now()
+        self.total_crawler_urls: int = 0
         self.current_processed_count: int = 0
         self.sources = Sources(self)
         self.domain_protocols: Dict[str, set] = defaultdict(set)
+        self.progress = Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(complete_style="blue"),
+            TaskProgressColumn(),
+            TimeRemainingColumn(),
+            console=self.console,
+        )
+        self.progress_task = self.progress.add_task("Fetching urls...", total=None)
+        self.progress.start()
 
     async def start(self):
         """Add urls to process."""
@@ -106,20 +123,21 @@ class Crawler:
 
     async def add_crawler_url(self, crawler_url: CrawlerUrl) -> Optional[asyncio.Task]:
         """Add crawler_url to tasks"""
-        if crawler_url in self.crawler_urls or not self.in_domains(
-            crawler_url.url.domain
+        if (
+            self.total_crawler_urls > self.configuration.limit
+            or crawler_url in self.crawler_urls
+            or not self.in_domains(crawler_url.url.domain)
         ):
             return
-        # TODO: move to CrawlerUrl after retrieve the data
-        self.current_processed_count += 1
         self.crawler_urls.add(crawler_url)
         await self.add_crawler_url_task(crawler_url)
 
     async def add_crawler_url_task(self, crawler_url) -> asyncio.Task:
         """Add crawler_url to tasks"""
+        self.total_crawler_urls += 1
         return self.add_task(
             retry_error(crawler_url.retrieve, KeyboardInterrupt)(),
-            name=f"crawlerurl-{self.current_processed_count}",
+            name=f"crawlerurl-{self.total_crawler_urls}",
         )
 
     async def add_domain(self, domain: str):
@@ -154,6 +172,16 @@ class Crawler:
         if 300 > processor.status >= 200:
             self.add_domain_protocol(processor.crawler_url)
         self.console.print(processor.get_text())
+        self.progress.update(
+            self.progress_task,
+            description=f"Obtained [bold blue]{self.current_processed_count}[/bold blue] urls out of "
+            f"[bold blue]{self.total_crawler_urls}[/bold blue]",
+            completed=self.current_processed_count,
+            refresh=True,
+            total=self.configuration.limit
+            if self.total_crawler_urls > self.configuration.limit
+            else None,
+        )
 
     def add_domain_protocol(self, crawler_url: "CrawlerUrl"):
         """Add domain protocol"""
