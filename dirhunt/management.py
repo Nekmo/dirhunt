@@ -248,12 +248,16 @@ def flags_range(flags):
     help="Add a cookie to requests in the cookie_name:value format.",
 )
 @click.option(
-    "-h",
     "--header",
     "headers",
     callback=key_value,
     multiple=True,
     help="Add a header to requests in the header:value format.",
+)
+@click.option(
+    "--retries",
+    type=int,
+    help="Retry errors the indicated number of times.",
 )
 @click.option(
     "--version", is_flag=True, callback=print_version, expose_value=False, is_eager=True

@@ -18,8 +18,9 @@ FLAGS_WEIGHT = {
     "not_found.fake": 3,
     "html": 2,
 }
-URL_TYPES = Literal["index_file",]  # index.php, index.html, index.htm, etc.
+URL_TYPES = Literal["index_file"]  # index.php, index.html, index.htm, etc.
 DEFAULT_ENCODING = "utf-8"
+RETRIES_WAIT = 2
 
 
 if TYPE_CHECKING:
@@ -51,7 +52,9 @@ class CrawlerUrlRequest:
         self.crawler_url = crawler_url
         self.crawler = crawler_url.crawler
 
-    async def retrieve(self) -> Optional["ProcessBase"]:
+    async def retrieve(self, retries: Optional[int] = None) -> Optional["ProcessBase"]:
+        if retries is None:
+            retries = self.crawler.configuration.retries
         from dirhunt.processors import (
             get_processor,
         )
@@ -74,10 +77,14 @@ class CrawlerUrlRequest:
                 if processor.has_descendants:
                     processor = get_processor(self)
         except (ClientError, asyncio.TimeoutError) as e:
-            self.crawler.current_processed_count += 1
-            self.crawler.print_error(
-                f"Request error to {self.crawler_url.url}: {get_message_from_exception(e)}"
-            )
+            if retries and retries > 0:
+                await asyncio.sleep(RETRIES_WAIT)
+                return await self.retrieve(retries - 1)
+            else:
+                self.crawler.current_processed_count += 1
+                self.crawler.print_error(
+                    f"Request error to {self.crawler_url.url}: {get_message_from_exception(e)}"
+                )
         else:
             await processor.process(self)
         finally:

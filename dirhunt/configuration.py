@@ -29,6 +29,7 @@ class ConfigurationDict(TypedDict):
     user_agent: Optional[str]
     cookies: Dict[str, str]
     headers: Dict[str, str]
+    retries: Optional[int]
 
 
 @dataclass
@@ -59,3 +60,4 @@ class Configuration:
     user_agent: Optional[str] = None
     cookies: Dict[str, str] = field(default_factory=dict)
     headers: Dict[str, str] = field(default_factory=dict)
+    retries: Optional[int] = None
