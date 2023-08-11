@@ -14,17 +14,9 @@ TIMEOUT = 10
 class CommonCrawl(SourceBase):
     async def get_latest_craw_index(self):
         url = COMMONCRAWL_URL
-        try:
-            async with self.sources.crawler.session.get(
-                url, timeout=TIMEOUT
-            ) as response:
-                response.raise_for_status()
-                crawl_indexes = await response.json()
-        except (ClientError, ValueError, JSONDecodeError) as e:
-            self.add_error("Error on CommonCrawl source: {}".format(e))
-            return
-        if not crawl_indexes:
-            return
+        async with self.sources.crawler.session.get(url, timeout=TIMEOUT) as response:
+            response.raise_for_status()
+            crawl_indexes = await response.json()
         latest_crawl_index = crawl_indexes[0]
         return latest_crawl_index["cdx-api"]
 

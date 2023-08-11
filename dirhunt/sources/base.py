@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
 class SourceBase:
     max_cache_age = datetime.timedelta(days=7)
+    allow_subdomains = False
     wait_locks = {}
     wait_between_requests = None
 

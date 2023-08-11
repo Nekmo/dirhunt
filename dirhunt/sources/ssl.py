@@ -1,12 +1,9 @@
 import socket
 import ssl
-import sys
+from typing import Iterable
 
+from dirhunt.exceptions import SourceError
 from dirhunt.sources.base import SourceBase
-
-
-if sys.version_info < (3,):
-    ConnectionError = socket.error
 
 
 DEFAULT_SSL_PORT = 443
@@ -18,20 +15,16 @@ def get_url(protocol, domain, path):
 
 
 class CertificateSSL(SourceBase):
-    def callback(self, domain):
-        ctx = ssl.create_default_context()
-        cert = None
-        try:
-            with ctx.wrap_socket(socket.socket(), server_hostname=domain) as s:
-                s.connect((domain, DEFAULT_SSL_PORT))
-                cert = s.getpeercert()
-        except (ConnectionError, ssl.SSLError, ValueError, socket.error):
-            pass
-        if cert is None:
-            return
-        alt_names = cert.get("subjectAltName") or ()
-        for alt_name in alt_names:
-            alt_name_domain = alt_name[1]
-            if alt_name_domain.startswith("*."):
+    async def search_by_domain(self, domain: str) -> Iterable[str]:
+        async with self.sources.crawler.session.get(f"https://{domain}") as response:
+            response.raise_for_status()
+            if response.connection is None:
+                raise SourceError("Connection is not available.")
+            cert = response.connection.transport.get_extra_info("peercert")
+            alt_names = cert.get("subjectAltName") or ()
+            urls = []
+            for alt_name in alt_names:
+                alt_name_domain = alt_name[1]
                 alt_name_domain = alt_name_domain.replace(".*", "", 1)
-            self.add_result("https://{}/".format(alt_name_domain))
+                urls.append("https://{}/".format(alt_name_domain))
+            return urls
