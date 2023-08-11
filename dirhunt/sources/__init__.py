@@ -23,7 +23,7 @@ SOURCE_CLASSES: List[Type["SourceBase"]] = [
     CommonCrawl,
     CrtSh,
     CertificateSSL,
-    # Wayback,
+    Wayback,
 ]
 
 
