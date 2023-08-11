@@ -1,8 +1,9 @@
 import string
-from bs4 import BeautifulSoup
-from requests import RequestException
+from typing import Iterable
 
-from dirhunt.sessions import Sessions
+from bs4 import BeautifulSoup
+
+from dirhunt.exceptions import SourceError
 from dirhunt.sources.base import SourceBase
 
 
@@ -12,19 +13,16 @@ ABUSE_MESSAGE_ERROR = "VirusTotal abuse has failed (scraping detected). Validate
 
 
 class VirusTotal(SourceBase):
-    def callback(self, domain):
+    async def search_by_domain(self, domain: str) -> Iterable[str]:
+        """Search by domain in VirusTotal."""
         url = VT_URL.format(domain=domain)
-        session = Sessions().get_session()
-        try:
-            with session.get(url) as response:
-                html = response.text
-        except RequestException as e:
-            self.add_error("Error on Crt.sh source: {}".format(e))
-            return
+        async with self.sources.crawler.session.get(url) as response:
+            response.raise_for_status()
+            html = await response.text()
         if ABUSE in html:
-            self.add_error(ABUSE_MESSAGE_ERROR.format(url=url))
-            return
+            raise SourceError(ABUSE_MESSAGE_ERROR.format(url=url))
         soup = BeautifulSoup(html, "html.parser")
-
-        for url in soup.select("#detected-urls .enum a"):
-            self.add_result(url.text.strip(string.whitespace))
+        return [
+            url.text.strip(string.whitespace)
+            for url in soup.select("#detected-urls .enum a")
+        ]

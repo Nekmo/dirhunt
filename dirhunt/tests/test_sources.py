@@ -95,7 +95,7 @@ class TestVirusTotal(unittest.TestCase):
             ),
         )
         with patch.object(VirusTotal, "add_result") as mock_add_result:
-            VirusTotal(lambda x: x, None).callback(domain)
+            VirusTotal(lambda x: x, None).search_by_domain(domain)
             mock_add_result.assert_has_calls(
                 [call(detect_url) for detect_url in detect_urls]
             )
@@ -106,7 +106,7 @@ class TestVirusTotal(unittest.TestCase):
         url = VT_URL.format(domain=domain)
         m.get(url, text=ABUSE)
         with patch.object(VirusTotal, "add_error") as mock_add_error:
-            VirusTotal(lambda x: x, lambda x: x).callback(domain)
+            VirusTotal(lambda x: x, lambda x: x).search_by_domain(domain)
             mock_add_error.assert_called()
 
 

@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 SOURCE_CLASSES: List[Type["SourceBase"]] = [
     Robots,
-    # VirusTotal,
+    VirusTotal,
     Google,
     CommonCrawl,
     CrtSh,
