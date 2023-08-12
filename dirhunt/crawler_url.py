@@ -59,7 +59,7 @@ class CrawlerUrlRequest:
             get_processor,
         )
 
-        processor = None
+        released_lock = False
         try:
             await self.crawler.domain_semaphore.acquire(self.crawler_url.url.domain)
             async with self.crawler.session.get(
@@ -76,18 +76,17 @@ class CrawlerUrlRequest:
                     self.content = await get_content(response)
                 if processor.has_descendants:
                     processor = get_processor(self)
-        except (ClientError, asyncio.TimeoutError) as e:
+        except (ClientError, asyncio.TimeoutError):
             if retries and retries > 0:
+                self.crawler.domain_semaphore.release(self.crawler_url.url.domain)
+                released_lock = True
                 await asyncio.sleep(RETRIES_WAIT)
                 return await self.retrieve(retries - 1)
-            else:
-                self.crawler.print_error(
-                    f"Request error to {self.crawler_url.url}: {get_message_from_exception(e)}"
-                )
         else:
             await processor.process(self)
         finally:
-            self.crawler.domain_semaphore.release(self.crawler_url.url.domain)
+            if not released_lock:
+                self.crawler.domain_semaphore.release(self.crawler_url.url.domain)
         return processor
 
     @property
@@ -157,14 +156,14 @@ class CrawlerUrl:
         from processors import GenericProcessor
 
         crawler_url_request = CrawlerUrlRequest(self)
-        processor = await crawler_url_request.retrieve()
+        self.processor = await crawler_url_request.retrieve()
         self.crawler.current_processed_count += 1
         if (
-            processor is not None
-            and not isinstance(processor, GenericProcessor)
+            self.processor is not None
+            and not isinstance(self.processor, GenericProcessor)
             and self.url_type not in {"asset", "index_file"}
         ):
-            self.crawler.print_processor(processor)
+            self.crawler.print_processor(self.processor)
         # if self.must_be_downloaded(response):
         #     processor = get_processor(response, text, self, soup) or GenericProcessor(
         #         response, self

@@ -90,7 +90,10 @@ class ProcessBase:
 
     async def search_index_files(self):
         """Search for index files in the directory. For example index.php, index.html, etc."""
-        if self.crawler_url.url_type not in ["directory", None]:
+        if (
+            self.crawler_url.url_type not in ["directory", None]
+            or self.crawler_url.crawler.hard_limit_reached
+        ):
             return
         crawler = self.crawler_url.crawler
         for index_file in INDEX_FILES:
@@ -319,6 +322,8 @@ class ProcessCssStyleSheet(ProcessBase):
     async def process(self, crawler_url_request: "CrawlerUrlRequest") -> None:
         """Process the request. This method will search for urls in the CSS stylesheet."""
         self.search_keywords(crawler_url_request.content)
+        if self.crawler_url.crawler.hard_limit_reached:
+            return
         urls = [
             full_url_address(url, self.crawler_url.url)
             for url in re.findall(
@@ -352,6 +357,8 @@ class ProcessJavaScript(ProcessBase):
     async def process(self, crawler_url_request: "CrawlerUrlRequest") -> None:
         """Process the request. This method will search for urls in the JavaScript file."""
         self.search_keywords(crawler_url_request.content)
+        if self.crawler_url.crawler.hard_limit_reached:
+            return
         urls = [
             full_url_address(url[0], self.crawler_url.url)
             for url in re.findall(
@@ -384,6 +391,8 @@ class ProcessHtmlRequest(ProcessBase):
     async def process(self, crawler_url_request: "CrawlerUrlRequest") -> None:
         """Process the request. This method will search for urls in the HTML document."""
         self.search_keywords(crawler_url_request.content)
+        if self.crawler_url.crawler.hard_limit_reached:
+            return
         await self.assets(crawler_url_request.soup)
         await self.links(crawler_url_request.soup)
         await self.search_index_files()

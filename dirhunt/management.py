@@ -3,30 +3,27 @@
 from __future__ import print_function
 
 import asyncio
-import re
-import click as click
 import os
-
+import re
 import sys
 
-from click import BadOptionUsage, Path, BadParameter, UsageError
+import click
+from click import Path, BadParameter, UsageError
+from colorama import init
 
 from dirhunt.configuration import ConfigurationDict, Configuration
+from dirhunt.console import radiolist_prompt
 from dirhunt.crawler import Crawler
-from dirhunt.exceptions import DirHuntError, catch, IncompatibleVersionError
-from dirhunt.output import output_urls
+from dirhunt.exceptions import catch
 from dirhunt.sources import SOURCE_CLASSES, get_source_name
 from dirhunt.utils import (
     lrange,
-    catch_keyboard_interrupt,
     force_url,
     read_file_lines,
     value_is_file_path,
     flat_list,
     multiplier_args,
-    catch_keyboard_interrupt_choices,
 )
-from colorama import init
 
 init(autoreset=True)
 
@@ -276,7 +273,7 @@ def hunt(**kwargs: ConfigurationDict):
     if not configuration.urls:
         click.echo(
             "•_•) OOPS! Add urls to analyze.\nFor example: dirhunt http://domain/path\n\n"
-            "Need help? Then use dirhunt --help",
+            "If you need help use: dirhunt --help",
             err=True,
         )
         return
@@ -286,8 +283,25 @@ def hunt(**kwargs: ConfigurationDict):
         try:
             loop.run_until_complete(crawler.start())
         except KeyboardInterrupt:
-            click.echo("Goodbye!")
-            input()
+            crawler.progress.stop()
+            coroutine = radiolist_prompt(
+                "Program execution has been paused. What do you want to do? Press the key of your selection",
+                [
+                    ("continue", "Continue analyzing urls."),
+                    ("report", "Go to the report."),
+                    ("exit", "Exit."),
+                ],
+                "continue",
+                "exit",
+                async_=True,
+            )
+            new_loop = asyncio.new_event_loop()
+            choice = new_loop.run_until_complete(coroutine)
+            if choice == "exit":
+                sys.exit(0)
+            elif choice == "report":
+                break
+            crawler.progress.start()
         else:
             break
 

@@ -8,13 +8,9 @@ from asyncio import Semaphore, Task
 from collections import defaultdict
 from concurrent.futures.thread import _python_exit
 from hashlib import sha256
-from threading import Lock, ThreadError
-from typing import Optional, Set, Coroutine, Any, Dict
+from typing import Optional, Set, Coroutine, Any, Dict, Literal
 
-import humanize as humanize
-from click import get_terminal_size
 from rich.console import Console
-from rich.text import Text
 from rich.progress import (
     Progress,
     TaskProgressColumn,
@@ -22,6 +18,7 @@ from rich.progress import (
     BarColumn,
     TextColumn,
 )
+from rich.text import Text
 
 from dirhunt import __version__
 from dirhunt._compat import queue, Queue, unregister
@@ -40,7 +37,12 @@ from dirhunt.utils import retry_error
 """Flags importance"""
 
 
+# Some URLs can take a long time to process, so we increase the number of urls
+# to process in the queue to finish as soon as possible.
+DIRHUNT_OVERFLOW_MULTIPLIER = int(os.environ.get("DIRHUNT_OVERFLOW_MULTIPLIER", 3))
+
 resume_dir = os.path.expanduser("~/.cache/dirhunt/")
+steps = Literal[None, "crawling_urls", "finishing_crawler_urls"]
 
 
 class DomainSemaphore:
@@ -64,7 +66,7 @@ class DomainSemaphore:
 
 class Crawler:
     urls_info = None
-    started = False
+    step: steps = None
 
     def __init__(self, configuration: Configuration, loop: asyncio.AbstractEventLoop):
         """Initialize Crawler.
@@ -81,11 +83,9 @@ class Crawler:
         self.domain_semaphore = DomainSemaphore(configuration.concurrency)
         self.results = Queue()
         self.index_of_processors = []
-        self.processed = {}
-        self.add_lock = Lock()
         self.start_dt = datetime.datetime.now()
-        self.total_crawler_urls: int = 0
         self.current_processed_count: int = 0
+        self.total_crawler_urls: int = 0
         self.sources = Sources(self)
         self.domain_protocols: Dict[str, set] = defaultdict(set)
         self.progress = Progress(
@@ -100,7 +100,7 @@ class Crawler:
 
     async def start(self):
         """Add urls to process."""
-        if self.started:
+        if self.step == "crawling_urls":
             await self.restart()
             return
         for url in self.configuration.urls:
@@ -108,7 +108,7 @@ class Crawler:
             await self.add_domain(crawler_url.url.domain)
             await self.add_crawler_url(crawler_url)
             self.add_domain_protocol(crawler_url)
-        self.started = True
+        self.step = "crawling_urls"
         await self.run_tasks()
 
     async def run_tasks(self) -> None:
@@ -124,7 +124,7 @@ class Crawler:
     async def add_crawler_url(self, crawler_url: CrawlerUrl) -> Optional[asyncio.Task]:
         """Add crawler_url to tasks"""
         if (
-            self.total_crawler_urls > self.configuration.limit
+            self.hard_limit_reached
             or crawler_url in self.crawler_urls
             or not self.in_domains(crawler_url.url.domain)
         ):
@@ -171,15 +171,20 @@ class Crawler:
         """Print processor to console."""
         if 300 > processor.status >= 200:
             self.add_domain_protocol(processor.crawler_url)
+        if self.step == "finishing_crawler_urls":
+            return
+        if self.soft_limit_reached:
+            self.step = "finishing_crawler_urls"
+            self.cancel_tasks()
         self.console.print(processor.get_text())
         self.progress.update(
             self.progress_task,
             description=f"Obtained [bold blue]{self.current_processed_count}[/bold blue] urls out of "
-            f"[bold blue]{self.total_crawler_urls}[/bold blue]",
+            f"[bold blue]{min(self.total_crawler_urls, self.configuration.limit)}[/bold blue]",
             completed=self.current_processed_count,
             refresh=True,
             total=self.configuration.limit
-            if self.total_crawler_urls > self.configuration.limit
+            if self.total_crawler_urls >= self.configuration.limit
             else None,
         )
 
@@ -192,16 +197,26 @@ class Crawler:
         """Return pending crawler_urls without finished."""
         return filter(lambda x: not x.finished, self.crawler_urls)
 
-    def add_init_urls(self, *urls):
-        """Add urls to queue."""
-        self.initial_urls.extend(urls)
-        for crawler_url in urls:
-            if not isinstance(crawler_url, CrawlerUrl):
-                crawler_url = CrawlerUrl(
-                    self, crawler_url, depth=self.depth, timeout=self.timeout
-                )
-            self.add_domain(crawler_url.url.only_domain)
-            self.add_url(crawler_url, lock=False)
+    @property
+    def soft_limit_reached(self) -> bool:
+        """Return True if the soft limit is reached.
+
+        This limit is used when the number of urls already processed is reached.
+        """
+        return self.current_processed_count >= self.configuration.limit
+
+    @property
+    def hard_limit_reached(self) -> bool:
+        """Return True if the hard limit is reached.
+
+        This limit is used to add urls to the queue. Some URLs can take a long time to
+        process, so we increase the number of urls to process in the queue to finish
+        as soon as possible.
+        """
+        return (
+            self.total_crawler_urls
+            >= self.configuration.limit * DIRHUNT_OVERFLOW_MULTIPLIER
+        )
 
     def add_task(
         self, coro: Coroutine[Any, Any, Any], name: Optional[str] = None
@@ -211,40 +226,10 @@ class Crawler:
         task.add_done_callback(self.tasks.discard)
         return task
 
-    def add_message(self, body):
-        from dirhunt.processors import Message
-
-        self.results.put(Message(body))
-
-    def echo(self, body):
-        if self.std is None:
-            return
-        # TODO: remove ANSI chars on is not tty
-        self.std.write(str(body))
-        self.std.write("\n")
-
-    def erase(self):
-        if self.std is None or not self.std.isatty():
-            return
-        CURSOR_UP_ONE = "\x1b[1A"
-        ERASE_LINE = "\x1b[2K"
-        # This can be improved. In the future we may want to define stdout/stderr with an cli option
-        # fn = sys.stderr.write if sys.stderr.isatty() else sys.stdout.write
-        self.std.write(CURSOR_UP_ONE + ERASE_LINE)
-
-    def print_progress(self, finished=False):
-        if not self.progress_enabled:
-            # Cancel print progress on
-            return
-        self.echo(
-            "{} {} {}".format(
-                next(self.spinner),
-                "Finished after" if finished else "Started",
-                (humanize.naturaldelta if finished else humanize.naturaltime)(
-                    datetime.datetime.now() - self.start_dt
-                ),
-            )
-        )
+    def cancel_tasks(self):
+        """Cancel all tasks."""
+        for task in self.tasks:
+            task.cancel()
 
     def print_results(self, exclude=None, include=None):
         exclude = exclude or set()

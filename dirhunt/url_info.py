@@ -8,7 +8,6 @@ from threading import Lock
 
 import six
 from bs4 import BeautifulSoup
-from click import get_terminal_size
 from colorama import Fore
 from requests import RequestException
 from urllib3.exceptions import ReadTimeoutError

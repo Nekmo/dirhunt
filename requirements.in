@@ -8,6 +8,7 @@ google
 proxy-db
 rich>=12.0.0
 aiohttp
+prompt_toolkit>=3.0.0
 platformdirs>=3.5.1,<4.0.0
 futures; python_version < '3.0'
 py2-ipaddress; python_version < '3.0'

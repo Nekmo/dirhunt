@@ -51,6 +51,10 @@ multidict==6.0.4
     # via
     #   aiohttp
     #   yarl
+platformdirs==3.10.0
+    # via -r requirements.in
+prompt-toolkit==3.0.39
+    # via -r requirements.in
 proxy-db==0.3.1
     # via -r requirements.in
 pygments==2.16.1
@@ -76,5 +80,7 @@ typing-extensions==4.7.1
     # via sqlalchemy
 urllib3==2.0.4
     # via requests
+wcwidth==0.2.6
+    # via prompt-toolkit
 yarl==1.9.2
     # via aiohttp

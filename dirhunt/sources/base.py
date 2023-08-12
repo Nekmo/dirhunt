@@ -93,7 +93,7 @@ class SourceBase:
         with open(self.cache_file, "w") as file:
             json.dump(cache_data, file)
 
-    async def add_url(self, url: str):
+    async def add_url(self, url: str) -> None:
         """Add url to crawler."""
         await self.sources.crawler.add_crawler_url(
             CrawlerUrl(self.sources.crawler, url)
