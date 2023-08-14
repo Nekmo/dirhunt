@@ -2,6 +2,20 @@
 History
 =======
 
+1.0.0 (2023-08-14)
+------------------
+
+* Add keyword search (issue #110)
+* Add Python 3.11 support (issue #112)
+* Add pip-rating badge (issue #118)
+* Ignore base64 urls from wayback machine (issue #120)
+* Use pip-tools for dependencies (issue #119)
+* Remove Python 3.5 & Python 3.6 support (issue #113)
+* Fix Github example issue message (issue #114)
+* Fix readme badge (issue #115)
+* Fix Python versions in Pypi (issue #116)
+
+
 0.9.0 (2022-05-16)
 ------------------
 
