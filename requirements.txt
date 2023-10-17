@@ -46,5 +46,5 @@ sqlalchemy==2.0.19
     # via proxy-db
 typing-extensions==4.7.1
     # via sqlalchemy
-urllib3==2.0.4
+urllib3==2.0.7
     # via requests
