@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" 
+xmlns:xlink="http://www.w3.org/1999/xlink" width="82" height="20" role="img"
+     aria-label="pip-rating: D">
+    <title>pip-rating: D</title>
+    <g shape-rendering="crispEdges">
+        <rect width="65" height="20" fill="#555"/><rect x="65" width="17" 
+height="20" fill="#FFAF00"/>
+    </g>
+    <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu 
+Sans,sans-serif"
+       text-rendering="geometricPrecision" font-size="110">
+        <text x="335" y="140" transform="scale(.1)" fill="#fff" 
+textLength="550">pip-rating</text>
+        <text x="725" y="140" transform="scale(.1)" fill="fff" 
+textLength="70">D</text>
+    </g>
+</svg>
+
